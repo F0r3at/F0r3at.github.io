@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>渗透测试 on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/</link>
+    <description>Recent content in 渗透测试 on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 09 Sep 2019 02:11:19 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>一次艰难的渗透提权过程</title>
+      <link>https://getshe11.com/posts/a-difficult-penetration-process/</link>
+      <pubDate>Mon, 09 Sep 2019 02:11:19 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/a-difficult-penetration-process/</guid>
+      <description>0x01 前言 某日朋友丢了一条shell叫我提权，我拿到shell看了一下，菜刀蚁剑都无法执行命令。 Getshell的漏洞分析在:https://getpass.cn/2019/09/06/An-APP-distribution-system-upload-vulnerability/
+然后搞了好久熬了一个晚上才弄好，中间走了很多弯路。。。
+0x02 信息探测 上一个phpinfo看下环境
+PHP Version 5.6.30 disable_functions: passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,popen,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru sendmail_path:/usr/sbin/sendmail -t -i mysql:	mysqlnd 5.0.11-dev - 20120503 宝塔警告！ 问了宝塔的开发工程师，宝塔确实是做得挺好的，Windows的基本没什么希望了，看下Linux的。 0x03 肝 putenv这个没禁可以利用一下，看了P神的一篇文章：https://www.leavesongs.com/PHP/php-bypass-disable-functions-by-CVE-2014-6271.html http://www.exploit-db.com/exploits/35146/ 的POC
+&amp;lt;?php # Exploit Title: PHP 5.x Shellshock Exploit (bypass disable_functions) # Google Dork: none # Date: 10/31/2014 # Exploit Author: Ryan King (Starfall) # Vendor Homepage: http://php.net # Software Link: http://php.net/get/php-5.6.2.tar.bz2/from/a/mirror # Version: 5.* (tested on 5.6.2) # Tested on: Debian 7 and CentOS 5 and 6 # CVE: CVE-2014-6271  function shellshock($cmd) { // Execute a command via CVE-2014-6271 @mail.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Linux on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/linux/</link>
+    <description>Recent content in Linux on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 24 Mar 2018 12:46:22 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/linux/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Deepin Linux install Metasploit</title>
+      <link>https://getshe11.com/posts/deepin-linux-install-metasploit/</link>
+      <pubDate>Sat, 24 Mar 2018 12:46:22 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/deepin-linux-install-metasploit/</guid>
+      <description>前言 最近换了个系统，觉得国内的Deepin Linux还是比较符合日常适合和编程的。之前用ThinkPad装Ubuntu都崩好几次了，比较笔记本性能不太好。
+环境 笔记本：ThinkPad X230 下载安装 官网上面有安装指导，以前那种安装方法特别麻烦，安装完msf还要自己去下载数据库配置用户连接信息，现在就比较方便了哈。
+https://github.com/rapid7/metasploit-framework/wiki/Nightly-Installers
+切换到root用户然后执行下面的命令就ok了。
+curl https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb &amp;gt; msfinstall &amp;amp;&amp;amp; \ chmod 755 msfinstall &amp;amp;&amp;amp; \ ./msfinstall 安装过程： 建立数据库 我在root用户下面不能自动帮我创建数据库，然后我切换到用户目录下就ok了。 结束 今天要继续写我的每日一洞了，上周一直都在做赛前准备，所以就没有继续写下去，我不会放弃的，既然要做一件事情，就要坚定的做下去。
+参考 https://www.metasploit.com/</description>
+    </item>
+    
+  </channel>
+</rss>

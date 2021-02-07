@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>关于Kali2020安装Parallels Tools后Chrome显示空白 - F0rmat&#39;Blog</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1><a href="https://getshe11.com/">F0rmat&#39;Blog</a></h1>
+  </div>
+  <nav></nav>
+</header>
+<main>
+  <article>
+    <div class="title">
+  <h1>关于Kali2020安装Parallels Tools后Chrome显示空白</h1>
+  </div>
+<div style="position: fixed; right:-30px; max-width:300px; overflow:auto; top: 1px; width: 300px; bottom:100px">
+<div class="container text-center mt-3">
+    <iframe src="https://duckduckgo.com/search.html?site=https://getshe11.com/&prefill=" style="overflow:hidden;margin:0;padding:0;max-width:80%;height:40px;" frameborder="0"></iframe>
+</div>
+</div>
+<div class="meta">
+  <div>2020-12-30 13:20</div>
+  <div>
+    <span><a href="https://getshe11.com/tags/kali-linux/">#Kali Linux</a></span>
+      </div>
+  </div>
+<div class="content">
+  <h1 id="0x00-起因">0x00 起因</h1>
+<p>kali安装好了pdtools，突然发现chrome和edge浏览器打开都是空白</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/pd-chrome-3d-1.png" alt="1"></p>
+<!-- raw HTML omitted -->
+<h1 id="0x01-解决">0x01 解决</h1>
+<p>逛pd的论坛发现是3D加速的问题，要么关闭3D加速：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/pd-chrome-3d-2.png" alt="2"></p>
+<p>但是用pd就是奔着3D加速的，vmware也是开启了3d加速，但是跟没开一样，还是pd香。</p>
+<p>于是就有了下面的解决办法：</p>
+<pre><code>google-chrome --use-gl=swiftshader
+</code></pre><pre><code>microsoft-edge --use-gl=swiftshader
+</code></pre><p>或者：</p>
+<pre><code>google-chrome --disable-gpu
+</code></pre><pre><code>microsoft-edge --disable-gpu
+</code></pre><h1 id="0x02-参考">0x02 参考</h1>
+<p><a href="https://forum.parallels.com/threads/google-chrome-black-screen-on-ubuntu-18-04.347169/">https://forum.parallels.com/threads/google-chrome-black-screen-on-ubuntu-18-04.347169/</a></p>
+</div>
+<div style="position: fixed; right:50px; max-width:255px; overflow:auto; top: 120px; width: 220px; bottom:90px">
+
+
+
+
+
+
+
+
+
+
+<div class="toc">
+
+    <div class="page-header"><strong>目录</strong></div>
+
+    <div id="page-scrollspy" class="toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x00-%e8%b5%b7%e5%9b%a0">
+                            0x00 起因
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x01-%e8%a7%a3%e5%86%b3">
+                            0x01 解决
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x02-%e5%8f%82%e8%80%83">
+                            0x02 参考
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+  </article>
+</main>
+<footer>
+  <div>
+    <div>&copy; 2021 F0rmat. <a href="https://creativecommons.org/licenses/by/4.0/deed.zh">CC-BY-4.0</a></div>
+  </div>
+</footer>
+</body>
+</html>

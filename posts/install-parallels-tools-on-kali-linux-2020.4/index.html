@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kali Linux 2020.4安装Parallels Tools - F0rmat&#39;Blog</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1><a href="https://getshe11.com/">F0rmat&#39;Blog</a></h1>
+  </div>
+  <nav></nav>
+</header>
+<main>
+  <article>
+    <div class="title">
+  <h1>Kali Linux 2020.4安装Parallels Tools</h1>
+  </div>
+<div style="position: fixed; right:-30px; max-width:300px; overflow:auto; top: 1px; width: 300px; bottom:100px">
+<div class="container text-center mt-3">
+    <iframe src="https://duckduckgo.com/search.html?site=https://getshe11.com/&prefill=" style="overflow:hidden;margin:0;padding:0;max-width:80%;height:40px;" frameborder="0"></iframe>
+</div>
+</div>
+<div class="meta">
+  <div>2020-12-30 00:20</div>
+  <div>
+    <span><a href="https://getshe11.com/tags/kali-linux/">#Kali Linux</a></span>
+      </div>
+  </div>
+<div class="content">
+  <h1 id="0x00-前言">0x00 前言</h1>
+<p>最近在vmware fusion里面用kali实在是太卡了，就想着换到pd会不会快一点呢？</p>
+<p>于是就开始立马动手！</p>
+<p>装完后，wow！很顺畅，但是屏幕分辨率和复制粘贴等操作不方便，就要开始装pd tools了，以前也是因为这个问题就放弃了在pd里面操作kali。</p>
+<p>开始安装pd tools。。。</p>
+<p>中间装了无数次。。。</p>
+<p>弄到晚上3点多还没搞定，睡觉了。。。</p>
+<p>早上起来精神不错，看了老外给的解决方法，终于搞定了！</p>
+<!-- raw HTML omitted -->
+<h1 id="0x01-解决问题">0x01 解决问题</h1>
+<h2 id="1环境">1、环境</h2>
+<ul>
+<li>macOS Big Sur 11.2</li>
+<li>Parallels Desktop 16.0.1</li>
+<li>Kali Linux 2020.4 (linux-headers-5.9.0-kali5-common)</li>
+</ul>
+<h2 id="2解决过程">2、解决过程</h2>
+<p>先把系统更新到最新：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">apt-get update
+apt-get upgrade -y
+apt-get dist-upgrade -y
+</code></pre></div><p>挂载parallels tools并移动到桌面：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cp -R /media/cdrom0/ ~/Desktop/pdtools/
+</code></pre></div><p>安装</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./install
+</code></pre></div><p>这个时候就开始出错了，因为之前报错的log我没保存下来。。下面是解决的办法</p>
+<p>解压kmods里面的压缩包,并删除之前的压缩包（如果想要原文件直接去/media/cdrom0里面拖出来）：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">tar -xzf prl_mod.tar.gz
+rm prl_mod.tar.gz
+</code></pre></div><p>修改<strong>prl_fs/SharedFolders/Guest/Linux/prl_fs/inode.c</strong>，在最上面加上下面这行：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#define segment_eq(a, b) ((a).seg == (b).seg)
+</span></code></pre></div><p>修改<strong>prl_fs_freeze/Snapshot/Guest/Linux/prl_freeze/prl_fs_freeze.c</strong>，在最上面加上下面这行：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;linux/blkdev.h&gt;</span><span style="color:#75715e">
+</span></code></pre></div><p>然后重新打包：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">tar -zcvf prl_mod.tar.gz . dkms.conf Makefile.kmods
+</code></pre></div><p>最后**./install** 成功！</p>
+<h1 id="0x02-参考">0x02 参考</h1>
+<ul>
+<li>
+<p><a href="https://forum.parallels.com/threads/2020-2-kali-linux-parallels-tools-error.350083/#post-876979">https://forum.parallels.com/threads/2020-2-kali-linux-parallels-tools-error.350083/#post-876979</a> （本文的解决方案）</p>
+</li>
+<li>
+<p><a href="http://www.xferris.cn/kali-pt-tools/">http://www.xferris.cn/kali-pt-tools/</a></p>
+</li>
+<li>
+<p><a href="https://blog.csdn.net/shouxi516/article/details/106367604">https://blog.csdn.net/shouxi516/article/details/106367604</a></p>
+</li>
+</ul>
+</div>
+<div style="position: fixed; right:50px; max-width:255px; overflow:auto; top: 120px; width: 220px; bottom:90px">
+
+
+
+
+
+
+
+
+
+
+<div class="toc">
+
+    <div class="page-header"><strong>目录</strong></div>
+
+    <div id="page-scrollspy" class="toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x00-%e5%89%8d%e8%a8%80">
+                            0x00 前言
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x01-%e8%a7%a3%e5%86%b3%e9%97%ae%e9%a2%98">
+                            0x01 解决问题
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#1%e7%8e%af%e5%a2%83">
+                            1、环境
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#2%e8%a7%a3%e5%86%b3%e8%bf%87%e7%a8%8b">
+                            2、解决过程
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x02-%e5%8f%82%e8%80%83">
+                            0x02 参考
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+  </article>
+</main>
+<footer>
+  <div>
+    <div>&copy; 2021 F0rmat. <a href="https://creativecommons.org/licenses/by/4.0/deed.zh">CC-BY-4.0</a></div>
+  </div>
+</footer>
+</body>
+</html>

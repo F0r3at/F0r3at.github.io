@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kali on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/kali/</link>
+    <description>Recent content in Kali on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 09 Apr 2018 21:00:52 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/kali/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>由kali执行apt-get update 报错-GPG error引起数字签名的问题</title>
+      <link>https://getshe11.com/posts/kali-implementation-of-update-source-error-gpg-error-caused-deep-understanding-of-digital-signature/</link>
+      <pubDate>Mon, 09 Apr 2018 21:00:52 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/kali-implementation-of-update-source-error-gpg-error-caused-deep-understanding-of-digital-signature/</guid>
+      <description>0x01 前言 今天想去更新一下Kali，怎么换源都是会报错，换官方源都不行。 然后去百度了一下，参考了大神给出的方案，重新添加kali的数字签名： https://blog.csdn.net/hardhard123/article/details/79598132
+wget -q -O - https://archive.kali.org/archive-key.asc | apt-key add  但是懂得了这个解决方法，但是知其然而不知其所以然，所以我们来看下apt-key是什么？数字签名又是什么？
+0x02 apt-key是什么？ Apt-get 软件包管理使用公钥加密来验证下载的软件包。
+以下是从Debian的wiki页面收集的关键获取和验证过程的简短摘要。
+ 基本概念公钥密码系统基于成对的密钥a public key和a private key。这public key是给世界的; 在private key必须保持秘密。拥有公钥的任何人都可以对消息进行加密，以便只有持有私钥的人才能阅读。也可以使用私钥签名文件，而不是对其进行加密。如果使用私钥签名文件，那么拥有公钥的任何人都可以检查该文件是否由该密钥签名。任何没有私钥的人都可以伪造这样的签名。 gpg（GNU Privacy Guard）是安全易用的签名文件并检查签名的工具。 apt-key是一个用于管理安全apt的gpg密钥环的程序。钥匙圈保存在文件中/etc/apt/trusted.gpg （不要与相关但不很混淆 /etc/apt/trustdb.gpg）。apt-key可用于显示密钥环中的密钥，以及添加或删除密钥。
+ 每次添加另一个apt存储库时/etc/apt/sources.list，如果您想要信任它，还必须给出它的关键字。获得密钥后，您可以通过检查密钥的指纹并使用私钥签署该公钥来验证密钥。然后，您可以将密钥添加到apt的密钥环中apt-key add 您需要存储库密钥，以便您可以验证您是否从您认为自己获得的软件包中获得了该软件包。
+这就是为了防止人们将不好的软件包注入到更新中。
+0x03 数字签名是什么？ 大神阮一峰一篇翻译的文章里面说的很清晰透彻，作者是David Youd:
+1.鲍勃有两把钥匙，一把是公钥，另一把是私钥。 2.鲍勃把公钥送给他的朋友们&amp;mdash;-帕蒂、道格、苏珊&amp;mdash;-每人一把。 3.苏珊要给鲍勃写一封保密的信。她写完后用鲍勃的公钥加密，就可以达到保密的效果。 4.鲍勃收信后，用私钥解密，就看到了信件内容。这里要强调的是，只要鲍勃的私钥不泄露，这封信就是安全的，即使落在别人手里，也无法解密。 5.鲍勃给苏珊回信，决定采用&amp;quot;数字签名&amp;quot;。他写完后先用Hash函数，生成信件的摘要（digest）。 6.然后，鲍勃使用私钥，对这个摘要加密，生成&amp;quot;数字签名&amp;quot;（signature）。 7.鲍勃将这个签名，附在信件下面，一起发给苏珊。 8.苏珊收信后，取下数字签名，用鲍勃的公钥解密，得到信件的摘要。由此证明，这封信确实是鲍勃发出的。 9.苏珊再对信件本身使用Hash函数，将得到的结果，与上一步得到的摘要进行对比。如果两者一致，就证明这封信未被修改过。 0x04 公钥和私钥加密解密？ 看完上面可能还是会有点懵，到底是谁加密谁，谁解密谁？
+知乎最好的答案： 你只要想：既然是加密，那肯定是不希望别人知道我的消息，所以只有我才能解密，所以可得出公钥负责加密，私钥负责解密；同理，既然是签名，那肯定是不希望有人冒充我发消息，只有我才能发布这个签名，所以可得出私钥负责签名，公钥负责验证。
+0x05参考 https://www.zhihu.com/question/25912483/answer/46649199
+http://www.youdzone.com/signature.html
+http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html</description>
+    </item>
+    
+  </channel>
+</rss>

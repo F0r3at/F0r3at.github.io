@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wordpress Plugin Site Editor 1.1.1 - 本地文件包含漏洞分析(每日一洞) - F0rmat&#39;Blog</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1><a href="https://getshe11.com/">F0rmat&#39;Blog</a></h1>
+  </div>
+  <nav></nav>
+</header>
+<main>
+  <article>
+    <div class="title">
+  <h1>Wordpress Plugin Site Editor 1.1.1 - 本地文件包含漏洞分析(每日一洞)</h1>
+  </div>
+<div style="position: fixed; right:-30px; max-width:300px; overflow:auto; top: 1px; width: 300px; bottom:100px">
+<div class="container text-center mt-3">
+    <iframe src="https://duckduckgo.com/search.html?site=https://getshe11.com/&prefill=" style="overflow:hidden;margin:0;padding:0;max-width:80%;height:40px;" frameborder="0"></iframe>
+</div>
+</div>
+<div class="meta">
+  <div>2018-03-25 13:45</div>
+  <div>
+    <span><a href="https://getshe11.com/tags/wordpress/">#Wordpress</a></span>
+      <span><a href="https://getshe11.com/tags/site-editor/">#Site Editor</a></span>
+      </div>
+  </div>
+<div class="content">
+  <h1 id="0x01-前言">0x01 前言</h1>
+<p>大概有一周没有写文章了，比赛完嗨皮了两天，喝酒喝到半夜回来继续看文章，看到了exploit的关于wordpress一个漏洞信息<a href="https://www.exploit-db.com/exploits/44340/">CVE-2018-7422 </a>，下面就来分析一下这个本地文件包含的漏洞代码，如果权限够的话是可以读取系统的一些敏感的文件例如:/etc/passwd、/etc/shadow等。</p>
+<h1 id="0x02-漏洞复现">0x02 漏洞复现</h1>
+<h2 id="环境">环境</h2>
+<p><code>攻击机：</code>Deepin Linux x64
+<code>Wordpress服务器：</code>Windows 10 x64 (phpstudy)
+搭建环境有些要注意的，例如上传插件是大于2M的，要php.ini里面修改下再重启下就行了。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/phpini.png" alt=""></p>
+<h2 id="proof-of-concept">Proof of Concept</h2>
+<pre><code>http://&lt;host&gt;/wp-content/plugins/site-editor/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php?ajax_path=要读取的文件绝对路径或者相对路径
+</code></pre><!-- raw HTML omitted -->
+<h2 id="结果">结果</h2>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/wordpres1.png" alt=""></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/wordpress2.png" alt=""></p>
+<h1 id="0x03-代码分析">0x03 代码分析</h1>
+<p>文件在<code>wp-content/plugins/site-editor/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php </code></p>
+<p>你可以去插件的官方github看，前天的漏洞，现在还没修复
+<a href="https://github.com/SiteEditor/editor/blob/master/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php">https://github.com/SiteEditor/editor/blob/master/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php</a></p>
+<p>这个漏洞代码比较简单容易，新手也很适合理解。
+整合代码执行流程就是判断文件是否存在，存在就<code>require_once</code>包含，不存在就报错。
+这里有一个点，为什么说是只能本地文件包含呢，不能用远程包含吗？如果远程文件包含不就可以利用php的协议来getshell了吗？
+因为<code>file_exists</code>函数只能判断本地文件，如果是远程文件的话就会判断文件不存在了。</p>
+<pre><code>if( isset( $_REQUEST['ajax_path'] ) &amp;&amp; is_file( $_REQUEST['ajax_path'] ) &amp;&amp; file_exists( $_REQUEST['ajax_path'] ) ){
+    require_once $_REQUEST['ajax_path'];
+}else{
+    echo json_encode( array(
+            'success' =&gt; false,
+            'message' =&gt; &quot;Error: didn't load shortcodes pattern file&quot;,
+        )
+    );
+    return ;
+}
+</code></pre><h1 id="0x04-结束">0x04 结束</h1>
+<p>再给我点时间，嗨皮过头了还没缓过神来，看过大表哥对我文章的评价，我会改进文章的一些细节，展现更好的给大家。</p>
+<h1 id="0x05-参考">0x05 参考</h1>
+<p>插件源码下载：https://pan.lanzou.com/i0ps44b</p>
+<p><a href="https://wordpress.org/plugins/site-editor/">https://wordpress.org/plugins/site-editor/</a></p>
+<p><a href="https://www.exploit-db.com/exploits/44340/">https://www.exploit-db.com/exploits/44340/</a></p>
+<p><a href="http://php.net/manual/zh/function.is-file.php">http://php.net/manual/zh/function.is-file.php</a></p>
+</div>
+<div style="position: fixed; right:50px; max-width:255px; overflow:auto; top: 120px; width: 220px; bottom:90px">
+
+
+
+
+
+
+
+
+
+
+<div class="toc">
+
+    <div class="page-header"><strong>目录</strong></div>
+
+    <div id="page-scrollspy" class="toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x01-%e5%89%8d%e8%a8%80">
+                            0x01 前言
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x02-%e6%bc%8f%e6%b4%9e%e5%a4%8d%e7%8e%b0">
+                            0x02 漏洞复现
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e7%8e%af%e5%a2%83">
+                            环境
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#proof-of-concept">
+                            Proof of Concept
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e7%bb%93%e6%9e%9c">
+                            结果
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x03-%e4%bb%a3%e7%a0%81%e5%88%86%e6%9e%90">
+                            0x03 代码分析
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x04-%e7%bb%93%e6%9d%9f">
+                            0x04 结束
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x05-%e5%8f%82%e8%80%83">
+                            0x05 参考
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+  </article>
+</main>
+<footer>
+  <div>
+    <div>&copy; 2021 F0rmat. <a href="https://creativecommons.org/licenses/by/4.0/deed.zh">CC-BY-4.0</a></div>
+  </div>
+</footer>
+</body>
+</html>

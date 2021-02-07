@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hackthebox-Oopsie - F0rmat&#39;Blog</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1><a href="https://getshe11.com/">F0rmat&#39;Blog</a></h1>
+  </div>
+  <nav></nav>
+</header>
+<main>
+  <article>
+    <div class="title">
+  <h1>Hackthebox-Oopsie</h1>
+  </div>
+<div style="position: fixed; right:-30px; max-width:300px; overflow:auto; top: 1px; width: 300px; bottom:100px">
+<div class="container text-center mt-3">
+    <iframe src="https://duckduckgo.com/search.html?site=https://getshe11.com/&prefill=" style="overflow:hidden;margin:0;padding:0;max-width:80%;height:40px;" frameborder="0"></iframe>
+</div>
+</div>
+<div class="meta">
+  <div>2020-12-06 12:53</div>
+  <div>
+    <span><a href="https://getshe11.com/tags/hackthebox/">#hackthebox</a></span>
+      </div>
+  </div>
+<div class="content">
+  <h1 id="0x01-前言">0x01 前言</h1>
+<p>做完Archetype继续来做Oopsie</p>
+<h1 id="0x02-过程">0x02 过程</h1>
+<h2 id="scan-port">Scan Port：</h2>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/11.png" alt="11"></p>
+<h2 id="getshell">Getshell</h2>
+<p>开启burp suite浏览网站，发现后台：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/1.png" alt="1"></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/2.png" alt="2"></p>
+<p>使用Archetype实验获取到的密码MEGACORP_4dm1n!! 登陆成功：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/3.png" alt="3"></p>
+<p>上传功能要超级管理员才可以上传，使用Accout页面的功能枚举账号：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/4.png" alt="4"></p>
+<p>使用burpsuite的intruder功能进行爆破：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/5.png" alt="5"></p>
+<p>访问上传页面拦截并修改cookie的user参数：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/6.png" alt="6"></p>
+<p>成功显示上传界面：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/7.png" alt="7"></p>
+<p>编写kali自带的php-reverse-shell.php，文件在/usr/share/webshells/php，把信息修改成监听的机子：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/8.png" alt="8"></p>
+<p>监听端口，等待连接：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/9.png" alt="9"></p>
+<p>上传php文件：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/10.png" alt="10"></p>
+<p>但是找不到上传后的文件地址，使用kali自带的dirbuster对网站进行扫描：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/12.png" alt="12"></p>
+<p>找到uploads文件，尝试把上传的文件名放在uploads访问，已经反弹成功：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/13.png" alt="13"></p>
+<h2 id="privilege-escalation">Privilege Escalation</h2>
+<p>读取web应用下的db.php文件获取到数据库连接信息：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/14.png" alt="14"></p>
+<p>登陆robert用户，因为还不是交互式的shell，可以使用命令<code>SHELL=/bin/bash script -q /dev/null</code> :</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/15.png" alt="15"></p>
+<p>看到robert用户属于两个组，看下bugtracker有s权限，能使用root的权限执行：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/17.png" alt="17"></p>
+<p>输入id，可以看到它是使用cat读取root目录的文件信息：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/19.png" alt="19"></p>
+<p>我们可以使用改变当前目录的path值，当前用户执行bugtracker程序是会优先使用当前的path变量：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/20.png" alt="20"></p>
+<p>然后在tmp目录下写入一个cat，程序会先执行这个cat，cat的内容是<code>/bin/bash</code>，执行后会以root形式执行 <code>/bin/bash /root/reports/</code>：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/21.png" alt="21"></p>
+<p>执行成功后：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Oopsie/23.png" alt="23"></p>
+<h1 id="0x03-总结">0x03 总结</h1>
+<p>1、还是要细心为主</p>
+<p>2、关于文中为什么可以用bugtracker来提权为root，可以参考以下两个链接：</p>
+<blockquote>
+<p>关于Linux下s、t、i、a权限：https://www.cnblogs.com/qlqwjy/p/8665871.html</p>
+<p>LINUX s权限位提权：http://www.361way.com/suid-privilege/5965.html</p>
+</blockquote>
+<p>3、过程有一个设置path的知识点</p>
+<pre><code>robert@oopsie:/$ export PATH=/tmp:$PATH
+robert@oopsie:/$ cd /tmp
+robert@oopsie:/tmp$ echo '/bin/bash' &gt; cat
+robert@oopsie:/tmp$ chmod +x cat
+</code></pre><p><code> export PATH=/tmp:$PATH</code> export是设置环境变量，这条语句设置<strong>PATH</strong>的变量，<code>/tmp:$PATH</code> 的$PATH代表原本的PATH变量，把<code>/tmp</code>加到这边变量的前面</p>
+<p>4、提权到root发现cat用不了，因为我们已经改变了cat为<code>/bin/bash</code>,可以使用more、xxd等命令查看文件内容</p>
+</div>
+<div style="position: fixed; right:50px; max-width:255px; overflow:auto; top: 120px; width: 220px; bottom:90px">
+
+
+
+
+
+
+
+
+
+
+<div class="toc">
+
+    <div class="page-header"><strong>目录</strong></div>
+
+    <div id="page-scrollspy" class="toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x01-%e5%89%8d%e8%a8%80">
+                            0x01 前言
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x02-%e8%bf%87%e7%a8%8b">
+                            0x02 过程
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#scan-port">
+                            Scan Port：
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#getshell">
+                            Getshell
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#privilege-escalation">
+                            Privilege Escalation
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x03-%e6%80%bb%e7%bb%93">
+                            0x03 总结
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+  </article>
+</main>
+<footer>
+  <div>
+    <div>&copy; 2021 F0rmat. <a href="https://creativecommons.org/licenses/by/4.0/deed.zh">CC-BY-4.0</a></div>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>WordPress on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/wordpress/</link>
+    <description>Recent content in WordPress on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 01 Jul 2018 10:07:19 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/wordpress/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Wordpress 4.9.6 Arbitrary File-Removal Vulnerability</title>
+      <link>https://getshe11.com/posts/wordpress-4.9.6-arbitrary-file-removal-vulnerability/</link>
+      <pubDate>Sun, 01 Jul 2018 10:07:19 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/wordpress-4.9.6-arbitrary-file-removal-vulnerability/</guid>
+      <description>0x01 前言 和预期超了几天，毕业了挺多聚会的，在学校的日子总是过得那么快，一转眼就毕业了。好些东西都没去好好珍惜，大学也不要求有多大的成就，就希望每天都能开开心心就最好的。 今天这篇文章的分析早就有人发过了，不过我觉得我还是得写一下，毕竟我要有我自己的风格。还是老样子，先测试漏洞怎么触发，然后再去做分析。
+0x02 环境搭建 旧的和新的区别不大，只要不大于4.9.6就行了，这次测试的是4.6版本的，具体怎么搭建按照上一篇的文章方法搭建就行了，这里就不再过一遍了。 https://getpass.cn/2018/06/18/Analysis-of-WordPress%3C=4.6-Command-Execution-Vulnerability/
+本文中用的搭建环境是docker+Kitematic，都差不多的，用图形界面比较方便些。 0x03 漏洞复现 1.漏洞执行流程 先给一个大概的框架，代码稍后再分析就会很明了了。 2.复现过程 -登录账号 -上传文件 -编辑文件 -执行Payload 首先要获取_wpnonce和cookies还有post的id。 然后执行： curl -v &#39;http://127.0.0.1/wp-admin/post.php?post=5&#39; -H &#39;Cookie: xxx&#39; -d &#39;action=editattachment&amp;amp;_wpnonce=xxx&amp;amp;thumb=../../../../wp-config.php&#39; 我这里用的是curl，在Macos比较方便，如果是win可以用抓包发包。 -删除文件 然后点击删除 执行完之后会跳转到安装界面。 然后wp-config.php也不在网站目录下了 0x04 漏洞分析 1.phpmyadmin安装 在命令行里面看数据不太好看，装个图形界面比较清楚，进入docker的交互式： 查看容器ID docker ps 进入指定容器的交互式 docker exec -it ID /bin/bash 安装phpmyadmin,输入下面的命令就行了： apt update apt install phpmyadmin 然后输入MySQL的账号密码，再创建链接： ln -s /usr/share/phpmyadmin /var/www/html/phpmyadmin 最后输入 htpp://127.0.0.1/phpmyadmin进入
+2.分析如何插入thumb属性 我们看下Payload里面是传了什么参数：
+ post action thumb  post传入的ID就不分析了，直接看action的参数的值是editattachment,代码是在/wp-admin/post.php的178~189行
+case &amp;#39;editattachment&amp;#39;: check_admin_referer(&amp;#39;update-post_&amp;#39; .</description>
+    </item>
+    
+    <item>
+      <title>WordPress 4.6 Command Execution Vulnerability(CVE-2016-10033) Analysis</title>
+      <link>https://getshe11.com/posts/analysis-of-wordpress4.6-command-execution-vulnerability/</link>
+      <pubDate>Mon, 18 Jun 2018 12:47:35 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/analysis-of-wordpress4.6-command-execution-vulnerability/</guid>
+      <description>0x01 前言 因为去参加比赛，已经有一个月没有写文章了，中间玩了段时间，现在把心收回来了，坚持每周一洞的习惯。废话不多说，下面是复现PHPMailer的详细过程，一步一步来理解这个漏洞的原理。
+0x02 Roundcube 1.2.2 远程命令执行漏洞分析 1.触发漏洞需满足前提  Roundcube 使用 PHP 的 mail 来发送邮件，而不通过其他 SMTP Server PHP 的 mail 使用 sendmail 来发送邮件（默认） PHP 的 safe_mode 是关闭的（默认） 攻击者需要知道 Web 应用的绝对路径 攻击者可以登录到 Roundcube 并可以发送邮件 成功攻击后攻击者可远程执行任意代码。  2.代码分析 具体可以在下面的参考的文章链接详细阅读，我直接抽文件program/lib/Roundcube/rcube.php第1524-1678行：
+$from参数进入mail()函数处理，通过使用-f参数获取from来传递给sendmail。
+public function deliver_message(&amp;amp;$message, $from, $mailto, &amp;amp;$error, &amp;amp;$body_file = null, $options = null) { // send thru SMTP server using custom SMTP library  if ($this-&amp;gt;config-&amp;gt;get(&amp;#39;smtp_server&amp;#39;)) { ... } // send mail using PHP&amp;#39;s mail() function  else { .</description>
+    </item>
+    
+    <item>
+      <title>Wordpress Plugin Site Editor 1.1.1 - 本地文件包含漏洞分析(每日一洞)</title>
+      <link>https://getshe11.com/posts/wordpress-plugin-site-editor-1.1.1-local-file-inclusion-analysis/</link>
+      <pubDate>Sun, 25 Mar 2018 13:45:14 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/wordpress-plugin-site-editor-1.1.1-local-file-inclusion-analysis/</guid>
+      <description>0x01 前言 大概有一周没有写文章了，比赛完嗨皮了两天，喝酒喝到半夜回来继续看文章，看到了exploit的关于wordpress一个漏洞信息CVE-2018-7422 ，下面就来分析一下这个本地文件包含的漏洞代码，如果权限够的话是可以读取系统的一些敏感的文件例如:/etc/passwd、/etc/shadow等。
+0x02 漏洞复现 环境 攻击机：Deepin Linux x64 Wordpress服务器：Windows 10 x64 (phpstudy) 搭建环境有些要注意的，例如上传插件是大于2M的，要php.ini里面修改下再重启下就行了。 Proof of Concept http://&amp;lt;host&amp;gt;/wp-content/plugins/site-editor/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php?ajax_path=要读取的文件绝对路径或者相对路径 结果 0x03 代码分析 文件在wp-content/plugins/site-editor/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php 
+你可以去插件的官方github看，前天的漏洞，现在还没修复 https://github.com/SiteEditor/editor/blob/master/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php
+这个漏洞代码比较简单容易，新手也很适合理解。 整合代码执行流程就是判断文件是否存在，存在就require_once包含，不存在就报错。 这里有一个点，为什么说是只能本地文件包含呢，不能用远程包含吗？如果远程文件包含不就可以利用php的协议来getshell了吗？ 因为file_exists函数只能判断本地文件，如果是远程文件的话就会判断文件不存在了。
+if( isset( $_REQUEST[&#39;ajax_path&#39;] ) &amp;amp;&amp;amp; is_file( $_REQUEST[&#39;ajax_path&#39;] ) &amp;amp;&amp;amp; file_exists( $_REQUEST[&#39;ajax_path&#39;] ) ){ require_once $_REQUEST[&#39;ajax_path&#39;]; }else{ echo json_encode( array( &#39;success&#39; =&amp;gt; false, &#39;message&#39; =&amp;gt; &amp;quot;Error: didn&#39;t load shortcodes pattern file&amp;quot;, ) ); return ; } 0x04 结束 再给我点时间，嗨皮过头了还没缓过神来，看过大表哥对我文章的评价，我会改进文章的一些细节，展现更好的给大家。
+0x05 参考 插件源码下载：https://pan.</description>
+    </item>
+    
+  </channel>
+</rss>

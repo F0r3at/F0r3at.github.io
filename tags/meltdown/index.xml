@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Meltdown on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/meltdown/</link>
+    <description>Recent content in Meltdown on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 29 Mar 2018 10:16:39 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/meltdown/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>漏洞预警|Windows 7 Meltdown 补丁发现漏洞，允许任意进程读写内核</title>
+      <link>https://getshe11.com/posts/vulnerability-alert_windows-7-meltdown-patch-discovery-vulnerability-allows-any-process-to-read-and-write-kernels/</link>
+      <pubDate>Thu, 29 Mar 2018 10:16:39 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/vulnerability-alert_windows-7-meltdown-patch-discovery-vulnerability-allows-any-process-to-read-and-write-kernels/</guid>
+      <description>前言 今晚本来想养生睡个早觉的，睡前浏览了下twitter，看到大佬的高危漏洞，看着有点好笑，微软拿起自己的石头砸自己的脚操作哈哈，这个洞在27号就已经出来了。  今年1月份英特尔确认了在自家CPU中发现两个安全漏洞，而这些漏洞将会使得数十亿设备面临受到攻击的风险“Meltdown”和“Spectre”两个漏洞让不少人感觉恐慌，因为他们发现这些漏洞几乎影响到过去20年制造的每一种计算设备，无论是手机还是个人电脑。他们允许恶意程序窃取在受影响机器上处理的敏感数据。
+ 别以为安装这个官方的补丁就很安全了，更糟糕的事情来了，这个漏洞可以允许任意进程读写内核。
+总体崩溃? 你认为Meltdown糟糕吗？未授权的应用程序能够以每秒兆字节的速度读取内核内存不是一件好事。
+从1月份开始迎接Windows 7 Meltdown补丁。它停止了Meltdown，但是开辟了一条更糟的漏洞&amp;hellip;&amp;hellip;它允许任何进程以每秒千兆字节的速度读取完整的内存内容，噢 - 也可以写入任意内存。
+没有fancy的利用需要。 Windows 7已经将所需内存映射到每个正在运行的进程中。开发仅仅是读写已映射进程内虚拟内存的问题。没有fancy的API或系统调用要求 - 只是标准的读取和写入！ 由于磁盘传输速度的原因，以超过4GB / s的速度访问内存，转储到磁盘的速度较慢
+这怎么可能？ 简而言之 - 在PML4自引用条目中，User/Supervisor权限位已设置为User。这使得页表在每个进程中都可用于用户模式代码。页面表通常只能由内核本身访问。
+PML4是4级内存页表层次结构的基础，CPU内存管理单元（MMU）用来将进程的虚拟地址转换为RAM中的物理内存地址。欲了解更多有关寻呼的深入信息，请看看获得物理：极端滥用基于英特尔的寻呼系统 - 第1部分和第2部分。 位于偏移量0xF68且值为0x0000000062100867的PML4自引用条目。
+Windows在这个最重要的PML4页表中有一个特殊的条目，它引用了它自己的一个自引用条目。在Windows 7中，PML4自引用固定在位置0x1ED，偏移量0xF68（在Windows 10中随机化）。这意味着PML4将始终映射到虚拟内存中的地址0xFFFFF6FB7DBED000。这通常是一个内核地址（Supervisor）提供的内存地址。由于权限位被错误地设置为用户，这意味着PML4被映射到每个进程并且可用于在用户模式下执行的代码。
+作为用户模式读/写页面映射到每个进程的“内核地址”内存地址。.
+一旦对页表进行读/写访问，除非通过用于虚拟化的扩展页表（EPT）进行额外保护，否则访问整个物理内存将非常容易。所有人都必须将自己的页面表项（PTE）写入页表以访问任意的物理内存。
+PML4e 0x0000000062100867中的最后一个&#39;7&#39;（来自上面的例子）表示位0,1,2被设置，这意味着它可以按照Intel手册中的说明进行存在，可写和用户模式访问。 摘自英特尔手册，如果位2设置为&#39;1&#39;，则允许用户模式访问。
+我可以自己尝试一下吗？ 是的，一点没错。 该技术已被添加为PCILeech直接存储器访问攻击工具包的内存采集设备。 只需下载PCILeech并使用设备类型执行即可：-device totalmeltdown在易受攻击的Windows 7系统上。
+使用以下命令将内存转储到文件：
+pcileech.exe dump -out memorydump.raw -device totalmeltdown -v -force 如果安装了Dokany文件系统驱动程序，则应该能够将正在运行的进程挂载为内存进程文件系统中的文件和文件夹 - 将内核的虚拟内存和进程的内存作为读/写进行安装。
+要挂载进程，请执行以下命令：
+pcileech.exe mount -device totalmeltdown 如果您暂时卸载最新版本以测试此漏洞，请记住重新安装安全更新。
+易受攻击的系统被“利用”，运行中的进程被PCILeech挂载。进程内存映射和PML4被访问。
+我的系统很脆弱吗？ 只有使用2018-01或2018-02补丁修补的Windows 7 x64系统才容易受到攻击。如果您的系统自2017年12月以来没有进行过修补，或者修补了2018-03修补程序或更高版本，那么它将是安全的。
+其他Windows版本 - 例如Windows 10或8.1，对于这个问题是完全安全的，并且从未受到它的影响。</description>
+    </item>
+    
+  </channel>
+</rss>

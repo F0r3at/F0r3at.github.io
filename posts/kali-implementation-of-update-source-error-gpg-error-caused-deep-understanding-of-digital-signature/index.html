@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>由kali执行apt-get update 报错-GPG error引起数字签名的问题 - F0rmat&#39;Blog</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1><a href="https://getshe11.com/">F0rmat&#39;Blog</a></h1>
+  </div>
+  <nav></nav>
+</header>
+<main>
+  <article>
+    <div class="title">
+  <h1>由kali执行apt-get update 报错-GPG error引起数字签名的问题</h1>
+  </div>
+<div style="position: fixed; right:-30px; max-width:300px; overflow:auto; top: 1px; width: 300px; bottom:100px">
+<div class="container text-center mt-3">
+    <iframe src="https://duckduckgo.com/search.html?site=https://getshe11.com/&prefill=" style="overflow:hidden;margin:0;padding:0;max-width:80%;height:40px;" frameborder="0"></iframe>
+</div>
+</div>
+<div class="meta">
+  <div>2018-04-09 21:00</div>
+  <div>
+    <span><a href="https://getshe11.com/tags/kali/">#Kali</a></span>
+      </div>
+  </div>
+<div class="content">
+  <h2 id="0x01-前言">0x01 前言</h2>
+<p>今天想去更新一下Kali，怎么换源都是会报错，换官方源都不行。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/kalipgp.PNG" alt=""></p>
+<p>然后去百度了一下，参考了大神给出的方案，重新添加kali的数字签名：
+<a href="https://blog.csdn.net/hardhard123/article/details/79598132">https://blog.csdn.net/hardhard123/article/details/79598132</a></p>
+<pre><code>wget -q -O - https://archive.kali.org/archive-key.asc | apt-key add
+</code></pre>
+<p>但是懂得了这个解决方法，但是知其然而不知其所以然，所以我们来看下<code>apt-key</code>是什么？<code>数字签名</code>又是什么？</p>
+<h2 id="0x02-apt-key是什么">0x02 apt-key是什么？</h2>
+<p>Apt-get 软件包管理使用公钥加密来验证下载的软件包。</p>
+<!-- raw HTML omitted -->
+<p>以下是从Debian的wiki页面收集的关键获取和验证过程的简短摘要。</p>
+<blockquote>
+<p>基本概念公钥密码系统基于成对的密钥a  public key和a private key。这public key是给世界的; 在private key必须保持秘密。拥有公钥的任何人都可以对消息进行加密，以便只有持有私钥的人才能阅读。也可以使用私钥签名文件，而不是对其进行加密。如果使用私钥签名文件，那么拥有公钥的任何人都可以检查该文件是否由该密钥签名。任何没有私钥的人都可以伪造这样的签名。
+gpg（GNU Privacy Guard）是安全易用的签名文件并检查签名的工具。
+apt-key是一个用于管理安全apt的gpg密钥环的程序。钥匙圈保存在文件中/etc/apt/trusted.gpg （不要与相关但不很混淆  /etc/apt/trustdb.gpg）。apt-key可用于显示密钥环中的密钥，以及添加或删除密钥。</p>
+</blockquote>
+<p>每次添加另一个apt存储库时/etc/apt/sources.list，如果您想要信任它，还必须给出它的关键字。获得密钥后，您可以通过检查密钥的指纹并使用私钥签署该公钥来验证密钥。然后，您可以将密钥添加到apt的密钥环中apt-key add <!-- raw HTML omitted -->
+您需要存储库密钥，以便您可以验证您是否从您认为自己获得的软件包中获得了该软件包。</p>
+<p><strong>这就是为了防止人们将不好的软件包注入到更新中</strong>。</p>
+<h2 id="0x03-数字签名是什么">0x03 数字签名是什么？</h2>
+<p>大神<code>阮一峰</code>一篇翻译的文章里面说的很清晰透彻，作者是<code>David Youd</code>:</p>
+<p>1.鲍勃有两把钥匙，一把是公钥，另一把是私钥。
+<img src="http://www.ruanyifeng.com/blogimg/asset/201108/bg2011080901.png" alt="">
+2.鲍勃把公钥送给他的朋友们&mdash;-帕蒂、道格、苏珊&mdash;-每人一把。
+<img src="http://www.ruanyifeng.com/blogimg/asset/201108/bg2011080902.png" alt="">
+3.苏珊要给鲍勃写一封保密的信。她写完后用鲍勃的公钥加密，就可以达到保密的效果。
+<img src="http://www.ruanyifeng.com/blogimg/asset/201108/bg2011080903.png" alt="">
+4.鲍勃收信后，用私钥解密，就看到了信件内容。这里要强调的是，只要鲍勃的私钥不泄露，这封信就是安全的，即使落在别人手里，也无法解密。
+<img src="http://www.ruanyifeng.com/blogimg/asset/201108/bg2011080904.png" alt="">
+5.鲍勃给苏珊回信，决定采用&quot;数字签名&quot;。他写完后先用Hash函数，生成信件的摘要（digest）。
+<img src="http://www.ruanyifeng.com/blogimg/asset/201108/bg2011080905.png" alt="">
+6.然后，鲍勃使用私钥，对这个摘要加密，生成&quot;数字签名&quot;（signature）。
+<img src="http://www.ruanyifeng.com/blogimg/asset/201108/bg2011080906.png" alt="">
+7.鲍勃将这个签名，附在信件下面，一起发给苏珊。
+<img src="http://www.ruanyifeng.com/blogimg/asset/201108/bg2011080907.png" alt="">
+8.苏珊收信后，取下数字签名，用鲍勃的公钥解密，得到信件的摘要。由此证明，这封信确实是鲍勃发出的。
+<img src="http://www.ruanyifeng.com/blogimg/asset/201108/bg2011080908.png" alt="">
+9.苏珊再对信件本身使用Hash函数，将得到的结果，与上一步得到的摘要进行对比。如果两者一致，就证明这封信未被修改过。
+<img src="http://www.ruanyifeng.com/blogimg/asset/201108/bg2011080909.png" alt=""></p>
+<h2 id="0x04-公钥和私钥加密解密">0x04 公钥和私钥加密解密？</h2>
+<p>看完上面可能还是会有点懵，到底是谁加密谁，谁解密谁？</p>
+<p>知乎最好的答案：
+<strong>你只要想：既然是加密，那肯定是不希望别人知道我的消息，所以只有我才能解密，所以可得出公钥负责加密，私钥负责解密；同理，既然是签名，那肯定是不希望有人冒充我发消息，只有我才能发布这个签名，所以可得出私钥负责签名，公钥负责验证。</strong></p>
+<h2 id="0x05参考">0x05参考</h2>
+<p><a href="https://www.zhihu.com/question/25912483/answer/46649199">https://www.zhihu.com/question/25912483/answer/46649199</a></p>
+<p><a href="http://www.youdzone.com/signature.html">http://www.youdzone.com/signature.html</a></p>
+<p><a href="http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html">http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html</a></p>
+</div>
+<div style="position: fixed; right:50px; max-width:255px; overflow:auto; top: 120px; width: 220px; bottom:90px">
+
+
+
+
+
+
+
+
+
+
+<div class="toc">
+
+    <div class="page-header"><strong>目录</strong></div>
+
+    <div id="page-scrollspy" class="toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x01-%e5%89%8d%e8%a8%80">
+                            0x01 前言
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x02-apt-key%e6%98%af%e4%bb%80%e4%b9%88">
+                            0x02 apt-key是什么？
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x03-%e6%95%b0%e5%ad%97%e7%ad%be%e5%90%8d%e6%98%af%e4%bb%80%e4%b9%88">
+                            0x03 数字签名是什么？
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x04-%e5%85%ac%e9%92%a5%e5%92%8c%e7%a7%81%e9%92%a5%e5%8a%a0%e5%af%86%e8%a7%a3%e5%af%86">
+                            0x04 公钥和私钥加密解密？
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#0x05%e5%8f%82%e8%80%83">
+                            0x05参考
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+  </article>
+</main>
+<footer>
+  <div>
+    <div>&copy; 2021 F0rmat. <a href="https://creativecommons.org/licenses/by/4.0/deed.zh">CC-BY-4.0</a></div>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>CentOS on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/centos/</link>
+    <description>Recent content in CentOS on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 07 May 2018 16:15:13 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/centos/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>CentOS 5.x 安装Python3和yum源配置</title>
+      <link>https://getshe11.com/posts/centos-5.x-yum-source-configuration/</link>
+      <pubDate>Mon, 07 May 2018 16:15:13 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/centos-5.x-yum-source-configuration/</guid>
+      <description>0x01 前言 技能大赛的题目里面用的是CentOS的系统，本来觉得没什么，居然要装上Python3的版本，尝试了各种办法去下载python. 中间用了curl 和 wget的下载方式，提示，说不能建立SSL，办法就是更新wget这个工具，我想我还是自己下载吧。 然而浏览器也是
+0x02 源代码安装Python3 下载Python3软件包 老系统就安装那么新的版本了，就选择了一个3.5的，在实体机下载的，因为浏览器也不支持ssl，只能在实体机下载了软件包然后拉到虚拟机里面。 下载地址：https://www.python.org/downloads/release/python-355/ 把文件放到用户的主目录，然后切换到root。 安装Python3 先解压
+tar zxvf Python-3.5.4.tgz 然后进入
+cd Python-3.5.4 编译安装
+./configure prefix=/usr/local/python3 make &amp;amp;&amp;amp; make install 这里需要等一段时间，安装好之后，因为CentOS原本就自带了Python2的版本，所以我们可以软链到/usr/bin的目录下，并改名为python3。
+ln -s /usr/local/python3/bin/python3 /usr/bin/python3 安装完成后 0x03 配置yum源 但是很多库文件要下载，pip也要安装，网上都是用yum安装pip的，所以只得更新下yum源了。 我开始是去百度找的，但是那些都过期了，就去官网找。 http://mirror.centos.org/centos/5.5/readme 里面只有一个readme,内容是
+ This directory (and version of CentOS) is deprecated. For normal users, you should use /5/ and not /5.5/ in your path. Please see this FAQ concerning the CentOS release scheme: https://wiki.</description>
+    </item>
+    
+    <item>
+      <title>从用CentOS安装Docker靶场到Joomla 3.4.5 反序列化漏洞复现(每日一洞)</title>
+      <link>https://getshe11.com/posts/install-docker-from-centos-to-build-loopholes-to-joomla-3.4.5-replay-of-deserialization-loopholes/</link>
+      <pubDate>Sat, 07 Apr 2018 09:02:12 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/install-docker-from-centos-to-build-loopholes-to-joomla-3.4.5-replay-of-deserialization-loopholes/</guid>
+      <description>0x01 前言 最近天气突然变凉，导致我直接病倒在床，今天才缓过来。
+上次的用Docker来搭建各种漏洞靶场(妈妈再也不用担心我没有靶场练习了)讲的是Windows搭建，这次就以CentOS作为Dokcer的环境去搭建漏洞靶场，并以Joomla 3.4.5 反序列化漏洞复现(CVE-2015-8562)作为演示。
+我本来还想写这个漏洞的分析，但是对于Joomla的比较大的程序，函数又多，要写一篇简单易懂的文章，篇幅会很长、很枯燥，我觉得还是不要造轮子了，直接去看P神的文章就行了Joomla远程代码执行漏洞分析（总结）。
+话有点多了，估计是还没吃药哈。
+0x02 安装Docker过程 1.安装所需的包 $ sudo yum install -y yum-utils \ device-mapper-persistent-data \ lvm2 2.添加Docker的源 $ sudo yum-config-manager \ --add-repo \ https://download.docker.com/linux/centos/docker-ce.repo 3.启用边缘和测试存储库 $ sudo yum-config-manager --enable docker-ce-edge $ sudo yum-config-manager --enable docker-ce-test  4.安装Docker $ sudo yum install docker-ce  5.验证是否正确安装 $ docker -v  6.使用国内的Docker加速器 不用加速器慢到要死，推荐使用。 注册一个阿里云的账号：https://cr.console.aliyun.com/#/accelerator
+然后获取专属加速器地址： 输入以下命令：
+sudo tee /etc/docker/daemon.json &amp;lt;&amp;lt;-&#39;EOF&#39; { &amp;quot;registry-mirrors&amp;quot;: [&amp;quot;https://你的地址.mirror.aliyuncs.com&amp;quot;] } EOF sudo systemctl daemon-reload sudo systemctl restart docker 7.</description>
+    </item>
+    
+  </channel>
+</rss>

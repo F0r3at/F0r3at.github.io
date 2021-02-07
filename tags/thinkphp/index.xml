@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Thinkphp on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/thinkphp/</link>
+    <description>Recent content in Thinkphp on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 18 Apr 2018 15:20:50 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/thinkphp/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Thinkphp框架 3.2.x sql注入漏洞分析(每周一洞)</title>
+      <link>https://getshe11.com/posts/thinkphp-framework-3.2.x-sql-injection-vulnerability-analysis/</link>
+      <pubDate>Wed, 18 Apr 2018 15:20:50 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/thinkphp-framework-3.2.x-sql-injection-vulnerability-analysis/</guid>
+      <description>0x01 前言 Thinkphp 3.2.x用的也挺多的，以前的程序大部分都是用这边版本的，如果移动到2版本又挺麻烦，而且小程序不说，大程序就复杂很多了。
+这次的漏洞是出现在WHERE这这个地方。
+0x02 环境搭建和漏洞复现 程序下载地址：http://www.thinkphp.cn/donate/download/id/610.html PHPstudy：Apache+php7.1+MySQL 工具：PHPstorm
+ 首先建立一个数据库名为：thinkphp 建立一个表名为：user 添加两个字段：name,pass   thinkphp3.2版本和之前的5版本略有不同，它的数据库信息文件是在 这个文件：thinkphp/ThinkPHP/Conf/convention.php 在这里面填上我们刚才建立的数据库信息:   打开thinkphp的调试模式： 在刚才的文件：thinkphp/ThinkPHP/Conf/convention.php 然后修改为true： &#39;SHOW_ERROR_MSG&#39; =&amp;gt; true, // 显示错误信息
+  这个3.2版本的控制器位置又是和5版本有点区别。具体的可以在本文的参考链接详细查看thinkphp3.2版本的开发手册。 文件位置：thinkphp/Application/Home/Controller/IndexController.class.php 在里面写一个简单的update的例子：
+  &amp;lt;?php namespace Home\Controller; use Think\Controller; class IndexController extends Controller { public function index() { $tj[&amp;#39;name&amp;#39;] = I(&amp;#39;name&amp;#39;); $data[&amp;#39;pass&amp;#39;] = &amp;#39;111111&amp;#39;; $res = M(&amp;#34;user&amp;#34;)-&amp;gt;where($tj)-&amp;gt;save($data); } } I函数和5版本的input助手函数差不多，具体可以看：http://document.thinkphp.cn/manual_3_2.html#input_var
+因为我们仅仅执行基本的CURD操作，所以用M方法来实例化数据库对象就行了。 实例化模型可以看：http://document.thinkphp.cn/manual_3_2.html#model_instance 7. 那么现在就开始执行我们的Payload： http://127.0.0.1/thinkphp/index.php?name[0]=bind&amp;amp;name[1]=0 and updatexml(2,concat(0x7e,user()),0)
+0x03 漏洞分析  这里也是用phpstorm+debug进行动态分析，配置方法在我上一篇的5版本注入文章里面也写过了，如有不懂可以去查阅。 我们先在I函数这里下一个断点，看下I函数有没有过滤掉我们的输入。   然后访问我们payload，它会跳到入口文件，我们只要分析的是I函数执行的地方，所以我们直接F8跳到执行I函数地方： 2.</description>
+    </item>
+    
+    <item>
+      <title>Thinkphp框架 &lt; 5.0.16 sql注入漏洞分析(每日一洞)</title>
+      <link>https://getshe11.com/posts/thinkphp-framework-_-5.0.16-sql-injection-vulnerability-analysis/</link>
+      <pubDate>Wed, 11 Apr 2018 09:34:29 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/thinkphp-framework-_-5.0.16-sql-injection-vulnerability-analysis/</guid>
+      <description>0x01 前言 前天在公众号看到石大神发的一篇审计thinkphp的文章,就想写一个分析流程，delay到了今天。昨天在先知也看到了chybeta发的一篇分析文章感觉也不错。分析过程，我也会做thinkphp部分功能的解析。 废话不多说，开始吧！
+0x02 环境搭建和漏洞复现 程序下载地址：http://www.thinkphp.cn/down/1126.html PHPstudy：Apache+php5.6+MySQL 工具：PHPstorm
+ 首先建立一个数据库名为：thinkphp 建立一个表名为：user 添加三个字段：id,name,password   在thinkphp的数据库文件填上刚才我们建立的数据库信息： 文件位置：\thinkphp\application\database.php  打开thinkphp的调试模式： 文件位置：\thinkphp\application\config.php  简单写一个update功能，石大神用到了模型，这里就简单写一个例子就行了。 文件位置：\thinkphp\application\index\controller\Index.php  &amp;lt;?php namespace app\index\controller; class Index { public function index() { $password = input(&amp;#39;get.password/a&amp;#39;); db(&amp;#39;user&amp;#39;)-&amp;gt;where([&amp;#39;id&amp;#39;=&amp;gt; 1])-&amp;gt;update([&amp;#39;password&amp;#39;=&amp;gt;$password]); } } 这里用到了thinkphp的助手函数input()，是专用来接收get，post等的值。具体可以看：https://www.kancloud.cn/manual/thinkphp5/118044 还有就是thinkphp的数据库操作，框架本身写好了我们调用就比较方便。所以为什么那么多人用框架去开发程序，快捷而且安全，不过也会有安全问题，就像今天这个sql漏洞，不过如果是新手的话总比自己写的好对吧哈。 具体可以看链接：https://www.kancloud.cn/manual/thinkphp5/135178 7. 现在就可以访问我们的payload了：
+http://thinkphp.test/thinkphp/public/index.php?password[0]=inc&amp;amp;password[1]=updatexml(2,concat(0x7e,user()),0)&amp;amp;password[2]=1 0x03 漏洞分析  这里用phpstorm+debug来动态分析，有不懂配置的可以访问我写一篇配置文章：利用phpstorm+xdebug进行断点调试 我们在主函数下一断点：   然后访问我们payload，它会跳到入口文件，我们只要分析的是sql执行的地方，所以我们直接F8跳到执行sql地方： 2. 我们继续跟进到loader.php它会包含thinkphp的Db.php文件， 接下还会包\thinkphp\library\think\db\connector\Mysql.php文件，主要是连接数据库的操作，这里就直接跳过了。别分析分析把自己绕进去了，我只是在这里讲诉下过程，我们还是直接分析sql执行的部分吧。 3. 我们跳到update执行的部分，文件位置：\thinkphp\library\think\db\Query.php 继续往下看，这句是执行我们sql的地方： 4. 我们F7跟进去，跳到文件位置\thinkphp\library\think\db\Builder.php parseTable函数直接F8往下执行了，这函数是处理table分析的，主要还是parseData函数,我们继续F7跟进 5. 我们继续往下跟进 我们看到了这里如果传入的值为数组形式的话，并且第一个参数为inc就执行switch所对应的的语句。 可以看到这里函数对我们传入的值没有做任何处理，返回内容仍然是我们的语句： 跟到后面返回的执行sql语句：
+执行完，我们跟进到报错的地方，说明我的语句执行成功： 6.</description>
+    </item>
+    
+  </channel>
+</rss>

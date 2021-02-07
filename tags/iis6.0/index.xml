@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>IIS6.0 on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/tags/iis6.0/</link>
+    <description>Recent content in IIS6.0 on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 16 Jan 2018 19:10:45 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/iis6.0/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>IIS6.0远程命令执行漏洞(CVE-2017-7269)</title>
+      <link>https://getshe11.com/posts/iis6.0-remote-command-execution-vulnerability-cve-2017-7269/</link>
+      <pubDate>Tue, 16 Jan 2018 19:10:45 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/iis6.0-remote-command-execution-vulnerability-cve-2017-7269/</guid>
+      <description>漏洞信息 漏洞编号：CVE-2017-7269 发现人员：Zhiniang Peng和Chen Wu（华南理工大学信息安全实验室,计算机科学与工程学院） 漏洞简述：开启WebDAV服务的IIS 6.0被爆存在缓存区溢出漏洞导致远程代码执行，目前针对 Windows Server 2003 R2 可以稳定利用，该漏洞最早在2016年7,8月份开始在野外被利用。 漏洞类型：缓冲区溢出 漏洞等级：高危 影响产品：Microsoft Windows Server 2003 R2 开启WebDAV服务的IIS6.0（目前已验证,其他版本尚未验证） 触发函数：ScStoragePathFromUrl函数 附加信息：ScStoragePathFromUrl函数被调用了两次 漏洞细节：在Windows Server 2003的IIS6.0的WebDAV服务的ScStoragePathFromUrl函数存在缓存区溢出漏洞，攻击者通过一个以“If: &amp;lt;Http://”开始的较长header头的PROPFIND请求执行任意代码。
+利用条件  iis6.0 开启WebDav功能（具体为PROPFIND方法，成功则返回207或者200） windows server 2003 R2  POC #------------Our payload set up a ROP chain by using the overflow 3 times. It will launch a calc.exe which shows the bug is really dangerous. #written by Zhiniang Peng and Chen Wu. Information Security Lab &amp;amp; School of Computer Science &amp;amp; Engineering, South China University of Technology Guangzhou, China #-----------Email: edwardz@foxmail.</description>
+    </item>
+    
+  </channel>
+</rss>

