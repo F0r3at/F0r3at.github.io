@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>upload-labs on F0rmat&#39;Blog</title>
+    <title>upload-labs on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/upload-labs/</link>
-    <description>Recent content in upload-labs on F0rmat&#39;Blog</description>
+    <description>Recent content in upload-labs on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Sat, 24 Nov 2018 15:41:37 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/upload-labs/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>upload-labs 通关笔记</title>
-      <link>https://getshe11.com/posts/upload-labs/</link>
+      <link>https://getshe11.com/post/upload-labs/</link>
       <pubDate>Sat, 24 Nov 2018 15:41:37 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/upload-labs/</guid>
+      <guid>https://getshe11.com/post/upload-labs/</guid>
       <description>upload-labs 通关笔记 前言 把上传的所有类型的漏洞都过一遍，然后做一个笔记，方便以后查看，在此也很感谢c0ny1大佬的平台。
 运行环境 php版本：推荐5.2.17(其他版本可能会导致部分Pass无法突破) php组件：php_gd2,php_exif（部分Pass需要开启这两个组件） apache：以moudel方式连接 PS：为了节省时间，可下载Windows下集成环境，解压即可运行靶机环境。
 Pass-01 我比较喜欢去看代码分析问题，所以仔细分析了程序的构造。
 表单上传文件变量是upload_file
-&amp;lt;input class=&amp;quot;input_file&amp;quot; type=&amp;quot;file&amp;quot; name=&amp;quot;upload_file&amp;quot;/&amp;gt; 再来看下PHP代码,UPLOAD_PATH是在config.php文件里面的常量define(&amp;quot;UPLOAD_PATH&amp;quot;, &amp;quot;../upload/&amp;quot;);,PHP的代码没有什么过滤的，直接就可以上传了。
+&amp;lt;input class=&amp;#34;input_file&amp;#34; type=&amp;#34;file&amp;#34; name=&amp;#34;upload_file&amp;#34;/&amp;gt; 再来看下PHP代码,UPLOAD_PATH是在config.php文件里面的常量define(&amp;quot;UPLOAD_PATH&amp;quot;, &amp;quot;../upload/&amp;quot;);,PHP的代码没有什么过滤的，直接就可以上传了。
 但是在这个上传这里我弄了很久，因为Linux的一些机制接触比较少，用的环境是CentOS 7，PHP版本是5.4。
 上传的时候一直失败，测试了$_FILES里面的参数都没什么问题，upload目录的权限也测试了，临时文件tmp也测试了，还是不行。
 一直到下面的move_uploaded_file函数这里，百度了下已有人遇到同样的问题，解决的办法就关掉selinux输入：

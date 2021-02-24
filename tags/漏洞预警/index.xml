@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>漏洞预警 on F0rmat&#39;Blog</title>
+    <title>漏洞预警 on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/%E6%BC%8F%E6%B4%9E%E9%A2%84%E8%AD%A6/</link>
-    <description>Recent content in 漏洞预警 on F0rmat&#39;Blog</description>
+    <description>Recent content in 漏洞预警 on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Thu, 29 Mar 2018 10:16:39 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/%E6%BC%8F%E6%B4%9E%E9%A2%84%E8%AD%A6/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>漏洞预警|Windows 7 Meltdown 补丁发现漏洞，允许任意进程读写内核</title>
-      <link>https://getshe11.com/posts/vulnerability-alert_windows-7-meltdown-patch-discovery-vulnerability-allows-any-process-to-read-and-write-kernels/</link>
+      <link>https://getshe11.com/post/vulnerability-alert_windows-7-meltdown-patch-discovery-vulnerability-allows-any-process-to-read-and-write-kernels/</link>
       <pubDate>Thu, 29 Mar 2018 10:16:39 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/vulnerability-alert_windows-7-meltdown-patch-discovery-vulnerability-allows-any-process-to-read-and-write-kernels/</guid>
+      <guid>https://getshe11.com/post/vulnerability-alert_windows-7-meltdown-patch-discovery-vulnerability-allows-any-process-to-read-and-write-kernels/</guid>
       <description>前言 今晚本来想养生睡个早觉的，睡前浏览了下twitter，看到大佬的高危漏洞，看着有点好笑，微软拿起自己的石头砸自己的脚操作哈哈，这个洞在27号就已经出来了。  今年1月份英特尔确认了在自家CPU中发现两个安全漏洞，而这些漏洞将会使得数十亿设备面临受到攻击的风险“Meltdown”和“Spectre”两个漏洞让不少人感觉恐慌，因为他们发现这些漏洞几乎影响到过去20年制造的每一种计算设备，无论是手机还是个人电脑。他们允许恶意程序窃取在受影响机器上处理的敏感数据。
  别以为安装这个官方的补丁就很安全了，更糟糕的事情来了，这个漏洞可以允许任意进程读写内核。
 总体崩溃? 你认为Meltdown糟糕吗？未授权的应用程序能够以每秒兆字节的速度读取内核内存不是一件好事。

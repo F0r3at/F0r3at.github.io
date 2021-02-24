@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Maccms on F0rmat&#39;Blog</title>
+    <title>Maccms on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/maccms/</link>
-    <description>Recent content in Maccms on F0rmat&#39;Blog</description>
+    <description>Recent content in Maccms on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Sun, 22 Dec 2019 11:17:18 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/maccms/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Maccms8最新命令执行漏洞</title>
-      <link>https://getshe11.com/posts/maccms8-latest-command-execution-vulnerability/</link>
+      <link>https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/</link>
       <pubDate>Sun, 22 Dec 2019 11:17:18 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/maccms8-latest-command-execution-vulnerability/</guid>
+      <guid>https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/</guid>
       <description>0x01 前言 太久太久没写文章。。。最近还发布了一些法律，许多网站都关了，我还在考虑是否去开这个博客，因为分享技术还得承担法律责任，不过不会再公布具有攻击性的工具或者exp。
 这个maccms的RCE是最近被绕过了，写一篇分析文。环境搭建的也不多写了，之前写的一篇Maccms的sql注入http://getshe11.com/2018/08/26/Maccms-sql-injection-analysis/ 有讲到 本文用到的源码可以去https://github.com/yaofeifly/Maccms8.x 这里下载 绕过的源码可以去https://github.com/magicblack/maccms8 下载
 0x02 漏洞复现   https://github.com/yaofeifly/Maccms8.x 下载搭建好之后
@@ -34,10 +34,10 @@ POST /index.php?m=vod-search HTTP/1.1 Host: xxxx Cache-Control: max-age=0 DNT: 1
     
     <item>
       <title>动态调试|Maccms SQL 注入分析(附注入盲注脚本)</title>
-      <link>https://getshe11.com/posts/maccms-sql-injection-analysis/</link>
+      <link>https://getshe11.com/post/maccms-sql-injection-analysis/</link>
       <pubDate>Sun, 26 Aug 2018 15:49:02 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/maccms-sql-injection-analysis/</guid>
+      <guid>https://getshe11.com/post/maccms-sql-injection-analysis/</guid>
       <description>0x01 前言 已经有一周没发表文章了，一个朋友叫我研究maccms的代码审计，碰到这个注入的漏洞挺有趣的，就在此写一篇分析文。
 0x02 环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： JetBrains PhpStorm 2018.1.6 x64、Seay代码审计工具
 搭建这个程序也挺简单的，也是一步到位。

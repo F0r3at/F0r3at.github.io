@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>MetInfo5.3.19安装过程过滤不严导致Getshell(每日一洞) - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="前言 前几天在先知看到的漏洞，就很想写个分析过程了的，因为比赛培训和在审计一个CMS拖到了今天。
+环境 Web： phpstudy System： Windows 7 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： PhpStorm 2017.3.3、Seay源代码审计系统
+任意文件删除漏洞 复现 POC 前提：需要由对应的删除权限 flienamecsv代表要删除的文件
+http://xxx.com/admin/app/batch/csvup.php?fileField=1&amp;amp;flienamecsv=../../../config/install.lock
+执行结果 代码位置和漏洞代码 代码位置 \admin\app\batch\csvup.php
+漏洞代码 &amp;lt;?php $depth=&amp;#39;../&amp;#39;; require_once $depth.&amp;#39;../login/login_check.php&amp;#39;; setlocale(LC_ALL,array(&amp;#39;zh_CN.gbk&amp;#39;,&amp;#39;zh_CN.gb2312&amp;#39;,&amp;#39;zh_CN.gb18030&amp;#39;)); $codeold=&amp;#39;gbk&amp;#39;; $codenew=&amp;#39;utf-8&amp;#39;; $classflie=explode(&amp;#39;_&amp;#39;,$fileField); $classflie=explode(&amp;#39;-&amp;#39;,$classflie[count($classflie)-1]); $class1=$classflie[0]; $class2=$classflie[1]; $class3=$classflie[2]; $class=$class3?$class3:($class2?$class2:$class1); $classcsv=$db-&amp;gt;get_one(&amp;#34;select * from $met_columnwhere id=$class&amp;#34;); if(!$classcsv){ metsave(&amp;#34;../app/batch/contentup.php?anyid=$anyid&amp;amp;lang=$lang&amp;#34;,$lang_csvnocolumn,$depth); } $table=moduledb($classcsv[&amp;#39;module&amp;#39;]); $file = fopen($flienamecsv,&amp;#39;r&amp;#39;); $fdata=fgetcsv($file); foreach($fdata as $key=&amp;gt;$val){ if(iconv($codeold,$codenew,$val)==$lang_columnhtmlname){$staticnum=$key;} } $numcsv=0; while ($data = fgetcsv($file)){ $staticone=iconv($codeold,$codenew,$data[$staticnum]); if($staticone!=NULL){ $static[$numcsv&#43;1]=$staticone; $static_copy[]=$staticone; } $dataqrray[]=$data; $numcsv&#43;&#43;; } fclose($file); @file_unlink($flienamecsv); 分析过程  开始的时候我就在找$fileField和$flienamecsv这两个变量是怎么get过来的，分析了包含include/common." /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="MetInfo5.3.19安装过程过滤不严导致Getshell(每日一洞)" />
+<meta property="og:description" content="前言 前几天在先知看到的漏洞，就很想写个分析过程了的，因为比赛培训和在审计一个CMS拖到了今天。
+环境 Web： phpstudy System： Windows 7 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： PhpStorm 2017.3.3、Seay源代码审计系统
+任意文件删除漏洞 复现 POC 前提：需要由对应的删除权限 flienamecsv代表要删除的文件
+http://xxx.com/admin/app/batch/csvup.php?fileField=1&amp;flienamecsv=../../../config/install.lock
+执行结果 代码位置和漏洞代码 代码位置 \admin\app\batch\csvup.php
+漏洞代码 &lt;?php $depth=&#39;../&#39;; require_once $depth.&#39;../login/login_check.php&#39;; setlocale(LC_ALL,array(&#39;zh_CN.gbk&#39;,&#39;zh_CN.gb2312&#39;,&#39;zh_CN.gb18030&#39;)); $codeold=&#39;gbk&#39;; $codenew=&#39;utf-8&#39;; $classflie=explode(&#39;_&#39;,$fileField); $classflie=explode(&#39;-&#39;,$classflie[count($classflie)-1]); $class1=$classflie[0]; $class2=$classflie[1]; $class3=$classflie[2]; $class=$class3?$class3:($class2?$class2:$class1); $classcsv=$db-&gt;get_one(&#34;select * from $met_columnwhere id=$class&#34;); if(!$classcsv){ metsave(&#34;../app/batch/contentup.php?anyid=$anyid&amp;lang=$lang&#34;,$lang_csvnocolumn,$depth); } $table=moduledb($classcsv[&#39;module&#39;]); $file = fopen($flienamecsv,&#39;r&#39;); $fdata=fgetcsv($file); foreach($fdata as $key=&gt;$val){ if(iconv($codeold,$codenew,$val)==$lang_columnhtmlname){$staticnum=$key;} } $numcsv=0; while ($data = fgetcsv($file)){ $staticone=iconv($codeold,$codenew,$data[$staticnum]); if($staticone!=NULL){ $static[$numcsv&#43;1]=$staticone; $static_copy[]=$staticone; } $dataqrray[]=$data; $numcsv&#43;&#43;; } fclose($file); @file_unlink($flienamecsv); 分析过程  开始的时候我就在找$fileField和$flienamecsv这两个变量是怎么get过来的，分析了包含include/common." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/metinfo5.3.19-installation-process-is-not-strict-lead-to-getshell/" />
+<meta property="article:published_time" content="2018-03-06T22:41:35+00:00" />
+<meta property="article:modified_time" content="2018-03-06T22:41:35+00:00" />
+<meta itemprop="name" content="MetInfo5.3.19安装过程过滤不严导致Getshell(每日一洞)">
+<meta itemprop="description" content="前言 前几天在先知看到的漏洞，就很想写个分析过程了的，因为比赛培训和在审计一个CMS拖到了今天。
+环境 Web： phpstudy System： Windows 7 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： PhpStorm 2017.3.3、Seay源代码审计系统
+任意文件删除漏洞 复现 POC 前提：需要由对应的删除权限 flienamecsv代表要删除的文件
+http://xxx.com/admin/app/batch/csvup.php?fileField=1&amp;flienamecsv=../../../config/install.lock
+执行结果 代码位置和漏洞代码 代码位置 \admin\app\batch\csvup.php
+漏洞代码 &lt;?php $depth=&#39;../&#39;; require_once $depth.&#39;../login/login_check.php&#39;; setlocale(LC_ALL,array(&#39;zh_CN.gbk&#39;,&#39;zh_CN.gb2312&#39;,&#39;zh_CN.gb18030&#39;)); $codeold=&#39;gbk&#39;; $codenew=&#39;utf-8&#39;; $classflie=explode(&#39;_&#39;,$fileField); $classflie=explode(&#39;-&#39;,$classflie[count($classflie)-1]); $class1=$classflie[0]; $class2=$classflie[1]; $class3=$classflie[2]; $class=$class3?$class3:($class2?$class2:$class1); $classcsv=$db-&gt;get_one(&#34;select * from $met_columnwhere id=$class&#34;); if(!$classcsv){ metsave(&#34;../app/batch/contentup.php?anyid=$anyid&amp;lang=$lang&#34;,$lang_csvnocolumn,$depth); } $table=moduledb($classcsv[&#39;module&#39;]); $file = fopen($flienamecsv,&#39;r&#39;); $fdata=fgetcsv($file); foreach($fdata as $key=&gt;$val){ if(iconv($codeold,$codenew,$val)==$lang_columnhtmlname){$staticnum=$key;} } $numcsv=0; while ($data = fgetcsv($file)){ $staticone=iconv($codeold,$codenew,$data[$staticnum]); if($staticone!=NULL){ $static[$numcsv&#43;1]=$staticone; $static_copy[]=$staticone; } $dataqrray[]=$data; $numcsv&#43;&#43;; } fclose($file); @file_unlink($flienamecsv); 分析过程  开始的时候我就在找$fileField和$flienamecsv这两个变量是怎么get过来的，分析了包含include/common.">
+<meta itemprop="datePublished" content="2018-03-06T22:41:35+00:00" />
+<meta itemprop="dateModified" content="2018-03-06T22:41:35+00:00" />
+<meta itemprop="wordCount" content="227">
+
+
+
+<meta itemprop="keywords" content="漏洞,代码审计,php,MetInfo,getshell," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="MetInfo5.3.19安装过程过滤不严导致Getshell(每日一洞)"/>
+<meta name="twitter:description" content="前言 前几天在先知看到的漏洞，就很想写个分析过程了的，因为比赛培训和在审计一个CMS拖到了今天。
+环境 Web： phpstudy System： Windows 7 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： PhpStorm 2017.3.3、Seay源代码审计系统
+任意文件删除漏洞 复现 POC 前提：需要由对应的删除权限 flienamecsv代表要删除的文件
+http://xxx.com/admin/app/batch/csvup.php?fileField=1&amp;flienamecsv=../../../config/install.lock
+执行结果 代码位置和漏洞代码 代码位置 \admin\app\batch\csvup.php
+漏洞代码 &lt;?php $depth=&#39;../&#39;; require_once $depth.&#39;../login/login_check.php&#39;; setlocale(LC_ALL,array(&#39;zh_CN.gbk&#39;,&#39;zh_CN.gb2312&#39;,&#39;zh_CN.gb18030&#39;)); $codeold=&#39;gbk&#39;; $codenew=&#39;utf-8&#39;; $classflie=explode(&#39;_&#39;,$fileField); $classflie=explode(&#39;-&#39;,$classflie[count($classflie)-1]); $class1=$classflie[0]; $class2=$classflie[1]; $class3=$classflie[2]; $class=$class3?$class3:($class2?$class2:$class1); $classcsv=$db-&gt;get_one(&#34;select * from $met_columnwhere id=$class&#34;); if(!$classcsv){ metsave(&#34;../app/batch/contentup.php?anyid=$anyid&amp;lang=$lang&#34;,$lang_csvnocolumn,$depth); } $table=moduledb($classcsv[&#39;module&#39;]); $file = fopen($flienamecsv,&#39;r&#39;); $fdata=fgetcsv($file); foreach($fdata as $key=&gt;$val){ if(iconv($codeold,$codenew,$val)==$lang_columnhtmlname){$staticnum=$key;} } $numcsv=0; while ($data = fgetcsv($file)){ $staticone=iconv($codeold,$codenew,$data[$staticnum]); if($staticone!=NULL){ $static[$numcsv&#43;1]=$staticone; $static_copy[]=$staticone; } $dataqrray[]=$data; $numcsv&#43;&#43;; } fclose($file); @file_unlink($flienamecsv); 分析过程  开始的时候我就在找$fileField和$flienamecsv这两个变量是怎么get过来的，分析了包含include/common."/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/.">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">MetInfo5.3.19安装过程过滤不严导致Getshell(每日一洞)</h1>
+        <p class="post-meta">Mar 06, 2018</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h1 id="前言">前言</h1>
+<p>前几天在先知看到的漏洞，就很想写个分析过程了的，因为比赛培训和在审计一个CMS拖到了今天。</p>
+<h1 id="环境">环境</h1>
+<p><strong>Web：</strong> phpstudy
+<strong>System：</strong> Windows 7 X64
+<strong>Browser：</strong> Firefox Quantum
+<strong>Python version ：</strong> 2.7
+<strong>Tools：</strong> PhpStorm 2017.3.3、Seay源代码审计系统</p>
+<h1 id="任意文件删除漏洞">任意文件删除漏洞</h1>
+<h2 id="复现">复现</h2>
+<h3 id="poc">POC</h3>
+<p>前提：需要由对应的删除权限
+<code>flienamecsv</code>代表要删除的文件</p>
+<!-- raw HTML omitted -->
+<p><code>http://xxx.com/admin/app/batch/csvup.php?fileField=1&amp;flienamecsv=../../../config/install.lock</code></p>
+<h3 id="执行结果">执行结果</h3>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/metinfo.gif" alt=""></p>
+<h2 id="代码位置和漏洞代码">代码位置和漏洞代码</h2>
+<h3 id="代码位置">代码位置</h3>
+<p><code>\admin\app\batch\csvup.php</code></p>
+<h3 id="漏洞代码">漏洞代码</h3>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="nv">$depth</span><span class="o">=</span><span class="s1">&#39;../&#39;</span><span class="p">;</span>
+<span class="k">require_once</span> <span class="nv">$depth</span><span class="o">.</span><span class="s1">&#39;../login/login_check.php&#39;</span><span class="p">;</span>
+<span class="nx">setlocale</span><span class="p">(</span><span class="nx">LC_ALL</span><span class="p">,</span><span class="k">array</span><span class="p">(</span><span class="s1">&#39;zh_CN.gbk&#39;</span><span class="p">,</span><span class="s1">&#39;zh_CN.gb2312&#39;</span><span class="p">,</span><span class="s1">&#39;zh_CN.gb18030&#39;</span><span class="p">));</span>
+<span class="nv">$codeold</span><span class="o">=</span><span class="s1">&#39;gbk&#39;</span><span class="p">;</span>
+<span class="nv">$codenew</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">;</span>
+<span class="nv">$classflie</span><span class="o">=</span><span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span><span class="nv">$fileField</span><span class="p">);</span>
+<span class="nv">$classflie</span><span class="o">=</span><span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="nv">$classflie</span><span class="p">[</span><span class="nx">count</span><span class="p">(</span><span class="nv">$classflie</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]);</span>
+<span class="nv">$class1</span><span class="o">=</span><span class="nv">$classflie</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="nv">$class2</span><span class="o">=</span><span class="nv">$classflie</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="nv">$class3</span><span class="o">=</span><span class="nv">$classflie</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+<span class="nv">$class</span><span class="o">=</span><span class="nv">$class3</span><span class="o">?</span><span class="nv">$class3</span><span class="o">:</span><span class="p">(</span><span class="nv">$class2</span><span class="o">?</span><span class="nv">$class2</span><span class="o">:</span><span class="nv">$class1</span><span class="p">);</span> 
+<span class="nv">$classcsv</span><span class="o">=</span><span class="nv">$db</span><span class="o">-&gt;</span><span class="na">get_one</span><span class="p">(</span><span class="s2">&#34;select * from </span><span class="si">$met_column</span><span class="s2"> where id=</span><span class="si">$class</span><span class="s2">&#34;</span><span class="p">);</span>
+<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nv">$classcsv</span><span class="p">){</span>
+<span class="nx">metsave</span><span class="p">(</span><span class="s2">&#34;../app/batch/contentup.php?anyid=</span><span class="si">$anyid</span><span class="s2">&amp;lang=</span><span class="si">$lang</span><span class="s2">&#34;</span><span class="p">,</span><span class="nv">$lang_csvnocolumn</span><span class="p">,</span><span class="nv">$depth</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nv">$table</span><span class="o">=</span><span class="nx">moduledb</span><span class="p">(</span><span class="nv">$classcsv</span><span class="p">[</span><span class="s1">&#39;module&#39;</span><span class="p">]);</span>
+<span class="nv">$file</span> <span class="o">=</span> <span class="nx">fopen</span><span class="p">(</span><span class="nv">$flienamecsv</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">);</span>
+<span class="nv">$fdata</span><span class="o">=</span><span class="nx">fgetcsv</span><span class="p">(</span><span class="nv">$file</span><span class="p">);</span>
+<span class="k">foreach</span><span class="p">(</span><span class="nv">$fdata</span> <span class="k">as</span> <span class="nv">$key</span><span class="o">=&gt;</span><span class="nv">$val</span><span class="p">){</span>
+	<span class="k">if</span><span class="p">(</span><span class="nx">iconv</span><span class="p">(</span><span class="nv">$codeold</span><span class="p">,</span><span class="nv">$codenew</span><span class="p">,</span><span class="nv">$val</span><span class="p">)</span><span class="o">==</span><span class="nv">$lang_columnhtmlname</span><span class="p">){</span><span class="nv">$staticnum</span><span class="o">=</span><span class="nv">$key</span><span class="p">;}</span>
+<span class="p">}</span>
+<span class="nv">$numcsv</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="k">while</span> <span class="p">(</span><span class="nv">$data</span> <span class="o">=</span> <span class="nx">fgetcsv</span><span class="p">(</span><span class="nv">$file</span><span class="p">)){</span>
+	<span class="nv">$staticone</span><span class="o">=</span><span class="nx">iconv</span><span class="p">(</span><span class="nv">$codeold</span><span class="p">,</span><span class="nv">$codenew</span><span class="p">,</span><span class="nv">$data</span><span class="p">[</span><span class="nv">$staticnum</span><span class="p">]);</span>
+	<span class="k">if</span><span class="p">(</span><span class="nv">$staticone</span><span class="o">!=</span><span class="k">NULL</span><span class="p">){</span>
+		<span class="nv">$static</span><span class="p">[</span><span class="nv">$numcsv</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span><span class="nv">$staticone</span><span class="p">;</span>
+		<span class="nv">$static_copy</span><span class="p">[]</span><span class="o">=</span><span class="nv">$staticone</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="nv">$dataqrray</span><span class="p">[]</span><span class="o">=</span><span class="nv">$data</span><span class="p">;</span>
+	<span class="nv">$numcsv</span><span class="o">++</span><span class="p">;</span>
+<span class="p">}</span>  
+<span class="nx">fclose</span><span class="p">(</span><span class="nv">$file</span><span class="p">);</span> 
+<span class="o">@</span><span class="nx">file_unlink</span><span class="p">(</span><span class="nv">$flienamecsv</span><span class="p">);</span> 
+</code></pre></div><h2 id="分析过程">分析过程</h2>
+<ul>
+<li>开始的时候我就在找<code>$fileField</code>和<code>$flienamecsv</code>这两个变量是怎么get过来的，分析了包含<code>include/common.inc.php</code>里面的，有点类似前天写的seacms里面的写法,但是又不是从这里get过来的。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/metinfo1.png" alt="">
+我又继续找，找到了<code>\admin\templates\met\app\batch\contentup.html</code>文件里面的一个js函数
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/metinfo2.png" alt="">
+再继续跟进这个函数，跳到了一个表单文件<code>\admin\templates\met\images\js\iframes.js</code>,在这里找到关于<code>csvup.php</code>文件里面的<code>get</code>那里的两个参数
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/metinfo3.png" alt=""></li>
+<li>分析完传参的过程，我们继续分析删除文件的过程。我们直接看<code>$class=$class3?$class3:($class2?$class2:$class1); </code>这一句就行了，我们传一个数字<code>2</code>进去，判断，如果没有<code>$class3</code>就要<code>$class2</code>没<code>$class2</code>就<code>$class1</code>。这里为什么可以随便填数字，我们再跟进一下下面这个判断，如果SQL执行后<code>$classcsv</code>这个为假的话就不能执行下面的删除文件命令了。我们可以用seay的审计里面的mysql监控工具来观察下：
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/metinfo4.png" alt=""></li>
+<li><code>$file = fopen($flienamecsv,'r');</code>读取我们传入的文件</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nv">$classflie</span><span class="o">=</span><span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span><span class="nv">$fileField</span><span class="p">);</span>
+<span class="nv">$classflie</span><span class="o">=</span><span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="nv">$classflie</span><span class="p">[</span><span class="nx">count</span><span class="p">(</span><span class="nv">$classflie</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]);</span>
+<span class="nv">$class1</span><span class="o">=</span><span class="nv">$classflie</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="nv">$class2</span><span class="o">=</span><span class="nv">$classflie</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="nv">$class3</span><span class="o">=</span><span class="nv">$classflie</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+<span class="nv">$class</span><span class="o">=</span><span class="nv">$class3</span><span class="o">?</span><span class="nv">$class3</span><span class="o">:</span><span class="p">(</span><span class="nv">$class2</span><span class="o">?</span><span class="nv">$class2</span><span class="o">:</span><span class="nv">$class1</span><span class="p">);</span> 
+<span class="nv">$classcsv</span><span class="o">=</span><span class="nv">$db</span><span class="o">-&gt;</span><span class="na">get_one</span><span class="p">(</span><span class="s2">&#34;select * from </span><span class="si">$met_column</span><span class="s2"> where id=</span><span class="si">$class</span><span class="s2">&#34;</span><span class="p">);</span>
+<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nv">$classcsv</span><span class="p">){</span>
+<span class="nx">metsave</span><span class="p">(</span><span class="s2">&#34;../app/batch/contentup.php?anyid=</span><span class="si">$anyid</span><span class="s2">&amp;lang=</span><span class="si">$lang</span><span class="s2">&#34;</span><span class="p">,</span><span class="nv">$lang_csvnocolumn</span><span class="p">,</span><span class="nv">$depth</span><span class="p">);</span>
+<span class="nv">$table</span><span class="o">=</span><span class="nx">moduledb</span><span class="p">(</span><span class="nv">$classcsv</span><span class="p">[</span><span class="s1">&#39;module&#39;</span><span class="p">]);</span>
+<span class="nv">$file</span> <span class="o">=</span> <span class="nx">fopen</span><span class="p">(</span><span class="nv">$flienamecsv</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div><ul>
+<li>中间的没什么影响，我们就直接跳到文件删除这里,我们跟进一下这个函数。</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">@</span><span class="nx">file_unlink</span><span class="p">(</span><span class="nv">$flienamecsv</span><span class="p">);</span> 
+</code></pre></div><ul>
+<li>传入文件名之后判断是否为windows系统，然后判读是否存在，最后执行删除函数<code>unlink</code>
+<code>\admin\include\global.func.php</code></li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">function</span> <span class="nf">file_unlink</span><span class="p">(</span><span class="nv">$file_name</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span><span class="p">(</span><span class="nx">stristr</span><span class="p">(</span><span class="k">PHP_OS</span><span class="p">,</span><span class="s2">&#34;WIN&#34;</span><span class="p">)){</span>
+		<span class="nv">$file_name</span><span class="o">=@</span><span class="nx">iconv</span><span class="p">(</span><span class="s2">&#34;utf-8&#34;</span><span class="p">,</span><span class="s2">&#34;gbk&#34;</span><span class="p">,</span><span class="nv">$file_name</span><span class="p">);</span>
+	<span class="p">}</span>
+	<span class="k">if</span><span class="p">(</span><span class="nx">file_exists</span><span class="p">(</span><span class="nv">$file_name</span><span class="p">))</span> <span class="p">{</span>
+		<span class="c1">//@chmod($file_name,0777);
+</span><span class="c1"></span>		<span class="nv">$area_lord</span> <span class="o">=</span> <span class="o">@</span><span class="nx">unlink</span><span class="p">(</span><span class="nv">$file_name</span><span class="p">);</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nv">$area_lord</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><h1 id="重装时数据库配置文件过滤不当">重装时数据库配置文件过滤不当</h1>
+<h2 id="复现-1">复现</h2>
+<p>利用上面的删除漏洞之后再重新安装，然后在填写数据库的步骤的时候写入内容。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/metinfo5.png" alt=""></p>
+<p>shell地址:<code>http://metinfo.test/config/config_db.php</code></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/metinfo6.png" alt=""></p>
+<h2 id="代码位置和漏洞代码-1">代码位置和漏洞代码</h2>
+<h3 id="代码位置-1">代码位置</h3>
+<p><code>install\index.php</code></p>
+<h3 id="漏洞代码-1">漏洞代码</h3>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">case</span> <span class="s1">&#39;db_setup&#39;</span><span class="o">:</span>
+	<span class="p">{</span>
+		<span class="k">if</span><span class="p">(</span><span class="nv">$setup</span><span class="o">==</span><span class="mi">1</span><span class="p">){</span>
+			<span class="nv">$db_prefix</span>      <span class="o">=</span> <span class="nx">trim</span><span class="p">(</span><span class="nv">$db_prefix</span><span class="p">);</span>
+			<span class="nv">$db_host</span>        <span class="o">=</span> <span class="nx">trim</span><span class="p">(</span><span class="nv">$db_host</span><span class="p">);</span>
+			<span class="nv">$db_username</span>    <span class="o">=</span> <span class="nx">trim</span><span class="p">(</span><span class="nv">$db_username</span><span class="p">);</span>
+			<span class="nv">$db_pass</span>        <span class="o">=</span> <span class="nx">trim</span><span class="p">(</span><span class="nv">$db_pass</span><span class="p">);</span>
+			<span class="nv">$db_name</span>        <span class="o">=</span> <span class="nx">trim</span><span class="p">(</span><span class="nv">$db_name</span><span class="p">);</span>
+			<span class="nv">$config</span><span class="o">=</span><span class="s2">&#34;&lt;?php
+</span><span class="s2">                   /*
+</span><span class="s2">                   con_db_host = </span><span class="se">\&#34;</span><span class="si">$db_host\</span><span class="s2">&#34;</span>
+                   <span class="nx">con_db_id</span>   <span class="o">=</span> <span class="nx">\</span><span class="s2">&#34;</span><span class="si">$db_username\</span><span class="s2">&#34;</span>
+                   <span class="nx">con_db_pass</span>	<span class="o">=</span> <span class="nx">\</span><span class="s2">&#34;</span><span class="si">$db_pass\</span><span class="s2">&#34;</span>
+                   <span class="nx">con_db_name</span> <span class="o">=</span> <span class="nx">\</span><span class="s2">&#34;</span><span class="si">$db_name\</span><span class="s2">&#34;</span>
+                   <span class="nx">tablepre</span>    <span class="o">=</span>  <span class="nx">\</span><span class="s2">&#34;</span><span class="si">$db_prefix\</span><span class="s2">&#34;</span>
+                   <span class="nx">db_charset</span>  <span class="o">=</span>  <span class="nx">\</span><span class="s2">&#34;utf8</span><span class="se">\&#34;</span><span class="s2">;
+</span><span class="s2">                  */
+</span><span class="s2">                  ?&gt;&#34;</span><span class="p">;</span>
+
+			<span class="nv">$fp</span><span class="o">=</span><span class="nx">fopen</span><span class="p">(</span><span class="s2">&#34;../config/config_db.php&#34;</span><span class="p">,</span><span class="s1">&#39;w+&#39;</span><span class="p">);</span>
+			<span class="nx">fputs</span><span class="p">(</span><span class="nv">$fp</span><span class="p">,</span><span class="nv">$config</span><span class="p">);</span>
+			<span class="nx">fclose</span><span class="p">(</span><span class="nv">$fp</span><span class="p">);</span>
+			<span class="nv">$db</span> <span class="o">=</span> <span class="nx">mysql_connect</span><span class="p">(</span><span class="nv">$db_host</span><span class="p">,</span><span class="nv">$db_username</span><span class="p">,</span><span class="nv">$db_pass</span><span class="p">)</span> <span class="k">or</span> <span class="k">die</span><span class="p">(</span><span class="s1">&#39;连接数据库失败: &#39;</span> <span class="o">.</span> <span class="nx">mysql_error</span><span class="p">());</span>
+			<span class="k">if</span><span class="p">(</span><span class="o">!@</span><span class="nx">mysql_select_db</span><span class="p">(</span><span class="nv">$db_name</span><span class="p">)){</span>
+</code></pre></div><h2 id="分析过程-1">分析过程</h2>
+<ul>
+<li><code>fopen</code>打开文件，讲<code>$congfig</code>的内容写进配置文件。这个有就点逻辑不对了，应该输入数据库信息判断下对错再进行写文件才安全。</li>
+<li>为什么要<code>*/phpinfo()/*</code>这样写？因为用<code>*/</code>是为了闭合上面的注释。</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php">	<span class="nv">$config</span><span class="o">=</span><span class="s2">&#34;&lt;?php
+</span><span class="s2">                   /*
+</span><span class="s2">                   con_db_host = </span><span class="se">\&#34;</span><span class="si">$db_host\</span><span class="s2">&#34;</span>
+                   <span class="nx">con_db_id</span>   <span class="o">=</span> <span class="nx">\</span><span class="s2">&#34;</span><span class="si">$db_username\</span><span class="s2">&#34;</span>
+                   <span class="nx">con_db_pass</span>	<span class="o">=</span> <span class="nx">\</span><span class="s2">&#34;</span><span class="si">$db_pass\</span><span class="s2">&#34;</span>
+                   <span class="nx">con_db_name</span> <span class="o">=</span> <span class="nx">\</span><span class="s2">&#34;</span><span class="si">$db_name\</span><span class="s2">&#34;</span>
+                   <span class="nx">tablepre</span>    <span class="o">=</span>  <span class="nx">\</span><span class="s2">&#34;</span><span class="si">$db_prefix\</span><span class="s2">&#34;</span>
+                   <span class="nx">db_charset</span>  <span class="o">=</span>  <span class="nx">\</span><span class="s2">&#34;utf8</span><span class="se">\&#34;</span><span class="s2">;
+</span><span class="s2">                  */
+</span><span class="s2">                  ?&gt;&#34;</span><span class="p">;</span>
+
+			<span class="nv">$fp</span><span class="o">=</span><span class="nx">fopen</span><span class="p">(</span><span class="s2">&#34;../config/config_db.php&#34;</span><span class="p">,</span><span class="s1">&#39;w+&#39;</span><span class="p">);</span>
+			<span class="nx">fputs</span><span class="p">(</span><span class="nv">$fp</span><span class="p">,</span><span class="nv">$config</span><span class="p">);</span>
+			<span class="nx">fclose</span><span class="p">(</span><span class="nv">$fp</span><span class="p">);</span>
+			<span class="nv">$db</span> <span class="o">=</span> <span class="nx">mysql_connect</span><span class="p">(</span><span class="nv">$db_host</span><span class="p">,</span><span class="nv">$db_username</span><span class="p">,</span><span class="nv">$db_pass</span><span class="p">)</span> <span class="k">or</span> <span class="k">die</span><span class="p">(</span><span class="s1">&#39;连接数据库失败: &#39;</span> <span class="o">.</span> <span class="nx">mysql_error</span><span class="p">());</span>
+			<span class="k">if</span><span class="p">(</span><span class="o">!@</span><span class="nx">mysql_select_db</span><span class="p">(</span><span class="nv">$db_name</span><span class="p">)){</span>
+</code></pre></div><h1 id="结束">结束</h1>
+<p>其实说来这个洞有点鸡肋了，因为安装过后程序都会修改程序，没有写的权限。不过学习整个过程还是不错的收获。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/metinfo7.png" alt=""></p>
+<h1 id="参考">参考</h1>
+<p><a href="http://www.metinfo.cn/upload/file/MetInfo5.3.zip">http://www.metinfo.cn/upload/file/MetInfo5.3.zip</a> 程序下载</p>
+<p><a href="https://xianzhi.aliyun.com/forum/topic/2096">https://xianzhi.aliyun.com/forum/topic/2096</a></p>
+
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/zzcms8.2-any-file-deleted-to-getshell/">
+            ZZCMS8.2任意文件删除至getshell(每日一洞)
+        </a>
+    </li>
+    
+    
+    <li>下一篇：
+        <a href="https://getshe11.com/post/dedecms-v5.7-sp2-background-getshell-code-execution-vulnerability/">
+            DedeCMS V5.7 SP2后台Getshell 代码执行漏洞(每日一洞)
+        </a>
+    </li>
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/an-app-distribution-system-upload-vulnerability/" class="post-link">某云分发APP上传漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/" class="post-link">浅析PHP反序列化漏洞</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>

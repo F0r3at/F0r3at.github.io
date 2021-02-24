@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Vulnhub on F0rmat&#39;Blog</title>
+    <title>Vulnhub on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/vulnhub/</link>
-    <description>Recent content in Vulnhub on F0rmat&#39;Blog</description>
+    <description>Recent content in Vulnhub on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Thu, 03 May 2018 17:04:29 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/vulnhub/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>用Vulnhub来练习漏洞靶场(爸爸再也不用担心我没有靶场练习了)</title>
-      <link>https://getshe11.com/posts/use-vulnhub-to-build-a-variety-of-hole-shooting-range-father-no-longer-have-to-worry-about-i-have-no-practice-range/</link>
+      <link>https://getshe11.com/post/use-vulnhub-to-build-a-variety-of-hole-shooting-range-father-no-longer-have-to-worry-about-i-have-no-practice-range/</link>
       <pubDate>Thu, 03 May 2018 17:04:29 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/use-vulnhub-to-build-a-variety-of-hole-shooting-range-father-no-longer-have-to-worry-about-i-have-no-practice-range/</guid>
+      <guid>https://getshe11.com/post/use-vulnhub-to-build-a-variety-of-hole-shooting-range-father-no-longer-have-to-worry-about-i-have-no-practice-range/</guid>
       <description>0x01 前言 Vulnhub它是一个提供各种漏洞环境的平台，里面大部分的环境是要用VMware或者VirtualBox打开运行的。 如果只是练习一些常见的漏洞可以看我另一篇用[Docker来搭建各种漏洞靶场(妈妈再也不用担心我没有靶场练习了)](https://getpass.cn/2018/03/14/Use Docker to build a variety of loopholes (my mother no longer has to worry about not having practiced in the shooting range)/)
 0x02 下载 https://www.vulnhub.com 里面有各种各样的镜像，可以下载到自己的机子上面练习。 镜像的下载地址和描述、难度等级等 随便点击下载，有些需要FQ才能下载，推荐官网的下载地址。 作为测试，我就下载JIS-CTF: VulnUpload作为演示吧
 Download (Mirror): https://download.vulnhub.com/jisctf/JIS-CTF-VulnUpload-CTF01.ova

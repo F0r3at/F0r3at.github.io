@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>Kali Linux 2020.4安装Parallels Tools - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="0x00 前言 最近在vmware fusion里面用kali实在是太卡了，就想着换到pd会不会快一点呢？
+于是就开始立马动手！
+装完后，wow！很顺畅，但是屏幕分辨率和复制粘贴等操作不方便，就要开始装pd tools了，以前也是因为这个问题就放弃了在pd里面操作kali。
+开始安装pd tools。。。
+中间装了无数次。。。
+弄到晚上3点多还没搞定，睡觉了。。。
+早上起来精神不错，看了老外给的解决方法，终于搞定了！
+0x01 解决问题 1、环境  macOS Big Sur 11.2 Parallels Desktop 16.0.1 Kali Linux 2020.4 (linux-headers-5.9.0-kali5-common)  2、解决过程 先把系统更新到最新：
+apt-get update apt-get upgrade -y apt-get dist-upgrade -y 挂载parallels tools并移动到桌面：
+cp -R /media/cdrom0/ ~/Desktop/pdtools/ 安装
+./install 这个时候就开始出错了，因为之前报错的log我没保存下来。。下面是解决的办法
+解压kmods里面的压缩包,并删除之前的压缩包（如果想要原文件直接去/media/cdrom0里面拖出来）：
+tar -xzf prl_mod.tar.gz rm prl_mod.tar.gz 修改prl_fs/SharedFolders/Guest/Linux/prl_fs/inode.c，在最上面加上下面这行：
+#define segment_eq(a, b) ((a).seg == (b).seg) 修改prl_fs_freeze/Snapshot/Guest/Linux/prl_freeze/prl_fs_freeze.c，在最上面加上下面这行：
+#include &amp;lt;linux/blkdev.h&amp;gt;然后重新打包：
+tar -zcvf prl_mod.tar.gz . dkms.conf Makefile.kmods 最后**./install** 成功！" /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="Kali Linux 2020.4安装Parallels Tools" />
+<meta property="og:description" content="0x00 前言 最近在vmware fusion里面用kali实在是太卡了，就想着换到pd会不会快一点呢？
+于是就开始立马动手！
+装完后，wow！很顺畅，但是屏幕分辨率和复制粘贴等操作不方便，就要开始装pd tools了，以前也是因为这个问题就放弃了在pd里面操作kali。
+开始安装pd tools。。。
+中间装了无数次。。。
+弄到晚上3点多还没搞定，睡觉了。。。
+早上起来精神不错，看了老外给的解决方法，终于搞定了！
+0x01 解决问题 1、环境  macOS Big Sur 11.2 Parallels Desktop 16.0.1 Kali Linux 2020.4 (linux-headers-5.9.0-kali5-common)  2、解决过程 先把系统更新到最新：
+apt-get update apt-get upgrade -y apt-get dist-upgrade -y 挂载parallels tools并移动到桌面：
+cp -R /media/cdrom0/ ~/Desktop/pdtools/ 安装
+./install 这个时候就开始出错了，因为之前报错的log我没保存下来。。下面是解决的办法
+解压kmods里面的压缩包,并删除之前的压缩包（如果想要原文件直接去/media/cdrom0里面拖出来）：
+tar -xzf prl_mod.tar.gz rm prl_mod.tar.gz 修改prl_fs/SharedFolders/Guest/Linux/prl_fs/inode.c，在最上面加上下面这行：
+#define segment_eq(a, b) ((a).seg == (b).seg) 修改prl_fs_freeze/Snapshot/Guest/Linux/prl_freeze/prl_fs_freeze.c，在最上面加上下面这行：
+#include &lt;linux/blkdev.h&gt;然后重新打包：
+tar -zcvf prl_mod.tar.gz . dkms.conf Makefile.kmods 最后**./install** 成功！" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" />
+<meta property="article:published_time" content="2020-12-30T00:20:00+00:00" />
+<meta property="article:modified_time" content="2020-12-30T00:20:00+00:00" />
+<meta itemprop="name" content="Kali Linux 2020.4安装Parallels Tools">
+<meta itemprop="description" content="0x00 前言 最近在vmware fusion里面用kali实在是太卡了，就想着换到pd会不会快一点呢？
+于是就开始立马动手！
+装完后，wow！很顺畅，但是屏幕分辨率和复制粘贴等操作不方便，就要开始装pd tools了，以前也是因为这个问题就放弃了在pd里面操作kali。
+开始安装pd tools。。。
+中间装了无数次。。。
+弄到晚上3点多还没搞定，睡觉了。。。
+早上起来精神不错，看了老外给的解决方法，终于搞定了！
+0x01 解决问题 1、环境  macOS Big Sur 11.2 Parallels Desktop 16.0.1 Kali Linux 2020.4 (linux-headers-5.9.0-kali5-common)  2、解决过程 先把系统更新到最新：
+apt-get update apt-get upgrade -y apt-get dist-upgrade -y 挂载parallels tools并移动到桌面：
+cp -R /media/cdrom0/ ~/Desktop/pdtools/ 安装
+./install 这个时候就开始出错了，因为之前报错的log我没保存下来。。下面是解决的办法
+解压kmods里面的压缩包,并删除之前的压缩包（如果想要原文件直接去/media/cdrom0里面拖出来）：
+tar -xzf prl_mod.tar.gz rm prl_mod.tar.gz 修改prl_fs/SharedFolders/Guest/Linux/prl_fs/inode.c，在最上面加上下面这行：
+#define segment_eq(a, b) ((a).seg == (b).seg) 修改prl_fs_freeze/Snapshot/Guest/Linux/prl_freeze/prl_fs_freeze.c，在最上面加上下面这行：
+#include &lt;linux/blkdev.h&gt;然后重新打包：
+tar -zcvf prl_mod.tar.gz . dkms.conf Makefile.kmods 最后**./install** 成功！">
+<meta itemprop="datePublished" content="2020-12-30T00:20:00+00:00" />
+<meta itemprop="dateModified" content="2020-12-30T00:20:00+00:00" />
+<meta itemprop="wordCount" content="75">
+
+
+
+<meta itemprop="keywords" content="Kali Linux," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Kali Linux 2020.4安装Parallels Tools"/>
+<meta name="twitter:description" content="0x00 前言 最近在vmware fusion里面用kali实在是太卡了，就想着换到pd会不会快一点呢？
+于是就开始立马动手！
+装完后，wow！很顺畅，但是屏幕分辨率和复制粘贴等操作不方便，就要开始装pd tools了，以前也是因为这个问题就放弃了在pd里面操作kali。
+开始安装pd tools。。。
+中间装了无数次。。。
+弄到晚上3点多还没搞定，睡觉了。。。
+早上起来精神不错，看了老外给的解决方法，终于搞定了！
+0x01 解决问题 1、环境  macOS Big Sur 11.2 Parallels Desktop 16.0.1 Kali Linux 2020.4 (linux-headers-5.9.0-kali5-common)  2、解决过程 先把系统更新到最新：
+apt-get update apt-get upgrade -y apt-get dist-upgrade -y 挂载parallels tools并移动到桌面：
+cp -R /media/cdrom0/ ~/Desktop/pdtools/ 安装
+./install 这个时候就开始出错了，因为之前报错的log我没保存下来。。下面是解决的办法
+解压kmods里面的压缩包,并删除之前的压缩包（如果想要原文件直接去/media/cdrom0里面拖出来）：
+tar -xzf prl_mod.tar.gz rm prl_mod.tar.gz 修改prl_fs/SharedFolders/Guest/Linux/prl_fs/inode.c，在最上面加上下面这行：
+#define segment_eq(a, b) ((a).seg == (b).seg) 修改prl_fs_freeze/Snapshot/Guest/Linux/prl_freeze/prl_fs_freeze.c，在最上面加上下面这行：
+#include &lt;linux/blkdev.h&gt;然后重新打包：
+tar -zcvf prl_mod.tar.gz . dkms.conf Makefile.kmods 最后**./install** 成功！"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/.">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">Kali Linux 2020.4安装Parallels Tools</h1>
+        <p class="post-meta">Dec 30, 2020</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h1 id="0x00-前言">0x00 前言</h1>
+<p>最近在vmware fusion里面用kali实在是太卡了，就想着换到pd会不会快一点呢？</p>
+<p>于是就开始立马动手！</p>
+<p>装完后，wow！很顺畅，但是屏幕分辨率和复制粘贴等操作不方便，就要开始装pd tools了，以前也是因为这个问题就放弃了在pd里面操作kali。</p>
+<p>开始安装pd tools。。。</p>
+<p>中间装了无数次。。。</p>
+<p>弄到晚上3点多还没搞定，睡觉了。。。</p>
+<p>早上起来精神不错，看了老外给的解决方法，终于搞定了！</p>
+<!-- raw HTML omitted -->
+<h1 id="0x01-解决问题">0x01 解决问题</h1>
+<h2 id="1环境">1、环境</h2>
+<ul>
+<li>macOS Big Sur 11.2</li>
+<li>Parallels Desktop 16.0.1</li>
+<li>Kali Linux 2020.4 (linux-headers-5.9.0-kali5-common)</li>
+</ul>
+<h2 id="2解决过程">2、解决过程</h2>
+<p>先把系统更新到最新：</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">apt-get update
+apt-get upgrade -y
+apt-get dist-upgrade -y
+</code></pre></div><p>挂载parallels tools并移动到桌面：</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">cp -R /media/cdrom0/ ~/Desktop/pdtools/
+</code></pre></div><p>安装</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">./install
+</code></pre></div><p>这个时候就开始出错了，因为之前报错的log我没保存下来。。下面是解决的办法</p>
+<p>解压kmods里面的压缩包,并删除之前的压缩包（如果想要原文件直接去/media/cdrom0里面拖出来）：</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">tar -xzf prl_mod.tar.gz
+rm prl_mod.tar.gz
+</code></pre></div><p>修改<strong>prl_fs/SharedFolders/Guest/Linux/prl_fs/inode.c</strong>，在最上面加上下面这行：</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#define segment_eq(a, b) ((a).seg == (b).seg)
+</span></code></pre></div><p>修改<strong>prl_fs_freeze/Snapshot/Guest/Linux/prl_freeze/prl_fs_freeze.c</strong>，在最上面加上下面这行：</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#include</span> <span class="cpf">&lt;linux/blkdev.h&gt;</span><span class="cp">
+</span></code></pre></div><p>然后重新打包：</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">tar -zcvf prl_mod.tar.gz . dkms.conf Makefile.kmods
+</code></pre></div><p>最后**./install** 成功！</p>
+<h1 id="0x02-参考">0x02 参考</h1>
+<ul>
+<li>
+<p><a href="https://forum.parallels.com/threads/2020-2-kali-linux-parallels-tools-error.350083/#post-876979">https://forum.parallels.com/threads/2020-2-kali-linux-parallels-tools-error.350083/#post-876979</a> （本文的解决方案）</p>
+</li>
+<li>
+<p><a href="http://www.xferris.cn/kali-pt-tools/">http://www.xferris.cn/kali-pt-tools/</a></p>
+</li>
+<li>
+<p><a href="https://blog.csdn.net/shouxi516/article/details/106367604">https://blog.csdn.net/shouxi516/article/details/106367604</a></p>
+</li>
+</ul>
+
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/pathfinder/">
+            Hackthebox-Pathfinder
+        </a>
+    </li>
+    
+    
+    <li>下一篇：
+        <a href="https://getshe11.com/post/pd-chrome-3d/">
+            关于Kali2020安装Parallels Tools后Chrome显示空白
+        </a>
+    </li>
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/an-app-distribution-system-upload-vulnerability/" class="post-link">某云分发APP上传漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/" class="post-link">浅析PHP反序列化漏洞</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>

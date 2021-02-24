@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>其他 on F0rmat&#39;Blog</title>
+    <title>其他 on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/categories/%E5%85%B6%E4%BB%96/</link>
-    <description>Recent content in 其他 on F0rmat&#39;Blog</description>
+    <description>Recent content in 其他 on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Wed, 30 Dec 2020 13:20:00 +0000</lastBuildDate><atom:link href="https://getshe11.com/categories/%E5%85%B6%E4%BB%96/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>关于Kali2020安装Parallels Tools后Chrome显示空白</title>
-      <link>https://getshe11.com/posts/pd-chrome-3d/</link>
+      <link>https://getshe11.com/post/pd-chrome-3d/</link>
       <pubDate>Wed, 30 Dec 2020 13:20:00 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/pd-chrome-3d/</guid>
+      <guid>https://getshe11.com/post/pd-chrome-3d/</guid>
       <description>0x00 起因 kali安装好了pdtools，突然发现chrome和edge浏览器打开都是空白
 0x01 解决 逛pd的论坛发现是3D加速的问题，要么关闭3D加速：
 但是用pd就是奔着3D加速的，vmware也是开启了3d加速，但是跟没开一样，还是pd香。
@@ -23,10 +23,10 @@ google-chrome --disable-gpu microsoft-edge --disable-gpu 0x02 参考 https://for
     
     <item>
       <title>Kali Linux 2020.4安装Parallels Tools</title>
-      <link>https://getshe11.com/posts/install-parallels-tools-on-kali-linux-2020.4/</link>
+      <link>https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/</link>
       <pubDate>Wed, 30 Dec 2020 00:20:00 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/install-parallels-tools-on-kali-linux-2020.4/</guid>
+      <guid>https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/</guid>
       <description>0x00 前言 最近在vmware fusion里面用kali实在是太卡了，就想着换到pd会不会快一点呢？
 于是就开始立马动手！
 装完后，wow！很顺畅，但是屏幕分辨率和复制粘贴等操作不方便，就要开始装pd tools了，以前也是因为这个问题就放弃了在pd里面操作kali。
@@ -47,10 +47,10 @@ tar -zcvf prl_mod.tar.gz . dkms.conf Makefile.kmods 最后**./install** 成功�
     
     <item>
       <title>Python Web学习方法</title>
-      <link>https://getshe11.com/posts/python-web-guide/</link>
+      <link>https://getshe11.com/post/python-web-guide/</link>
       <pubDate>Mon, 01 Oct 2018 08:49:25 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/python-web-guide/</guid>
+      <guid>https://getshe11.com/post/python-web-guide/</guid>
       <description>0x01 前言 学习Python Web的时候找到的一篇挺好的文章，里面写的也很实在，所有分享出来。
 0x02 学习路线 看了这么多是不是还有点懵，笔者当时自学的时候也没人带，没什么方向，走了很多弯路，找工作也不是一帆风顺。如果不是科班出身受过系统的计算机科学理论的训练，是比较吃亏的，只能通过大量针对性学习和练习来弥补。 大概整理下自己学习 python web 的路线，方便大家做个参考(一个合格的工程师不是短时间能练成的)。其实这基本上也是后端工程师的学习路线，换一个编程语言或者框架都差不多。技术更新迭代非常快，后端技术还算比较稳定的，但是知识点很多很杂，有针对性学习比较好。 如果你觉得这个教程列出的东西太多，建议就找最重要的知识点，每个知识点挑一本最合适的书学习，我列举的很多资料对于初学者来说可能短时间内难以消化，会有畏难心理和学习焦虑，建议多加练习通过正反馈提升自己学习的乐趣。（如果你还是个学生那很好，有大把的时间准备）
  学习并熟练掌握一门编程语言(学好英语)。这里笔者选择的是最近特别火的 python，它能干很多事。挑一本好的入门教材，通读并实践书中所有代码示例和练习题（练手感，坚持敲，大量敲）。了解该语言如何操作文本、进程、网络编程等，最后达到能熟练运用编程语言表达逻辑的能力。 搭建好开发环境。初学者个人比较推荐 Ubuntu 系统 + Pycharm 社区版，都是可以免费获取的，我经常安利用 linux 或者 mac，和桌面端不同，企业大部分用的都是 linux server 部署 web 应用的(包括 docker 容器技术等都是基于 linux)，熟悉 linux 命令行、文件、进程操作等会给你找工作和日常工作带来便利。 熟悉算法和数据结构。对于编程语言内置的数据结构、算法等要数量掌握和使用，常用数据结构和算法了解其原理，会计算时间空间复杂度，会自己实现(常见算法面试笔试常考)。 熟悉网络协议 TCP/IP，HTTP，了解互联网是怎么运作的。既然是做网站，需要对网络运行原理比较了解。 学习 web 框架和 python 库。做东西我们需要大量现成的轮子帮助我们，看下 django、flask 等流行的 tutorial，然后做个简单的网站出来（比如博客网站，一般按照教程撸一遍就入门了，python web 框架的文档非常完善）。最好能深入一个框架了解原理，比如看看 flask 和 Werkzeug 源码。 了解前端知识。如果能独立做一个博客出来，大概对 html、css、js 就有所了解了。虽然是做后端，但是基本的前端知识也是必不可少的。 学习业务常用数据库 mysql 和 redis，业界用得比较多的数据库。了解关系型数据库 mysql 基础概念、语句、索引优化等，了解内存型数据库 redis 的常用数据结构，使用场景、结构设计等。 学习 git 版本控制。公司项目协作的时候都是有版本控制的，方便我们协作、记录、回滚代码等。学习编码规范，培养良好的编程习惯。我建议一开始就遵守 pep8，用好 autopep8，pylint 等工具，写出格式规范的代码，不要走野路子。（学习下文档和规范很棒的 python 开源代码） 在 linux server 部署你的 python web 服务。你需要学习 linux 常用命令，web 服务器 nginx 等。最好能独立部署一个网站出来。(笔者经常安利 linux 或者 mac，即使不用来作为开发环境，也要熟悉 linux 命令，能帮助你在服务器上快速修改和调试代码) 对照招聘网站中意的公司的招聘需求查漏补缺。初期就是要多学多练多 google，不是做项目就是在刷题。可以做一些博客、论坛、管理后台等小网站练手。 老实说相比 java 和 php，python 后端岗位是比较少的，如果你学完了还没找到工作然后来臭骂我一顿我会感觉委屈的。我个人倾向于 python 是因为真爱，并且学习python 性价比很高，可以做很多事。如果你觉得不好找工作或者只是把 python 当玩具玩(比如用 pandas 分析自己的投资收益，回测等)，换个语言和技术栈后端路线图基本上还是这些，不会白学的。 建议坚持写技术博客，学习笔记等。你可以使用 hexo 之类的静态博客，或者知乎专栏等现成的服务，或者 readthedoc、gitbook 之类的文档工具。好的技术博客是找工作的一大加分项，笔者工作以后依然坚持写博客记录日常所学，可以是读书笔记、学习心得、对某个技术的理解和实践、甚至是备忘录等。 进阶建议：看《Fluent Python》 之类的进阶书籍；看优秀的源码，比如 python 一些内置库，flask 等优秀的框架源码(可以用 gitx 之类的工具从代码的最初提交开始看起)，能学到很多惯用法和稍微底层一些的东西。尝试仿写，比如实现个简单的 web 小框架，大概就了解框架的运行原理了。  求职与面试 最近笔者也开始当面试官了，之前求职的时候每次面试都会充分准备（当然也挂过很多次），提前一个月左右开始回顾重点理论知识(看面试相关的书)，刷常用算法，练习手写代码，看相对岗位的招聘需求等。最近面试就发现很多面试者无论是否是有经验都准备不足，忽略了基础知识。 如果没有知名公司或者项目相关背景，很多招聘要求比较高的公司都会比较看重理论基础和学习能力。公司最好能有一份针对初级、中级、高级岗位的题目，尽量覆盖面广泛、难度适中，防止因为面试官的个人喜好影响面试结果。</description>
@@ -58,10 +58,10 @@ tar -zcvf prl_mod.tar.gz . dkms.conf Makefile.kmods 最后**./install** 成功�
     
     <item>
       <title>CentOS 5.x 安装Python3和yum源配置</title>
-      <link>https://getshe11.com/posts/centos-5.x-yum-source-configuration/</link>
+      <link>https://getshe11.com/post/centos-5.x-yum-source-configuration/</link>
       <pubDate>Mon, 07 May 2018 16:15:13 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/centos-5.x-yum-source-configuration/</guid>
+      <guid>https://getshe11.com/post/centos-5.x-yum-source-configuration/</guid>
       <description>0x01 前言 技能大赛的题目里面用的是CentOS的系统，本来觉得没什么，居然要装上Python3的版本，尝试了各种办法去下载python. 中间用了curl 和 wget的下载方式，提示，说不能建立SSL，办法就是更新wget这个工具，我想我还是自己下载吧。 然而浏览器也是
 0x02 源代码安装Python3 下载Python3软件包 老系统就安装那么新的版本了，就选择了一个3.5的，在实体机下载的，因为浏览器也不支持ssl，只能在实体机下载了软件包然后拉到虚拟机里面。 下载地址：https://www.python.org/downloads/release/python-355/ 把文件放到用户的主目录，然后切换到root。 安装Python3 先解压
 tar zxvf Python-3.5.4.tgz 然后进入
@@ -73,10 +73,10 @@ ln -s /usr/local/python3/bin/python3 /usr/bin/python3 安装完成后 0x03 配�
     
     <item>
       <title>用Vulnhub来练习漏洞靶场(爸爸再也不用担心我没有靶场练习了)</title>
-      <link>https://getshe11.com/posts/use-vulnhub-to-build-a-variety-of-hole-shooting-range-father-no-longer-have-to-worry-about-i-have-no-practice-range/</link>
+      <link>https://getshe11.com/post/use-vulnhub-to-build-a-variety-of-hole-shooting-range-father-no-longer-have-to-worry-about-i-have-no-practice-range/</link>
       <pubDate>Thu, 03 May 2018 17:04:29 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/use-vulnhub-to-build-a-variety-of-hole-shooting-range-father-no-longer-have-to-worry-about-i-have-no-practice-range/</guid>
+      <guid>https://getshe11.com/post/use-vulnhub-to-build-a-variety-of-hole-shooting-range-father-no-longer-have-to-worry-about-i-have-no-practice-range/</guid>
       <description>0x01 前言 Vulnhub它是一个提供各种漏洞环境的平台，里面大部分的环境是要用VMware或者VirtualBox打开运行的。 如果只是练习一些常见的漏洞可以看我另一篇用[Docker来搭建各种漏洞靶场(妈妈再也不用担心我没有靶场练习了)](https://getpass.cn/2018/03/14/Use Docker to build a variety of loopholes (my mother no longer has to worry about not having practiced in the shooting range)/)
 0x02 下载 https://www.vulnhub.com 里面有各种各样的镜像，可以下载到自己的机子上面练习。 镜像的下载地址和描述、难度等级等 随便点击下载，有些需要FQ才能下载，推荐官网的下载地址。 作为测试，我就下载JIS-CTF: VulnUpload作为演示吧
 Download (Mirror): https://download.vulnhub.com/jisctf/JIS-CTF-VulnUpload-CTF01.ova
@@ -86,15 +86,15 @@ Download (Mirror): https://download.vulnhub.com/jisctf/JIS-CTF-VulnUpload-CTF01.
     
     <item>
       <title>利用phpstorm&#43;xdebug进行断点调试</title>
-      <link>https://getshe11.com/posts/breakpoint-debugging-with-phpstorm&#43;xdebug/</link>
+      <link>https://getshe11.com/post/breakpoint-debugging-with-phpstorm&#43;xdebug/</link>
       <pubDate>Tue, 10 Apr 2018 10:17:16 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/breakpoint-debugging-with-phpstorm&#43;xdebug/</guid>
+      <guid>https://getshe11.com/post/breakpoint-debugging-with-phpstorm&#43;xdebug/</guid>
       <description>0x01 前言 在代码审计中，有些程序用到框架之类的要想去分析一个一个看和输出调试比较麻烦，如今有了xdebug神器，就比较方便了。
 0x02 配置过程 php的配置 我是用phpstudy的，所以在php目录下面都会有内置的插件：phpStudy\PHPTutorial\php\php-5.6.27-nts\ext\php_xdebug.dll
 如果是其他环境的话可以去官网下载相对应的版本：https://xdebug.org/download.php 然后放在ext目录下面。
 然后在php.ini配置文件里面加上以下内容：
-[XDebug] zend_extension=&amp;quot;D:\phpStudy\PHPTutorial\php\php-5.6.27-nts\ext\php_xdebug.dll&amp;quot; xdebug.profiler_append = 0 xdebug.profiler_enable = 1 xdebug.profiler_enable_trigger = 0 xdebug.profiler_output_dir=&amp;quot;D:\phpStudy\PHPTutorial\tmp\xdebug&amp;quot; xdebug.trace_output_dir=&amp;quot;D:\phpStudy\PHPTutorial\tmp\xdebug&amp;quot; xdebug.profiler_output_name = &amp;quot;cache.out.%t-%s&amp;quot; xdebug.remote_enable = 1 xdebug.remote_handler = &amp;quot;dbgp&amp;quot; xdebug.remote_host = &amp;quot;127.0.0.1&amp;quot; xdebug.remote_port = 9000 xdebug.idekey = PHPSTORM phpstorm的设置 在phpstorm里面设置： 然后在debug的选项填上我们配置文件里面的端口： 配置proxy端口和IDE key，端口是你网站的端口，IDE key是我们配置文件里面的，应该一致： 然后配置我们的debug配置： 这里和我们网站的信息一样
+[XDebug] zend_extension=&amp;#34;D:\phpStudy\PHPTutorial\php\php-5.6.27-nts\ext\php_xdebug.dll&amp;#34; xdebug.profiler_append = 0 xdebug.profiler_enable = 1 xdebug.profiler_enable_trigger = 0 xdebug.profiler_output_dir=&amp;#34;D:\phpStudy\PHPTutorial\tmp\xdebug&amp;#34; xdebug.trace_output_dir=&amp;#34;D:\phpStudy\PHPTutorial\tmp\xdebug&amp;#34; xdebug.profiler_output_name = &amp;#34;cache.out.%t-%s&amp;#34; xdebug.remote_enable = 1 xdebug.remote_handler = &amp;#34;dbgp&amp;#34; xdebug.remote_host = &amp;#34;127.0.0.1&amp;#34; xdebug.remote_port = 9000 xdebug.idekey = PHPSTORM phpstorm的设置 在phpstorm里面设置： 然后在debug的选项填上我们配置文件里面的端口： 配置proxy端口和IDE key，端口是你网站的端口，IDE key是我们配置文件里面的，应该一致： 然后配置我们的debug配置： 这里和我们网站的信息一样
 下面我是使用火狐的插件xdebug-ext进行调试，因为审计用得比较多的就是火狐了插件多哈。 IDE key也要对应上我们的配置： 0x03 测试 这里我用dvwa来测试，我们先打开火狐xdebug-ext，然后打开phpstorm的debug模式，然后随便下个断点： 然后我们访问程序，已经成功断下了： </description>
     </item>
     

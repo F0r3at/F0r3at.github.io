@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>ZZCMS on F0rmat&#39;Blog</title>
+    <title>ZZCMS on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/zzcms/</link>
-    <description>Recent content in ZZCMS on F0rmat&#39;Blog</description>
+    <description>Recent content in ZZCMS on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Tue, 06 Mar 2018 22:41:35 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/zzcms/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>ZZCMS8.2任意文件删除至getshell(每日一洞)</title>
-      <link>https://getshe11.com/posts/zzcms8.2-any-file-deleted-to-getshell/</link>
+      <link>https://getshe11.com/post/zzcms8.2-any-file-deleted-to-getshell/</link>
       <pubDate>Tue, 06 Mar 2018 22:41:35 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/zzcms8.2-any-file-deleted-to-getshell/</guid>
+      <guid>https://getshe11.com/post/zzcms8.2-any-file-deleted-to-getshell/</guid>
       <description>前言 今天就审计一个洞，时间不够用了。明天或者周末看看有空有拿一些难的漏洞来审计复现一下。
 环境 Web： Apache+PHP+MySql System： Ubuntu Browser： Firefox Quantum
 漏洞详情 任意文件删除 文件位置：/user/licence_save.php
@@ -22,10 +22,10 @@ $title=trim($_POST[&amp;#34;title&amp;#34;]);	$img=trim($_POST[&amp;#34;img&amp;
     
     <item>
       <title>ZZCMS8.2任意用户密码修改漏洞代码分析(每日一洞)</title>
-      <link>https://getshe11.com/posts/zzcms-any-user-password-changes-loopholes-code-points/</link>
+      <link>https://getshe11.com/post/zzcms-any-user-password-changes-loopholes-code-points/</link>
       <pubDate>Tue, 06 Mar 2018 00:03:07 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/zzcms-any-user-password-changes-loopholes-code-points/</guid>
+      <guid>https://getshe11.com/post/zzcms-any-user-password-changes-loopholes-code-points/</guid>
       <description>前言 这几天感冒很难受，再加上比赛的培训，估计后面会两天一篇。 这个小型CMS前段时间我也挖到了很多洞，这次就找seebug发的一篇来做审计。
 环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7
 漏洞详情 代码位置和代码  位置 \one\getpassword.php 代码  &amp;lt;?php if(!isset($_SESSION)){session_start();} include(&amp;#34;../inc/conn.php&amp;#34;); include(&amp;#34;../inc/top2.php&amp;#34;); include(&amp;#34;../inc/bottom.php&amp;#34;); $action = isset($_POST[&amp;#39;action&amp;#39;])?$_POST[&amp;#39;action&amp;#39;]:&amp;#34;&amp;#34;; $file=&amp;#34;../template/&amp;#34;.$siteskin.&amp;#34;/getpassword.htm&amp;#34;; if (file_exists($file)==false){ WriteErrMsg($file.&amp;#39;模板文件不存在&amp;#39;); exit; } $fso = fopen($file,&amp;#39;r&amp;#39;); $strout = fread($fso,filesize($file)); $stepall=strbetween($strout,&amp;#34;{step1}&amp;#34;,&amp;#34;{/step4}&amp;#34;); $step1=strbetween($strout,&amp;#34;{step1}&amp;#34;,&amp;#34;{/step1}&amp;#34;); $step2=strbetween($strout,&amp;#34;{step2}&amp;#34;,&amp;#34;{/step2}&amp;#34;); $step3=strbetween($strout,&amp;#34;{step3}&amp;#34;,&amp;#34;{/step3}&amp;#34;); $step4=strbetween($strout,&amp;#34;{step4}&amp;#34;,&amp;#34;{/step4}&amp;#34;); if ($action==&amp;#34;&amp;#34;){ $strout=str_replace(&amp;#34;{step1}&amp;#34;,&amp;#34;&amp;#34;,$strout) ; $strout=str_replace(&amp;#34;{/step1}&amp;#34;,&amp;#34;&amp;#34;,$strout) ; $strout=str_replace(&amp;#34;{step2}&amp;#34;.$step2.&amp;#34;{/step2}&amp;#34;,&amp;#34;&amp;#34;,$strout) ; $strout=str_replace(&amp;#34;{step3}&amp;#34;.$step3.&amp;#34;{/step3}&amp;#34;,&amp;#34;&amp;#34;,$strout) ; $strout=str_replace(&amp;#34;{step4}&amp;#34;.$step4.&amp;#34;{/step4}&amp;#34;,&amp;#34;&amp;#34;,$strout) ; } if ($action==&amp;#34;step1&amp;#34;){ $username = isset($_POST[&amp;#39;username&amp;#39;])?$_POST[&amp;#39;username&amp;#39;]:&amp;#34;&amp;#34;; $_SESSION[&amp;#39;username&amp;#39;]=$username; checkyzm($_POST[&amp;#34;yzm&amp;#34;]); $rs=query(&amp;#34;select mobile,email from zzcms_user where username=&amp;#39;&amp;#34; .</description>

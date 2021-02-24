@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>phpstorm on F0rmat&#39;Blog</title>
+    <title>phpstorm on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/phpstorm/</link>
-    <description>Recent content in phpstorm on F0rmat&#39;Blog</description>
+    <description>Recent content in phpstorm on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Tue, 10 Apr 2018 10:17:16 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/phpstorm/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>利用phpstorm&#43;xdebug进行断点调试</title>
-      <link>https://getshe11.com/posts/breakpoint-debugging-with-phpstorm&#43;xdebug/</link>
+      <link>https://getshe11.com/post/breakpoint-debugging-with-phpstorm&#43;xdebug/</link>
       <pubDate>Tue, 10 Apr 2018 10:17:16 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/breakpoint-debugging-with-phpstorm&#43;xdebug/</guid>
+      <guid>https://getshe11.com/post/breakpoint-debugging-with-phpstorm&#43;xdebug/</guid>
       <description>0x01 前言 在代码审计中，有些程序用到框架之类的要想去分析一个一个看和输出调试比较麻烦，如今有了xdebug神器，就比较方便了。
 0x02 配置过程 php的配置 我是用phpstudy的，所以在php目录下面都会有内置的插件：phpStudy\PHPTutorial\php\php-5.6.27-nts\ext\php_xdebug.dll
 如果是其他环境的话可以去官网下载相对应的版本：https://xdebug.org/download.php 然后放在ext目录下面。
 然后在php.ini配置文件里面加上以下内容：
-[XDebug] zend_extension=&amp;quot;D:\phpStudy\PHPTutorial\php\php-5.6.27-nts\ext\php_xdebug.dll&amp;quot; xdebug.profiler_append = 0 xdebug.profiler_enable = 1 xdebug.profiler_enable_trigger = 0 xdebug.profiler_output_dir=&amp;quot;D:\phpStudy\PHPTutorial\tmp\xdebug&amp;quot; xdebug.trace_output_dir=&amp;quot;D:\phpStudy\PHPTutorial\tmp\xdebug&amp;quot; xdebug.profiler_output_name = &amp;quot;cache.out.%t-%s&amp;quot; xdebug.remote_enable = 1 xdebug.remote_handler = &amp;quot;dbgp&amp;quot; xdebug.remote_host = &amp;quot;127.0.0.1&amp;quot; xdebug.remote_port = 9000 xdebug.idekey = PHPSTORM phpstorm的设置 在phpstorm里面设置： 然后在debug的选项填上我们配置文件里面的端口： 配置proxy端口和IDE key，端口是你网站的端口，IDE key是我们配置文件里面的，应该一致： 然后配置我们的debug配置： 这里和我们网站的信息一样
+[XDebug] zend_extension=&amp;#34;D:\phpStudy\PHPTutorial\php\php-5.6.27-nts\ext\php_xdebug.dll&amp;#34; xdebug.profiler_append = 0 xdebug.profiler_enable = 1 xdebug.profiler_enable_trigger = 0 xdebug.profiler_output_dir=&amp;#34;D:\phpStudy\PHPTutorial\tmp\xdebug&amp;#34; xdebug.trace_output_dir=&amp;#34;D:\phpStudy\PHPTutorial\tmp\xdebug&amp;#34; xdebug.profiler_output_name = &amp;#34;cache.out.%t-%s&amp;#34; xdebug.remote_enable = 1 xdebug.remote_handler = &amp;#34;dbgp&amp;#34; xdebug.remote_host = &amp;#34;127.0.0.1&amp;#34; xdebug.remote_port = 9000 xdebug.idekey = PHPSTORM phpstorm的设置 在phpstorm里面设置： 然后在debug的选项填上我们配置文件里面的端口： 配置proxy端口和IDE key，端口是你网站的端口，IDE key是我们配置文件里面的，应该一致： 然后配置我们的debug配置： 这里和我们网站的信息一样
 下面我是使用火狐的插件xdebug-ext进行调试，因为审计用得比较多的就是火狐了插件多哈。 IDE key也要对应上我们的配置： 0x03 测试 这里我用dvwa来测试，我们先打开火狐xdebug-ext，然后打开phpstorm的debug模式，然后随便下个断点： 然后我们访问程序，已经成功断下了： </description>
     </item>
     

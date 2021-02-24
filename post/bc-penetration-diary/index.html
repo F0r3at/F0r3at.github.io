@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>bc站渗透日记 - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="0x01前言 不废话了，反正就是遇到这个网站了哈哈哈
+0x02 过程 看了是do结尾的，以为是struts2，随便输点字符发现是thinkphp的：
+直接上RCE，靠，日不动。
+扫了下目录，发现没啥内容
+没办法了，直接nmap看下，然后ping看看ip
+直接打开ip，我去，一看就是phpstudy
+phpstudy 后门走起，直接干！
+就这样拿到shell咯，特别枯燥～
+whoami看下权限,不是administrator的权限
+用query user看下管理员在不在线，看到一个隐藏用户admin$(运行中是我登录的)，明显被人日过了
+看到admin$是administrator用户组,nice!
+不用说啦，直接改密码，我本身这个用户也是administrator用户组的
+ipconfig看下网络，双网卡，太幸运了。
+也开了3389
+直接rdp上3389
+翻下phpstudy的域名管理，找到后台登录域名
+登录页面，这妹子我喜欢～
+看了下他还有一个phpmyadmin，直接root/root进去了
+但是密码是特殊加密过的，安全码直接给出明文
+密码是加密的又如何，服务器权限都在手上了，干就完了！
+直接编辑登录文件，把登录验证部分去掉
+随便输入密码登录即可，但是没啥用，一个测试平台
+想继续干点内网的事情，看了下vmtools，没啥意思，我这边也没备用外网机子。
+0x03 结尾 就到这咯，如果再深入也就是拿多几台虚拟机，略懂安全技术世界的人，就是那么枯燥无味～" /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="bc站渗透日记" />
+<meta property="og:description" content="0x01前言 不废话了，反正就是遇到这个网站了哈哈哈
+0x02 过程 看了是do结尾的，以为是struts2，随便输点字符发现是thinkphp的：
+直接上RCE，靠，日不动。
+扫了下目录，发现没啥内容
+没办法了，直接nmap看下，然后ping看看ip
+直接打开ip，我去，一看就是phpstudy
+phpstudy 后门走起，直接干！
+就这样拿到shell咯，特别枯燥～
+whoami看下权限,不是administrator的权限
+用query user看下管理员在不在线，看到一个隐藏用户admin$(运行中是我登录的)，明显被人日过了
+看到admin$是administrator用户组,nice!
+不用说啦，直接改密码，我本身这个用户也是administrator用户组的
+ipconfig看下网络，双网卡，太幸运了。
+也开了3389
+直接rdp上3389
+翻下phpstudy的域名管理，找到后台登录域名
+登录页面，这妹子我喜欢～
+看了下他还有一个phpmyadmin，直接root/root进去了
+但是密码是特殊加密过的，安全码直接给出明文
+密码是加密的又如何，服务器权限都在手上了，干就完了！
+直接编辑登录文件，把登录验证部分去掉
+随便输入密码登录即可，但是没啥用，一个测试平台
+想继续干点内网的事情，看了下vmtools，没啥意思，我这边也没备用外网机子。
+0x03 结尾 就到这咯，如果再深入也就是拿多几台虚拟机，略懂安全技术世界的人，就是那么枯燥无味～" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/bc-penetration-diary/" />
+<meta property="article:published_time" content="2020-06-13T00:24:46+00:00" />
+<meta property="article:modified_time" content="2020-06-13T00:24:46+00:00" />
+<meta itemprop="name" content="bc站渗透日记">
+<meta itemprop="description" content="0x01前言 不废话了，反正就是遇到这个网站了哈哈哈
+0x02 过程 看了是do结尾的，以为是struts2，随便输点字符发现是thinkphp的：
+直接上RCE，靠，日不动。
+扫了下目录，发现没啥内容
+没办法了，直接nmap看下，然后ping看看ip
+直接打开ip，我去，一看就是phpstudy
+phpstudy 后门走起，直接干！
+就这样拿到shell咯，特别枯燥～
+whoami看下权限,不是administrator的权限
+用query user看下管理员在不在线，看到一个隐藏用户admin$(运行中是我登录的)，明显被人日过了
+看到admin$是administrator用户组,nice!
+不用说啦，直接改密码，我本身这个用户也是administrator用户组的
+ipconfig看下网络，双网卡，太幸运了。
+也开了3389
+直接rdp上3389
+翻下phpstudy的域名管理，找到后台登录域名
+登录页面，这妹子我喜欢～
+看了下他还有一个phpmyadmin，直接root/root进去了
+但是密码是特殊加密过的，安全码直接给出明文
+密码是加密的又如何，服务器权限都在手上了，干就完了！
+直接编辑登录文件，把登录验证部分去掉
+随便输入密码登录即可，但是没啥用，一个测试平台
+想继续干点内网的事情，看了下vmtools，没啥意思，我这边也没备用外网机子。
+0x03 结尾 就到这咯，如果再深入也就是拿多几台虚拟机，略懂安全技术世界的人，就是那么枯燥无味～">
+<meta itemprop="datePublished" content="2020-06-13T00:24:46+00:00" />
+<meta itemprop="dateModified" content="2020-06-13T00:24:46+00:00" />
+<meta itemprop="wordCount" content="31">
+
+
+
+<meta itemprop="keywords" content="bc," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="bc站渗透日记"/>
+<meta name="twitter:description" content="0x01前言 不废话了，反正就是遇到这个网站了哈哈哈
+0x02 过程 看了是do结尾的，以为是struts2，随便输点字符发现是thinkphp的：
+直接上RCE，靠，日不动。
+扫了下目录，发现没啥内容
+没办法了，直接nmap看下，然后ping看看ip
+直接打开ip，我去，一看就是phpstudy
+phpstudy 后门走起，直接干！
+就这样拿到shell咯，特别枯燥～
+whoami看下权限,不是administrator的权限
+用query user看下管理员在不在线，看到一个隐藏用户admin$(运行中是我登录的)，明显被人日过了
+看到admin$是administrator用户组,nice!
+不用说啦，直接改密码，我本身这个用户也是administrator用户组的
+ipconfig看下网络，双网卡，太幸运了。
+也开了3389
+直接rdp上3389
+翻下phpstudy的域名管理，找到后台登录域名
+登录页面，这妹子我喜欢～
+看了下他还有一个phpmyadmin，直接root/root进去了
+但是密码是特殊加密过的，安全码直接给出明文
+密码是加密的又如何，服务器权限都在手上了，干就完了！
+直接编辑登录文件，把登录验证部分去掉
+随便输入密码登录即可，但是没啥用，一个测试平台
+想继续干点内网的事情，看了下vmtools，没啥意思，我这边也没备用外网机子。
+0x03 结尾 就到这咯，如果再深入也就是拿多几台虚拟机，略懂安全技术世界的人，就是那么枯燥无味～"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/.">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">Bc站渗透日记</h1>
+        <p class="post-meta">Jun 13, 2020</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h1 id="0x01前言">0x01前言</h1>
+<p>不废话了，反正就是遇到这个网站了哈哈哈</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/1.png" alt="1"></p>
+<h1 id="0x02-过程">0x02 过程</h1>
+<p>看了是do结尾的，以为是struts2，随便输点字符发现是thinkphp的：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/2.png" alt="2"></p>
+<p>直接上RCE，靠，日不动。</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/3.png" alt="3"></p>
+<p>扫了下目录，发现没啥内容</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/4.png" alt="4"></p>
+<p>没办法了，直接nmap看下，然后ping看看ip</p>
+<p>直接打开ip，我去，一看就是phpstudy</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/5.png" alt="5"></p>
+<p>phpstudy 后门走起，直接干！</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/6.png" alt="6"></p>
+<p>就这样拿到shell咯，特别枯燥～</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/7.png" alt="7"></p>
+<p><code>whoami</code>看下权限,不是administrator的权限</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/8.png" alt="8"></p>
+<p>用<code>query user</code>看下管理员在不在线，看到一个隐藏用户<code>admin$</code>(运行中是我登录的)，明显被人日过了</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/9.png" alt="9"></p>
+<p>看到<code>admin$</code>是administrator用户组,nice!</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/10.png" alt="10"></p>
+<p>不用说啦，直接改密码，我本身这个用户也是administrator用户组的</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/11.png" alt="11"></p>
+<p><code>ipconfig</code>看下网络，双网卡，太幸运了。</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/12.png" alt="12"></p>
+<p>也开了3389</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/13.png" alt="13"></p>
+<p>直接rdp上3389</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/14.png" alt="14"></p>
+<p>翻下phpstudy的域名管理，找到后台登录域名</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/15.png" alt="15"></p>
+<p>登录页面，这妹子我喜欢～</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/image-20200613174110953.png" alt="image-20200613174110953"></p>
+<p>看了下他还有一个phpmyadmin，直接root/root进去了</p>
+<p>但是密码是特殊加密过的，安全码直接给出明文</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/16.png" alt="16"></p>
+<p>密码是加密的又如何，服务器权限都在手上了，干就完了！</p>
+<p>直接编辑登录文件，把登录验证部分去掉</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/17.png" alt="17"></p>
+<p>随便输入密码登录即可，但是没啥用，一个测试平台</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/18.png" alt="18"></p>
+<p>想继续干点内网的事情，看了下vmtools，没啥意思，我这边也没备用外网机子。</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/bc-penetration-diary/20.png" alt="20"></p>
+<h1 id="0x03-结尾">0x03 结尾</h1>
+<p>就到这咯，如果再深入也就是拿多几台虚拟机，略懂安全技术世界的人，就是那么枯燥无味～</p>
+
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/">
+            Maccms8最新命令执行漏洞
+        </a>
+    </li>
+    
+    
+    <li>下一篇：
+        <a href="https://getshe11.com/post/vaccine/">
+            Hackthebox-Vaccine
+        </a>
+    </li>
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/an-app-distribution-system-upload-vulnerability/" class="post-link">某云分发APP上传漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/" class="post-link">浅析PHP反序列化漏洞</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>

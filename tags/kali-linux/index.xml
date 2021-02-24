@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Kali Linux on F0rmat&#39;Blog</title>
+    <title>Kali Linux on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/kali-linux/</link>
-    <description>Recent content in Kali Linux on F0rmat&#39;Blog</description>
+    <description>Recent content in Kali Linux on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Wed, 30 Dec 2020 13:20:00 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/kali-linux/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>关于Kali2020安装Parallels Tools后Chrome显示空白</title>
-      <link>https://getshe11.com/posts/pd-chrome-3d/</link>
+      <link>https://getshe11.com/post/pd-chrome-3d/</link>
       <pubDate>Wed, 30 Dec 2020 13:20:00 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/pd-chrome-3d/</guid>
+      <guid>https://getshe11.com/post/pd-chrome-3d/</guid>
       <description>0x00 起因 kali安装好了pdtools，突然发现chrome和edge浏览器打开都是空白
 0x01 解决 逛pd的论坛发现是3D加速的问题，要么关闭3D加速：
 但是用pd就是奔着3D加速的，vmware也是开启了3d加速，但是跟没开一样，还是pd香。
@@ -23,10 +23,10 @@ google-chrome --disable-gpu microsoft-edge --disable-gpu 0x02 参考 https://for
     
     <item>
       <title>Kali Linux 2020.4安装Parallels Tools</title>
-      <link>https://getshe11.com/posts/install-parallels-tools-on-kali-linux-2020.4/</link>
+      <link>https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/</link>
       <pubDate>Wed, 30 Dec 2020 00:20:00 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/install-parallels-tools-on-kali-linux-2020.4/</guid>
+      <guid>https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/</guid>
       <description>0x00 前言 最近在vmware fusion里面用kali实在是太卡了，就想着换到pd会不会快一点呢？
 于是就开始立马动手！
 装完后，wow！很顺畅，但是屏幕分辨率和复制粘贴等操作不方便，就要开始装pd tools了，以前也是因为这个问题就放弃了在pd里面操作kali。

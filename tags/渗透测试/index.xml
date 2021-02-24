@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>渗透测试 on F0rmat&#39;Blog</title>
+    <title>渗透测试 on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/</link>
-    <description>Recent content in 渗透测试 on F0rmat&#39;Blog</description>
+    <description>Recent content in 渗透测试 on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Mon, 09 Sep 2019 02:11:19 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>一次艰难的渗透提权过程</title>
-      <link>https://getshe11.com/posts/a-difficult-penetration-process/</link>
+      <link>https://getshe11.com/post/a-difficult-penetration-process/</link>
       <pubDate>Mon, 09 Sep 2019 02:11:19 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/a-difficult-penetration-process/</guid>
+      <guid>https://getshe11.com/post/a-difficult-penetration-process/</guid>
       <description>0x01 前言 某日朋友丢了一条shell叫我提权，我拿到shell看了一下，菜刀蚁剑都无法执行命令。 Getshell的漏洞分析在:https://getpass.cn/2019/09/06/An-APP-distribution-system-upload-vulnerability/
 然后搞了好久熬了一个晚上才弄好，中间走了很多弯路。。。
 0x02 信息探测 上一个phpinfo看下环境

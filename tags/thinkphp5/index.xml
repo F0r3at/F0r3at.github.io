@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>ThinkPHP5 on F0rmat&#39;Blog</title>
+    <title>ThinkPHP5 on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/thinkphp5/</link>
-    <description>Recent content in ThinkPHP5 on F0rmat&#39;Blog</description>
+    <description>Recent content in ThinkPHP5 on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Sat, 22 Dec 2018 11:17:18 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/thinkphp5/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>ThinkPHP5 远程代码执行漏洞动态分析</title>
-      <link>https://getshe11.com/posts/thinkphp5-remote-code-execution-vulnerability-dynamic-analysis/</link>
+      <link>https://getshe11.com/post/thinkphp5-remote-code-execution-vulnerability-dynamic-analysis/</link>
       <pubDate>Sat, 22 Dec 2018 11:17:18 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/thinkphp5-remote-code-execution-vulnerability-dynamic-analysis/</guid>
+      <guid>https://getshe11.com/post/thinkphp5-remote-code-execution-vulnerability-dynamic-analysis/</guid>
       <description>0x01 前言 这个漏洞已经过去了十多天了，最近比较忙，一直没有写分析的文章。今天抽点时间出来写一篇动态分析的文章，远程执行漏洞用动态分析比较方便也看出整个执行的过程和一些变量参数。
  ThinkPHP官方最近修复了一个严重的远程代码执行漏洞。这个主要漏洞原因是由于框架对控制器名没有进行足够的校验导致在没有开启强制路由的情况下可以构造恶意语句执行远程命令，受影响的版本包括5.0和5.1版本。
  0x02 环境 程序源码下载：http://www.thinkphp.cn/download/967.html Web环境：Windows 10 x64+PHPStudy 2018 调试工具：phpstorm+xdebug(用vscode也可以，我比较习惯用phpstorm)

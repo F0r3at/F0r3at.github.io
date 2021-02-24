@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>phpok on F0rmat&#39;Blog</title>
+    <title>phpok on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/phpok/</link>
-    <description>Recent content in phpok on F0rmat&#39;Blog</description>
+    <description>Recent content in phpok on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Mon, 06 Aug 2018 08:19:40 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/phpok/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>phpok4.9后台getshell(每周一洞)</title>
-      <link>https://getshe11.com/posts/phpok4.9-background-getshell/</link>
+      <link>https://getshe11.com/post/phpok4.9-background-getshell/</link>
       <pubDate>Mon, 06 Aug 2018 08:19:40 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/phpok4.9-background-getshell/</guid>
+      <guid>https://getshe11.com/post/phpok4.9-background-getshell/</guid>
       <description>0x01 前言 昨天看到phpok可以申请cve就去审计了一下，存在漏洞的地方还是挺多的，时间不多找了个简单的任意文件上传漏洞。
 0x02 环境  程序下载：https://www.lanzous.com/i1ksjkd 集成环境是PHPstudy,PHP5.6。 安装程序   4. 先创建一个数据库phpok 5. 设置管理员账号密码 6. 安装成功 0x03 漏洞挖掘过程   打开打开FolderChangesView记录程序的文件变动。   登录后台 程序升级-&amp;gt;压缩包升级   编辑一个测试文件phpinfo.php,压缩为phpinfo.zip上传。   点击上传，压缩包里面的文件会被压缩到网站根目录   访问根目录下新生成的文件   0x04 漏洞分析 漏洞代码出现在framework/admin/update_control.php文件的unzip_f函数,可以看到用到lib里面的phpzip类，有兴趣可以去读下源码framework/libs/phpzip.php 大家可能疑问你怎么知道漏洞文件是这个，可以抓包来查看整过利用的过程，然后再去源码分析。 public function unzip_f() { $zipfile = $this-&amp;gt;get(&amp;#39;zipfile&amp;#39;); if(!$zipfile){ $this-&amp;gt;error(P_Lang(&amp;#39;未指定附件文件&amp;#39;)); } if(strpos($zipfile,&amp;#39;..&amp;#39;) !== false){ $this-&amp;gt;error(P_Lang(&amp;#39;不支持带..上级路径&amp;#39;)); } if(!file_exists($this-&amp;gt;dir_root.$zipfile)){ $this-&amp;gt;error(P_Lang(&amp;#39;ZIP文件不存在&amp;#39;)); } $this-&amp;gt;lib(&amp;#39;phpzip&amp;#39;)-&amp;gt;unzip($this-&amp;gt;dir_root.$zipfile,&amp;#39;data/update/&amp;#39;); $info = $this-&amp;gt;update_load(); if(!$info || (is_array($info) &amp;amp;&amp;amp; $info[&amp;#39;status&amp;#39;] == &amp;#39;error&amp;#39;)){ $this-&amp;gt;error($info[&amp;#39;content&amp;#39;]); } $this-&amp;gt;success(); } 可以看到用到lib里面的phpzip类，有兴趣可以去读下源码framework/libs/phpzip.</description>
     </item>
     
     <item>
       <title>phpok 4.9代码审计(每周一洞)</title>
-      <link>https://getshe11.com/posts/phpok-4.9-code-audit/</link>
+      <link>https://getshe11.com/post/phpok-4.9-code-audit/</link>
       <pubDate>Sun, 05 Aug 2018 14:54:07 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/phpok-4.9-code-audit/</guid>
+      <guid>https://getshe11.com/post/phpok-4.9-code-audit/</guid>
       <description>0x01 前言 一放暑假就特别多事情，很多事情都耽误了，看吐司文章看到一篇不错的审计文章，就学习下。
 0x02 环境搭建 环境没什么要求PHPstudy就能搞定，这个要先创建数据库再安装程序的。
 0x03 任意文件上传漏洞 漏洞复现  登录后台，点击模块管理   新建一个测试文件然后压缩  然后导入模块 可以看到已经上传到了/data/cache/的目录下面了：  访问文件   漏洞分析 漏洞代码在framework/admin/modulec_control.php 642行。 大家可以详细的分析这个流程，主要漏洞的代码是 $this-&amp;gt;lib(&#39;phpzip&#39;)-&amp;gt;unzip($this-&amp;gt;dir_root.$zipfile,$this-&amp;gt;dir_root.&#39;data/cache/&#39;); 没有做任何的过滤，直接把zip原样解压缩到/data/cache/的目录下面。

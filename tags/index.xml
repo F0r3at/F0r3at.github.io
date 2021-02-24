@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Tags on F0rmat&#39;Blog</title>
+    <title>Tags on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/</link>
-    <description>Recent content in Tags on F0rmat&#39;Blog</description>
+    <description>Recent content in Tags on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Wed, 30 Dec 2020 13:20:00 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Kali Linux</title>

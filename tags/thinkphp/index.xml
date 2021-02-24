@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Thinkphp on F0rmat&#39;Blog</title>
+    <title>Thinkphp on F0rmat的博客 | 专注于网络攻防和信息安全</title>
     <link>https://getshe11.com/tags/thinkphp/</link>
-    <description>Recent content in Thinkphp on F0rmat&#39;Blog</description>
+    <description>Recent content in Thinkphp on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
+    <language>zh-cn</language>
     <lastBuildDate>Wed, 18 Apr 2018 15:20:50 +0000</lastBuildDate><atom:link href="https://getshe11.com/tags/thinkphp/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Thinkphp框架 3.2.x sql注入漏洞分析(每周一洞)</title>
-      <link>https://getshe11.com/posts/thinkphp-framework-3.2.x-sql-injection-vulnerability-analysis/</link>
+      <link>https://getshe11.com/post/thinkphp-framework-3.2.x-sql-injection-vulnerability-analysis/</link>
       <pubDate>Wed, 18 Apr 2018 15:20:50 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/thinkphp-framework-3.2.x-sql-injection-vulnerability-analysis/</guid>
+      <guid>https://getshe11.com/post/thinkphp-framework-3.2.x-sql-injection-vulnerability-analysis/</guid>
       <description>0x01 前言 Thinkphp 3.2.x用的也挺多的，以前的程序大部分都是用这边版本的，如果移动到2版本又挺麻烦，而且小程序不说，大程序就复杂很多了。
 这次的漏洞是出现在WHERE这这个地方。
 0x02 环境搭建和漏洞复现 程序下载地址：http://www.thinkphp.cn/donate/download/id/610.html PHPstudy：Apache+php7.1+MySQL 工具：PHPstorm
@@ -25,10 +25,10 @@
     
     <item>
       <title>Thinkphp框架 &lt; 5.0.16 sql注入漏洞分析(每日一洞)</title>
-      <link>https://getshe11.com/posts/thinkphp-framework-_-5.0.16-sql-injection-vulnerability-analysis/</link>
+      <link>https://getshe11.com/post/thinkphp-framework-_-5.0.16-sql-injection-vulnerability-analysis/</link>
       <pubDate>Wed, 11 Apr 2018 09:34:29 +0000</pubDate>
       
-      <guid>https://getshe11.com/posts/thinkphp-framework-_-5.0.16-sql-injection-vulnerability-analysis/</guid>
+      <guid>https://getshe11.com/post/thinkphp-framework-_-5.0.16-sql-injection-vulnerability-analysis/</guid>
       <description>0x01 前言 前天在公众号看到石大神发的一篇审计thinkphp的文章,就想写一个分析流程，delay到了今天。昨天在先知也看到了chybeta发的一篇分析文章感觉也不错。分析过程，我也会做thinkphp部分功能的解析。 废话不多说，开始吧！
 0x02 环境搭建和漏洞复现 程序下载地址：http://www.thinkphp.cn/down/1126.html PHPstudy：Apache+php5.6+MySQL 工具：PHPstorm
  首先建立一个数据库名为：thinkphp 建立一个表名为：user 添加三个字段：id,name,password   在thinkphp的数据库文件填上刚才我们建立的数据库信息： 文件位置：\thinkphp\application\database.php  打开thinkphp的调试模式： 文件位置：\thinkphp\application\config.php  简单写一个update功能，石大神用到了模型，这里就简单写一个例子就行了。 文件位置：\thinkphp\application\index\controller\Index.php  &amp;lt;?php namespace app\index\controller; class Index { public function index() { $password = input(&amp;#39;get.password/a&amp;#39;); db(&amp;#39;user&amp;#39;)-&amp;gt;where([&amp;#39;id&amp;#39;=&amp;gt; 1])-&amp;gt;update([&amp;#39;password&amp;#39;=&amp;gt;$password]); } } 这里用到了thinkphp的助手函数input()，是专用来接收get，post等的值。具体可以看：https://www.kancloud.cn/manual/thinkphp5/118044 还有就是thinkphp的数据库操作，框架本身写好了我们调用就比较方便。所以为什么那么多人用框架去开发程序，快捷而且安全，不过也会有安全问题，就像今天这个sql漏洞，不过如果是新手的话总比自己写的好对吧哈。 具体可以看链接：https://www.kancloud.cn/manual/thinkphp5/135178 7. 现在就可以访问我们的payload了：

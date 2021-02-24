@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>Windows认证与域渗透 - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="0x00 Windows系统中的工作组、域、域控、活动目录 1、工作组 工作组是局域网中的一个概念，由许多在同一物理地点，而且被相同的局域网连接起来的用户组成的小组，也可以是遍布一个机构的，但却被同一网络连接的用户构成的逻辑小组。工作组是最常见最简单最普通的资源管理模式，就是将不同的电脑按功能分别列入不同的组中，加入工作组是为了区分用户计算机在网络中的类别，如果用户有工作组的话，在管理上会方便很多，可以共享/使用打印机和协和工作，很多小企业都是用这种方法来管理电脑，共享文件。
+工作组环境中的登录验证过程：工作组网络也称为“对等式”的网络，因为网络中每台计算机的地位都是平等的，它们的资源以及管理是分散在每台计算机之上，所以工作组环境的特点就是分散管理，工作组环境中的每台计算机都有自己的“本机安全账户数据库”，称为SAM数据库。这个SAM数据库是干什么用的呢？其实就是平时我们登录电脑时，当我们输入账户和密码后，此时就会去这个SAM数据库验证，如果我们输入的账户存在SAM数据库中，同时密码也正确，SAM数据库就会通知系统让我们登录。而这个SAM数据库默认就存储在C:\WINDOWS\system32\config文件夹中。
+2、域（Domain） 域英文叫DOMAIN——域(Domain)是Windows网络中独立运行的单位，域之间相互访问则需要建立信任关系(即Trust Relation)。信任关系是连接在域与域之间的桥梁。当一个域与其他域建立了信任关系后，2个域之间不但可以按需要相互进行管理，还可以跨网分配文件和打印机等设备资源，使不同的域之间实现网络资源的共享与管理，以及相互通信和数据传输。
+域既是 Windows 网络操作系统的逻辑组织单元，也是Internet的逻辑组织单元，在 Windows 网络操作系统中，域是安全边界。域管理员只能管理域的内部，除非其他的域显式地赋予他管理权限，他才能够访问或者管理其他的域，每个域都有自己的安全策略，以及它与其他域的安全信任关系。
+可以把域和工作组联系起来理解，在工作组上你一切的设置在本机上进行包括各种策略，用户登录也是登录在本机的，密码是放在本机的数据库来验证的。而如果你的计算机加入域的话，各种策略是域控制器统一设定，用户名和密码也是放到域控制器去验证，也就是说你的账号密码可以在同一域的任何一台计算机登录。登陆到域中的时候，身份验证是采用Kerberos协议在域控制器上进行的，登陆到此计算机则是通过SAM来进行NTLM验证的。
+3、域控（域控制器 ，Domain Controller，简写为DC） 在“域”模式下，至少有一台服务器负责每一台联入网络的电脑和用户的验证工作，相当于一个单位的门卫一样，称为“域控制器（Domain Controller，简写为DC）”。 域控制器中包含了由这个域的账户、密码、属于这个域的计算机等信息构成的数据库。当电脑联入网络时，域控制器首先要鉴别这台电脑是否是属于这个域的，用户使用的登录账号是否存在、密码是否正确。如果以上信息有一样不正确，那么域控制器就会拒绝这个用户从这台电脑登录。不能登录，用户就不能访问服务器上有权限保护的资源，他只能以对等网用户的方式访问Windows共享出来的资源，这样就在一定程度上保护了网络上的资源。
+域控是活动目录的存储地方，也就是说活动目录存储在域控制器内。安装了活动目录的计算机就称为域控制器，其实在你第一次安装活动目录的时候，你安装活动目录的那台计算机就成为了域控制器。一个域可以有一台或多台域控制器。最经典的做法是做一个主辅域控。
+4、活动目录（Active Directory 简称 AD） 活动目录是微软Windows Server中，负责架构中大型网路环境的集中式目录管理服务（Directory Services）。目录服务在微软平台上从Windows Server 2000开始引入，所以我们可以理解为活动目录是目录服务在微软平台的一种实现方式。当然目录服务在非微软平台上都有相应的实现。
+Windows Server 2003的域环境与工作组环境最大的不同是，域内所有的计算机共享一个集中式的目录数据库（又称为活动目录数据库），它包含着整个域内的对象（用户账户、计算机账户、打印机、共享文件等）和安全信息等等，而活动目录负责目录数据库的添加，修改，更新和删除。所以我们要在Windows Server 2003上实现域环境，其实就是要安装活动目录。活动目录为我们实现了目录服务，提供对企业网络环境的集中式管理。比如在域环境中，只需要在活动目录中创建一次Bob账户，那么就可以在任意200台电脑中的一台上登录Bob，如果要为Bob账户更改密码，只需要在活动目录中更改一次就可以了，也就是说域用户信息保存在活动目录中。
+5、域、域树、林和组织单元 活动目录的逻辑结构包裹：域（Domain）、域树(Domain Tree)、林（Forest）和组织单元（Organization Unit）。如下图域是一种逻辑分组，准确的说是一种环境，域是安全的最小边界。域环境能对网络中的资源集中统一的管理，要想实现域环境，你必须要计算机中安装活动目录。 域树是由一组具有连续命名空间的域组成的。如下图
+其中最上层的域名为contoso.com，这个域是这棵域树的根域(root domain)，此根域下面 有2个子域，分别是gsd.contoso.com和ged.contoso.com。从图中我们可以看出他们的命名空间具有连续性。例如，域gsd.contoso.com的后缀名包含着上一层父域的域名contoso.com。其实子域gsd.contoso.com和ged.contoso.com还都可以有自己的子域，图中我没有给出而已。 域树内的所有域共享一个Active Directory(活动目录)，这个活动目录内的数据分散地存储在各个域内，且每一个域只存储该域内的数据，如该域内的用户账户，计算机账户等，Windows Server 2003将存储在各个域内的对象总称为Active Directory。 林（Forest）是有一棵或多棵域树组成的，每棵域树独享连续的命名空间，不同域树之间没有命名空间的连续性。林中第一棵域树的根域也整个林的根域，同时也是林的名称。 组织单元（OU）是一种容器，它里面可以包含对象（用户账户，计算机账户等），也可以包含其他的组织单元（OU）。
+0x01 Windows认证 1、NTLM 简介 在NTLM协议问世之前，它对前身就是LM（LAN Manager）协议，其中NTLM协议全称是：“NT LAN Manager”。
+LM与NTLM协议的认证机制相同，但是加密算法不同。
+目前大多数的Windows都采用NTLM协议认证，LM协议已经基本淘汰了。
+这个NTLM是一种网络认证协议，与NTLM Hash的关系就是：NTLM网络认证协议是以NTLM Hash作为根本凭证进行认证的协议。
+也就是说，NTLM与NTLM Hash相互对应。
+认证过程 NTLM验证是一种Challenge/Response 验证机制，由三种消息组成:通常称为type 1(协商)，类型type 2(质询)和type 3(身份验证)。" /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="Windows认证与域渗透" />
+<meta property="og:description" content="0x00 Windows系统中的工作组、域、域控、活动目录 1、工作组 工作组是局域网中的一个概念，由许多在同一物理地点，而且被相同的局域网连接起来的用户组成的小组，也可以是遍布一个机构的，但却被同一网络连接的用户构成的逻辑小组。工作组是最常见最简单最普通的资源管理模式，就是将不同的电脑按功能分别列入不同的组中，加入工作组是为了区分用户计算机在网络中的类别，如果用户有工作组的话，在管理上会方便很多，可以共享/使用打印机和协和工作，很多小企业都是用这种方法来管理电脑，共享文件。
+工作组环境中的登录验证过程：工作组网络也称为“对等式”的网络，因为网络中每台计算机的地位都是平等的，它们的资源以及管理是分散在每台计算机之上，所以工作组环境的特点就是分散管理，工作组环境中的每台计算机都有自己的“本机安全账户数据库”，称为SAM数据库。这个SAM数据库是干什么用的呢？其实就是平时我们登录电脑时，当我们输入账户和密码后，此时就会去这个SAM数据库验证，如果我们输入的账户存在SAM数据库中，同时密码也正确，SAM数据库就会通知系统让我们登录。而这个SAM数据库默认就存储在C:\WINDOWS\system32\config文件夹中。
+2、域（Domain） 域英文叫DOMAIN——域(Domain)是Windows网络中独立运行的单位，域之间相互访问则需要建立信任关系(即Trust Relation)。信任关系是连接在域与域之间的桥梁。当一个域与其他域建立了信任关系后，2个域之间不但可以按需要相互进行管理，还可以跨网分配文件和打印机等设备资源，使不同的域之间实现网络资源的共享与管理，以及相互通信和数据传输。
+域既是 Windows 网络操作系统的逻辑组织单元，也是Internet的逻辑组织单元，在 Windows 网络操作系统中，域是安全边界。域管理员只能管理域的内部，除非其他的域显式地赋予他管理权限，他才能够访问或者管理其他的域，每个域都有自己的安全策略，以及它与其他域的安全信任关系。
+可以把域和工作组联系起来理解，在工作组上你一切的设置在本机上进行包括各种策略，用户登录也是登录在本机的，密码是放在本机的数据库来验证的。而如果你的计算机加入域的话，各种策略是域控制器统一设定，用户名和密码也是放到域控制器去验证，也就是说你的账号密码可以在同一域的任何一台计算机登录。登陆到域中的时候，身份验证是采用Kerberos协议在域控制器上进行的，登陆到此计算机则是通过SAM来进行NTLM验证的。
+3、域控（域控制器 ，Domain Controller，简写为DC） 在“域”模式下，至少有一台服务器负责每一台联入网络的电脑和用户的验证工作，相当于一个单位的门卫一样，称为“域控制器（Domain Controller，简写为DC）”。 域控制器中包含了由这个域的账户、密码、属于这个域的计算机等信息构成的数据库。当电脑联入网络时，域控制器首先要鉴别这台电脑是否是属于这个域的，用户使用的登录账号是否存在、密码是否正确。如果以上信息有一样不正确，那么域控制器就会拒绝这个用户从这台电脑登录。不能登录，用户就不能访问服务器上有权限保护的资源，他只能以对等网用户的方式访问Windows共享出来的资源，这样就在一定程度上保护了网络上的资源。
+域控是活动目录的存储地方，也就是说活动目录存储在域控制器内。安装了活动目录的计算机就称为域控制器，其实在你第一次安装活动目录的时候，你安装活动目录的那台计算机就成为了域控制器。一个域可以有一台或多台域控制器。最经典的做法是做一个主辅域控。
+4、活动目录（Active Directory 简称 AD） 活动目录是微软Windows Server中，负责架构中大型网路环境的集中式目录管理服务（Directory Services）。目录服务在微软平台上从Windows Server 2000开始引入，所以我们可以理解为活动目录是目录服务在微软平台的一种实现方式。当然目录服务在非微软平台上都有相应的实现。
+Windows Server 2003的域环境与工作组环境最大的不同是，域内所有的计算机共享一个集中式的目录数据库（又称为活动目录数据库），它包含着整个域内的对象（用户账户、计算机账户、打印机、共享文件等）和安全信息等等，而活动目录负责目录数据库的添加，修改，更新和删除。所以我们要在Windows Server 2003上实现域环境，其实就是要安装活动目录。活动目录为我们实现了目录服务，提供对企业网络环境的集中式管理。比如在域环境中，只需要在活动目录中创建一次Bob账户，那么就可以在任意200台电脑中的一台上登录Bob，如果要为Bob账户更改密码，只需要在活动目录中更改一次就可以了，也就是说域用户信息保存在活动目录中。
+5、域、域树、林和组织单元 活动目录的逻辑结构包裹：域（Domain）、域树(Domain Tree)、林（Forest）和组织单元（Organization Unit）。如下图域是一种逻辑分组，准确的说是一种环境，域是安全的最小边界。域环境能对网络中的资源集中统一的管理，要想实现域环境，你必须要计算机中安装活动目录。 域树是由一组具有连续命名空间的域组成的。如下图
+其中最上层的域名为contoso.com，这个域是这棵域树的根域(root domain)，此根域下面 有2个子域，分别是gsd.contoso.com和ged.contoso.com。从图中我们可以看出他们的命名空间具有连续性。例如，域gsd.contoso.com的后缀名包含着上一层父域的域名contoso.com。其实子域gsd.contoso.com和ged.contoso.com还都可以有自己的子域，图中我没有给出而已。 域树内的所有域共享一个Active Directory(活动目录)，这个活动目录内的数据分散地存储在各个域内，且每一个域只存储该域内的数据，如该域内的用户账户，计算机账户等，Windows Server 2003将存储在各个域内的对象总称为Active Directory。 林（Forest）是有一棵或多棵域树组成的，每棵域树独享连续的命名空间，不同域树之间没有命名空间的连续性。林中第一棵域树的根域也整个林的根域，同时也是林的名称。 组织单元（OU）是一种容器，它里面可以包含对象（用户账户，计算机账户等），也可以包含其他的组织单元（OU）。
+0x01 Windows认证 1、NTLM 简介 在NTLM协议问世之前，它对前身就是LM（LAN Manager）协议，其中NTLM协议全称是：“NT LAN Manager”。
+LM与NTLM协议的认证机制相同，但是加密算法不同。
+目前大多数的Windows都采用NTLM协议认证，LM协议已经基本淘汰了。
+这个NTLM是一种网络认证协议，与NTLM Hash的关系就是：NTLM网络认证协议是以NTLM Hash作为根本凭证进行认证的协议。
+也就是说，NTLM与NTLM Hash相互对应。
+认证过程 NTLM验证是一种Challenge/Response 验证机制，由三种消息组成:通常称为type 1(协商)，类型type 2(质询)和type 3(身份验证)。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/domain-security/" />
+<meta property="article:published_time" content="2020-12-16T09:31:30+00:00" />
+<meta property="article:modified_time" content="2020-12-16T09:31:30+00:00" />
+<meta itemprop="name" content="Windows认证与域渗透">
+<meta itemprop="description" content="0x00 Windows系统中的工作组、域、域控、活动目录 1、工作组 工作组是局域网中的一个概念，由许多在同一物理地点，而且被相同的局域网连接起来的用户组成的小组，也可以是遍布一个机构的，但却被同一网络连接的用户构成的逻辑小组。工作组是最常见最简单最普通的资源管理模式，就是将不同的电脑按功能分别列入不同的组中，加入工作组是为了区分用户计算机在网络中的类别，如果用户有工作组的话，在管理上会方便很多，可以共享/使用打印机和协和工作，很多小企业都是用这种方法来管理电脑，共享文件。
+工作组环境中的登录验证过程：工作组网络也称为“对等式”的网络，因为网络中每台计算机的地位都是平等的，它们的资源以及管理是分散在每台计算机之上，所以工作组环境的特点就是分散管理，工作组环境中的每台计算机都有自己的“本机安全账户数据库”，称为SAM数据库。这个SAM数据库是干什么用的呢？其实就是平时我们登录电脑时，当我们输入账户和密码后，此时就会去这个SAM数据库验证，如果我们输入的账户存在SAM数据库中，同时密码也正确，SAM数据库就会通知系统让我们登录。而这个SAM数据库默认就存储在C:\WINDOWS\system32\config文件夹中。
+2、域（Domain） 域英文叫DOMAIN——域(Domain)是Windows网络中独立运行的单位，域之间相互访问则需要建立信任关系(即Trust Relation)。信任关系是连接在域与域之间的桥梁。当一个域与其他域建立了信任关系后，2个域之间不但可以按需要相互进行管理，还可以跨网分配文件和打印机等设备资源，使不同的域之间实现网络资源的共享与管理，以及相互通信和数据传输。
+域既是 Windows 网络操作系统的逻辑组织单元，也是Internet的逻辑组织单元，在 Windows 网络操作系统中，域是安全边界。域管理员只能管理域的内部，除非其他的域显式地赋予他管理权限，他才能够访问或者管理其他的域，每个域都有自己的安全策略，以及它与其他域的安全信任关系。
+可以把域和工作组联系起来理解，在工作组上你一切的设置在本机上进行包括各种策略，用户登录也是登录在本机的，密码是放在本机的数据库来验证的。而如果你的计算机加入域的话，各种策略是域控制器统一设定，用户名和密码也是放到域控制器去验证，也就是说你的账号密码可以在同一域的任何一台计算机登录。登陆到域中的时候，身份验证是采用Kerberos协议在域控制器上进行的，登陆到此计算机则是通过SAM来进行NTLM验证的。
+3、域控（域控制器 ，Domain Controller，简写为DC） 在“域”模式下，至少有一台服务器负责每一台联入网络的电脑和用户的验证工作，相当于一个单位的门卫一样，称为“域控制器（Domain Controller，简写为DC）”。 域控制器中包含了由这个域的账户、密码、属于这个域的计算机等信息构成的数据库。当电脑联入网络时，域控制器首先要鉴别这台电脑是否是属于这个域的，用户使用的登录账号是否存在、密码是否正确。如果以上信息有一样不正确，那么域控制器就会拒绝这个用户从这台电脑登录。不能登录，用户就不能访问服务器上有权限保护的资源，他只能以对等网用户的方式访问Windows共享出来的资源，这样就在一定程度上保护了网络上的资源。
+域控是活动目录的存储地方，也就是说活动目录存储在域控制器内。安装了活动目录的计算机就称为域控制器，其实在你第一次安装活动目录的时候，你安装活动目录的那台计算机就成为了域控制器。一个域可以有一台或多台域控制器。最经典的做法是做一个主辅域控。
+4、活动目录（Active Directory 简称 AD） 活动目录是微软Windows Server中，负责架构中大型网路环境的集中式目录管理服务（Directory Services）。目录服务在微软平台上从Windows Server 2000开始引入，所以我们可以理解为活动目录是目录服务在微软平台的一种实现方式。当然目录服务在非微软平台上都有相应的实现。
+Windows Server 2003的域环境与工作组环境最大的不同是，域内所有的计算机共享一个集中式的目录数据库（又称为活动目录数据库），它包含着整个域内的对象（用户账户、计算机账户、打印机、共享文件等）和安全信息等等，而活动目录负责目录数据库的添加，修改，更新和删除。所以我们要在Windows Server 2003上实现域环境，其实就是要安装活动目录。活动目录为我们实现了目录服务，提供对企业网络环境的集中式管理。比如在域环境中，只需要在活动目录中创建一次Bob账户，那么就可以在任意200台电脑中的一台上登录Bob，如果要为Bob账户更改密码，只需要在活动目录中更改一次就可以了，也就是说域用户信息保存在活动目录中。
+5、域、域树、林和组织单元 活动目录的逻辑结构包裹：域（Domain）、域树(Domain Tree)、林（Forest）和组织单元（Organization Unit）。如下图域是一种逻辑分组，准确的说是一种环境，域是安全的最小边界。域环境能对网络中的资源集中统一的管理，要想实现域环境，你必须要计算机中安装活动目录。 域树是由一组具有连续命名空间的域组成的。如下图
+其中最上层的域名为contoso.com，这个域是这棵域树的根域(root domain)，此根域下面 有2个子域，分别是gsd.contoso.com和ged.contoso.com。从图中我们可以看出他们的命名空间具有连续性。例如，域gsd.contoso.com的后缀名包含着上一层父域的域名contoso.com。其实子域gsd.contoso.com和ged.contoso.com还都可以有自己的子域，图中我没有给出而已。 域树内的所有域共享一个Active Directory(活动目录)，这个活动目录内的数据分散地存储在各个域内，且每一个域只存储该域内的数据，如该域内的用户账户，计算机账户等，Windows Server 2003将存储在各个域内的对象总称为Active Directory。 林（Forest）是有一棵或多棵域树组成的，每棵域树独享连续的命名空间，不同域树之间没有命名空间的连续性。林中第一棵域树的根域也整个林的根域，同时也是林的名称。 组织单元（OU）是一种容器，它里面可以包含对象（用户账户，计算机账户等），也可以包含其他的组织单元（OU）。
+0x01 Windows认证 1、NTLM 简介 在NTLM协议问世之前，它对前身就是LM（LAN Manager）协议，其中NTLM协议全称是：“NT LAN Manager”。
+LM与NTLM协议的认证机制相同，但是加密算法不同。
+目前大多数的Windows都采用NTLM协议认证，LM协议已经基本淘汰了。
+这个NTLM是一种网络认证协议，与NTLM Hash的关系就是：NTLM网络认证协议是以NTLM Hash作为根本凭证进行认证的协议。
+也就是说，NTLM与NTLM Hash相互对应。
+认证过程 NTLM验证是一种Challenge/Response 验证机制，由三种消息组成:通常称为type 1(协商)，类型type 2(质询)和type 3(身份验证)。">
+<meta itemprop="datePublished" content="2020-12-16T09:31:30+00:00" />
+<meta itemprop="dateModified" content="2020-12-16T09:31:30+00:00" />
+<meta itemprop="wordCount" content="205">
+
+
+
+<meta itemprop="keywords" content="域渗透," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Windows认证与域渗透"/>
+<meta name="twitter:description" content="0x00 Windows系统中的工作组、域、域控、活动目录 1、工作组 工作组是局域网中的一个概念，由许多在同一物理地点，而且被相同的局域网连接起来的用户组成的小组，也可以是遍布一个机构的，但却被同一网络连接的用户构成的逻辑小组。工作组是最常见最简单最普通的资源管理模式，就是将不同的电脑按功能分别列入不同的组中，加入工作组是为了区分用户计算机在网络中的类别，如果用户有工作组的话，在管理上会方便很多，可以共享/使用打印机和协和工作，很多小企业都是用这种方法来管理电脑，共享文件。
+工作组环境中的登录验证过程：工作组网络也称为“对等式”的网络，因为网络中每台计算机的地位都是平等的，它们的资源以及管理是分散在每台计算机之上，所以工作组环境的特点就是分散管理，工作组环境中的每台计算机都有自己的“本机安全账户数据库”，称为SAM数据库。这个SAM数据库是干什么用的呢？其实就是平时我们登录电脑时，当我们输入账户和密码后，此时就会去这个SAM数据库验证，如果我们输入的账户存在SAM数据库中，同时密码也正确，SAM数据库就会通知系统让我们登录。而这个SAM数据库默认就存储在C:\WINDOWS\system32\config文件夹中。
+2、域（Domain） 域英文叫DOMAIN——域(Domain)是Windows网络中独立运行的单位，域之间相互访问则需要建立信任关系(即Trust Relation)。信任关系是连接在域与域之间的桥梁。当一个域与其他域建立了信任关系后，2个域之间不但可以按需要相互进行管理，还可以跨网分配文件和打印机等设备资源，使不同的域之间实现网络资源的共享与管理，以及相互通信和数据传输。
+域既是 Windows 网络操作系统的逻辑组织单元，也是Internet的逻辑组织单元，在 Windows 网络操作系统中，域是安全边界。域管理员只能管理域的内部，除非其他的域显式地赋予他管理权限，他才能够访问或者管理其他的域，每个域都有自己的安全策略，以及它与其他域的安全信任关系。
+可以把域和工作组联系起来理解，在工作组上你一切的设置在本机上进行包括各种策略，用户登录也是登录在本机的，密码是放在本机的数据库来验证的。而如果你的计算机加入域的话，各种策略是域控制器统一设定，用户名和密码也是放到域控制器去验证，也就是说你的账号密码可以在同一域的任何一台计算机登录。登陆到域中的时候，身份验证是采用Kerberos协议在域控制器上进行的，登陆到此计算机则是通过SAM来进行NTLM验证的。
+3、域控（域控制器 ，Domain Controller，简写为DC） 在“域”模式下，至少有一台服务器负责每一台联入网络的电脑和用户的验证工作，相当于一个单位的门卫一样，称为“域控制器（Domain Controller，简写为DC）”。 域控制器中包含了由这个域的账户、密码、属于这个域的计算机等信息构成的数据库。当电脑联入网络时，域控制器首先要鉴别这台电脑是否是属于这个域的，用户使用的登录账号是否存在、密码是否正确。如果以上信息有一样不正确，那么域控制器就会拒绝这个用户从这台电脑登录。不能登录，用户就不能访问服务器上有权限保护的资源，他只能以对等网用户的方式访问Windows共享出来的资源，这样就在一定程度上保护了网络上的资源。
+域控是活动目录的存储地方，也就是说活动目录存储在域控制器内。安装了活动目录的计算机就称为域控制器，其实在你第一次安装活动目录的时候，你安装活动目录的那台计算机就成为了域控制器。一个域可以有一台或多台域控制器。最经典的做法是做一个主辅域控。
+4、活动目录（Active Directory 简称 AD） 活动目录是微软Windows Server中，负责架构中大型网路环境的集中式目录管理服务（Directory Services）。目录服务在微软平台上从Windows Server 2000开始引入，所以我们可以理解为活动目录是目录服务在微软平台的一种实现方式。当然目录服务在非微软平台上都有相应的实现。
+Windows Server 2003的域环境与工作组环境最大的不同是，域内所有的计算机共享一个集中式的目录数据库（又称为活动目录数据库），它包含着整个域内的对象（用户账户、计算机账户、打印机、共享文件等）和安全信息等等，而活动目录负责目录数据库的添加，修改，更新和删除。所以我们要在Windows Server 2003上实现域环境，其实就是要安装活动目录。活动目录为我们实现了目录服务，提供对企业网络环境的集中式管理。比如在域环境中，只需要在活动目录中创建一次Bob账户，那么就可以在任意200台电脑中的一台上登录Bob，如果要为Bob账户更改密码，只需要在活动目录中更改一次就可以了，也就是说域用户信息保存在活动目录中。
+5、域、域树、林和组织单元 活动目录的逻辑结构包裹：域（Domain）、域树(Domain Tree)、林（Forest）和组织单元（Organization Unit）。如下图域是一种逻辑分组，准确的说是一种环境，域是安全的最小边界。域环境能对网络中的资源集中统一的管理，要想实现域环境，你必须要计算机中安装活动目录。 域树是由一组具有连续命名空间的域组成的。如下图
+其中最上层的域名为contoso.com，这个域是这棵域树的根域(root domain)，此根域下面 有2个子域，分别是gsd.contoso.com和ged.contoso.com。从图中我们可以看出他们的命名空间具有连续性。例如，域gsd.contoso.com的后缀名包含着上一层父域的域名contoso.com。其实子域gsd.contoso.com和ged.contoso.com还都可以有自己的子域，图中我没有给出而已。 域树内的所有域共享一个Active Directory(活动目录)，这个活动目录内的数据分散地存储在各个域内，且每一个域只存储该域内的数据，如该域内的用户账户，计算机账户等，Windows Server 2003将存储在各个域内的对象总称为Active Directory。 林（Forest）是有一棵或多棵域树组成的，每棵域树独享连续的命名空间，不同域树之间没有命名空间的连续性。林中第一棵域树的根域也整个林的根域，同时也是林的名称。 组织单元（OU）是一种容器，它里面可以包含对象（用户账户，计算机账户等），也可以包含其他的组织单元（OU）。
+0x01 Windows认证 1、NTLM 简介 在NTLM协议问世之前，它对前身就是LM（LAN Manager）协议，其中NTLM协议全称是：“NT LAN Manager”。
+LM与NTLM协议的认证机制相同，但是加密算法不同。
+目前大多数的Windows都采用NTLM协议认证，LM协议已经基本淘汰了。
+这个NTLM是一种网络认证协议，与NTLM Hash的关系就是：NTLM网络认证协议是以NTLM Hash作为根本凭证进行认证的协议。
+也就是说，NTLM与NTLM Hash相互对应。
+认证过程 NTLM验证是一种Challenge/Response 验证机制，由三种消息组成:通常称为type 1(协商)，类型type 2(质询)和type 3(身份验证)。"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/.">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">Windows认证与域渗透</h1>
+        <p class="post-meta">Dec 16, 2020</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h1 id="0x00-windows系统中的工作组域域控活动目录">0x00 Windows系统中的工作组、域、域控、活动目录</h1>
+<h2 id="1工作组">1、工作组</h2>
+<p>工作组是局域网中的一个概念，由许多在同一物理地点，而且被相同的局域网连接起来的用户组成的小组，也可以是遍布一个机构的，但却被同一网络连接的用户构成的逻辑小组。工作组是最常见最简单最普通的资源管理模式，就是将不同的电脑按功能分别列入不同的组中，加入工作组是为了区分用户计算机在网络中的类别，如果用户有工作组的话，在管理上会方便很多，可以共享/使用打印机和协和工作，很多小企业都是用这种方法来管理电脑，共享文件。</p>
+<p>工作组环境中的登录验证过程：工作组网络也称为“对等式”的网络，因为网络中每台计算机的地位都是平等的，它们的资源以及管理是分散在每台计算机之上，所以工作组环境的特点就是分散管理，工作组环境中的每台计算机都有自己的“本机安全账户数据库”，称为SAM数据库。这个SAM数据库是干什么用的呢？其实就是平时我们登录电脑时，当我们输入账户和密码后，此时就会去这个SAM数据库验证，如果我们输入的账户存在SAM数据库中，同时密码也正确，SAM数据库就会通知系统让我们登录。而这个SAM数据库默认就存储在<strong>C:\WINDOWS\system32\config</strong>文件夹中。</p>
+<!-- raw HTML omitted -->
+<h2 id="2域domain">2、域（Domain）</h2>
+<p>域英文叫DOMAIN——域(Domain)是Windows网络中独立运行的单位，域之间相互访问则需要建立信任关系(即Trust Relation)。信任关系是连接在域与域之间的桥梁。当一个域与其他域建立了信任关系后，2个域之间不但可以按需要相互进行管理，还可以跨网分配文件和打印机等设备资源，使不同的域之间实现网络资源的共享与管理，以及相互通信和数据传输。</p>
+<p>域既是 Windows 网络操作系统的逻辑组织单元，也是Internet的逻辑组织单元，在 Windows 网络操作系统中，域是安全边界。域管理员只能管理域的内部，除非其他的域显式地赋予他管理权限，他才能够访问或者管理其他的域，每个域都有自己的安全策略，以及它与其他域的安全信任关系。</p>
+<p>可以把域和工作组联系起来理解，在工作组上你一切的设置在本机上进行包括各种策略，用户登录也是登录在本机的，密码是放在本机的数据库来验证的。而如果你的计算机加入域的话，各种策略是域控制器统一设定，用户名和密码也是放到域控制器去验证，也就是说你的账号密码可以在同一域的任何一台计算机登录。登陆到域中的时候，身份验证是采用Kerberos协议在域控制器上进行的，登陆到此计算机则是通过SAM来进行NTLM验证的。</p>
+<h2 id="3域控域控制器-domain-controller简写为dc">3、域控（域控制器 ，Domain Controller，简写为DC）</h2>
+<p>在“域”模式下，至少有一台服务器负责每一台联入网络的电脑和用户的验证工作，相当于一个单位的门卫一样，称为“域控制器（Domain Controller，简写为DC）”。 域控制器中包含了由这个域的账户、密码、属于这个域的计算机等信息构成的数据库。当电脑联入网络时，域控制器首先要鉴别这台电脑是否是属于这个域的，用户使用的登录账号是否存在、密码是否正确。如果以上信息有一样不正确，那么域控制器就会拒绝这个用户从这台电脑登录。不能登录，用户就不能访问服务器上有权限保护的资源，他只能以对等网用户的方式访问Windows共享出来的资源，这样就在一定程度上保护了网络上的资源。</p>
+<p>域控是活动目录的存储地方，也就是说活动目录存储在域控制器内。安装了活动目录的计算机就称为域控制器，其实在你第一次安装活动目录的时候，你安装活动目录的那台计算机就成为了域控制器。一个域可以有一台或多台域控制器。最经典的做法是做一个主辅域控。</p>
+<h2 id="4活动目录active-directory-简称-ad">4、活动目录（Active Directory 简称 AD）</h2>
+<p>活动目录是微软Windows Server中，负责架构中大型网路环境的集中式目录管理服务（Directory Services）。目录服务在微软平台上从Windows Server 2000开始引入，所以我们可以理解为活动目录是目录服务在微软平台的一种实现方式。当然目录服务在非微软平台上都有相应的实现。</p>
+<p>Windows Server 2003的域环境与工作组环境最大的不同是，域内所有的计算机共享一个集中式的目录数据库（又称为活动目录数据库），它包含着整个域内的对象（用户账户、计算机账户、打印机、共享文件等）和安全信息等等，而活动目录负责目录数据库的添加，修改，更新和删除。所以我们要在Windows Server 2003上实现域环境，其实就是要安装活动目录。活动目录为我们实现了目录服务，提供对企业网络环境的集中式管理。比如在域环境中，只需要在活动目录中创建一次Bob账户，那么就可以在任意200台电脑中的一台上登录Bob，如果要为Bob账户更改密码，只需要在活动目录中更改一次就可以了，也就是说域用户信息保存在活动目录中。</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Domain-security/1.jpg" alt="1"></p>
+<h2 id="5域域树林和组织单元">5、域、域树、林和组织单元</h2>
+<p>活动目录的逻辑结构包裹：域（Domain）、域树(Domain Tree)、林（Forest）和组织单元（Organization Unit）。如下图<img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Domain-security/2.jpg" alt="2"></p>
+<p>域是一种逻辑分组，准确的说是一种环境，域是安全的最小边界。域环境能对网络中的资源集中统一的管理，要想实现域环境，你必须要计算机中安装活动目录。 域树是由一组具有连续命名空间的域组成的。如下图</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Domain-security/3.jpg" alt="3"></p>
+<p>其中最上层的域名为contoso.com，这个域是这棵域树的根域(root domain)，此根域下面
+有2个子域，分别是gsd.contoso.com和ged.contoso.com。从图中我们可以看出他们的命名空间具有连续性。例如，域gsd.contoso.com的后缀名包含着上一层父域的域名contoso.com。其实子域gsd.contoso.com和ged.contoso.com还都可以有自己的子域，图中我没有给出而已。
+域树内的所有域共享一个Active Directory(活动目录)，这个活动目录内的数据分散地存储在各个域内，且每一个域只存储该域内的数据，如该域内的用户账户，计算机账户等，Windows Server 2003将存储在各个域内的对象总称为Active Directory。
+林（Forest）是有一棵或多棵域树组成的，每棵域树独享连续的命名空间，不同域树之间没有命名空间的连续性。林中第一棵域树的根域也整个林的根域，同时也是林的名称。
+组织单元（OU）是一种容器，它里面可以包含对象（用户账户，计算机账户等），也可以包含其他的组织单元（OU）。</p>
+<h1 id="0x01-windows认证">0x01 Windows认证</h1>
+<h2 id="1ntlm">1、NTLM</h2>
+<h3 id="简介">简介</h3>
+<p>在NTLM协议问世之前，它对前身就是LM（LAN Manager）协议，其中NTLM协议全称是：“NT LAN Manager”。</p>
+<p>LM与NTLM协议的认证机制相同，但是加密算法不同。</p>
+<p>目前大多数的Windows都采用NTLM协议认证，LM协议已经基本淘汰了。</p>
+<p>这个NTLM是一种网络认证协议，与NTLM Hash的关系就是：NTLM网络认证协议是以NTLM Hash作为根本凭证进行认证的协议。</p>
+<p>也就是说，NTLM与NTLM Hash相互对应。</p>
+<h3 id="认证过程">认证过程</h3>
+<p>NTLM验证是一种Challenge/Response 验证机制，由三种消息组成:通常称为type 1(协商)，类型type 2(质询)和type 3(身份验证)。</p>
+<p>它基本上是这样工作的:</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Domain-security/4.png" alt="4"></p>
+<ol>
+<li>用户登录客户端电脑</li>
+<li>(type 1)客户端向服务器发送type 1(协商)消息,它主要包含客户端支持和服务器请求的功能列表。</li>
+<li>(type 2)服务器用type 2消息(质询)进行响应，这包含服务器支持和同意的功能列表。但是，最重要的是，它包含服务器产生的Challenge。</li>
+<li>(type 3)客户端用type 3消息(身份验证)回复质询。用户接收到步骤3中的challenge之后，使用用户hash与challenge进行加密运算得到response，将response,username,challeng发给服务器。消息中的response是最关键的部分，因为它们向服务器证明客户端用户已经知道帐户密码。</li>
+<li>服务器拿到type 3之后，使用challenge和用户hash进行加密得到response2与type 3发来的response进行比较。如果用户hash是存储在域控里面的话，那么没有用户hash，也就没办法计算response2。也就没法验证。这个时候用户服务器就会通过netlogon协议联系域控，建立一个安全通道,然后将type 1,type 2，type3 全部发给域控(这个过程也叫作Pass Through Authentication认证流程)</li>
+<li>域控使用challenge和用户hash进行加密得到response2，与type 3的response进行比较</li>
+</ol>
+<h3 id="hash传递攻击">hash传递攻击</h3>
+<p>hash传递攻击也叫pass the hash,简称PTH。</p>
+<p>在type3计算response的时候，客户端是使用用户的hash进行计算的，而不是用户密码进行计算的。因此在模拟用户登录的时候。是不需要用户明文密码的，只需要用户hash。微软在2014年5月13日发布了针对Pass The Hash的更新补丁kb2871997，标题为<code>&quot;Update to fix the Pass-The-Hash Vulnerability&quot;</code>,而在一周后却把标题改成了<code>&quot;Update to improve credentials protection and management&quot;</code>。(事实上，这个补丁不仅能够缓解PTH,还能阻止mimikatz 抓取明文密码，本系列文章侧重于协议认证的问题，因此不在这里扩展介绍其他内容)。</p>
+<ul>
+<li>
+<p>mimikatz</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">privilege：：debug
+sekurlsa::pth /user:win10 /domain:test.local /ntlm:6a6293bc0c56d7b9731e2d5506065e4a
+</code></pre></div><p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Domain-security/5.png" alt="5"></p>
+</li>
+<li>
+<p>impacket</p>
+<p>impacket底下执行远程命令执行的脚本有5个</p>
+<div class="highlight"><pre class="chroma"><code class="language-fallback" data-lang="fallback">psexec.py
+smbexec.py
+atexec.py
+wmiexec.py
+dcomexec.py
+</code></pre></div><p>都支持使用hash进行远程命令执行，通过&ndash;hashes指定hash,以psexec.py为例</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Domain-security/6.png" alt="6"></p>
+</li>
+<li>
+<p>cobalstrike</p>
+<p>cabalstrike支持批量得进行pth，在横向移动中撞密码hash中特别有效</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Domain-security/7.png" alt="7"></p>
+</li>
+<li>
+<p>Msf</p>
+<p>msf的<code>exploit/windows/smb/psexec_psh</code>模块是支持对一个网段进行pth的，在横向移动中撞密码hash中特别有效</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Domain-security/8.png" alt="8"></p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Domain-security/9.png" alt="9"></p>
+</li>
+</ul>
+<h2 id="2kerberos">2、Kerberos</h2>
+<h3 id="简介-1">简介</h3>
+<p>Kerberos协议是一种网络认证协议，其设计目标是通过密钥系统为客户/服务器应用程序提供强大的认证服务。在令牌窃取攻击中，该攻击的核心就是Kerberos协议。Kerberos协议要解决的实际上就是一个身份认证的问题，顾名思义，<strong>当一个客户机去访问一个服务器的某服务时，服务器如何判断该客户机是否有权限来访问本服务器上的服务，同时保证在该过程中的通讯内容即便被拦截或者被篡改也不影响整个通讯的安全性</strong>。</p>
+<h3 id="认证过程-1">认证过程</h3>
+<p>我觉得下面几位大佬讲得很详细了，可以仔细阅读一下：</p>
+<p><a href="https://daiker.gitbook.io/windows-protocol/kerberos">https://daiker.gitbook.io/windows-protocol/kerberos</a> Kerberos 篇</p>
+<p><a href="https://xz.aliyun.com/t/8187">https://xz.aliyun.com/t/8187</a> 内网渗透之kerberos协议分析</p>
+<p><a href="https://payloads.online/archivers/2018-11-30/1#0x02-kerberos%E5%9F%9F%E8%AE%A4%E8%AF%81">https://payloads.online/archivers/2018-11-30/1#0x02-kerberos%E5%9F%9F%E8%AE%A4%E8%AF%81</a>  Kerberos域认证</p>
+<h3 id="hash传递攻击-1">hash传递攻击</h3>
+<p>这里不是只有在使用NTLM认证时候才会存在这个问题，在kerberos请求认证的时候允许使用hash进行认证，而不是只有账号密码才能认证。</p>
+<p>就是由于在进行认证的时候，是用用户hash加密时间戳，即使在使用密码进行登录的情况下，也是先把密码加密成hash，再进行认证。因此在只有用户hash，没有明文密码的情况下也是可以进行认证的。不管是rubeus还是impacket里面的相关脚本都是支持直接使用hash进行认证。其中，如果hash的ntlm hash，然后加密方式是rc4，这种就算做是<code>pass the hash</code>，如果是hash是aes key(使用<code>sekurlsa::ekeys</code>导出来)，就算是<code>pass the key</code>。在很多地方，不支持rc4加密方式的时候，使用pass the key不失为一种好方法。</p>
+<p>这里有一篇比较详细的过程文章：https://www.freebuf.com/articles/245872.html</p>
+<h3 id="域用户名枚举">域用户名枚举</h3>
+<p>这里比较多文章可以参考：</p>
+<p><a href="https://cloud.tencent.com/developer/article/1180848">https://cloud.tencent.com/developer/article/1180848</a> 从暴力枚举用户到获取域所有信息</p>
+<p><a href="http://hackergu.com/kerberos-sec-list-brute-user/">http://hackergu.com/kerberos-sec-list-brute-user/</a>  域安全-域用户的枚举与爆破</p>
+<p><a href="https://www.secpulse.com/archives/68628.html">https://www.secpulse.com/archives/68628.html</a> Kerberos域用户名枚举</p>
+<h3 id="密码喷洒攻击password-spraying">密码喷洒攻击（Password Spraying）</h3>
+<p>这个可以看倾旋大佬的啦：https://payloads.online/archivers/2018-05-02/1 Windows域渗透 - 用户密码枚举</p>
+<h3 id="as-reproasting">AS-REPRoasting</h3>
+<p>看<a href="https://www.harmj0y.net/blog">harmj0y</a>大佬的分析文章：https://www.harmj0y.net/blog/activedirectory/roasting-as-reps/</p>
+<p>主要是因为域账号开启了下面这个选项：</p>
+<p><img src="https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/Domain-security/10.png" alt="10"></p>
+<p>它的验证方式变的不一样了，不再需要用户的hash去请求就能返回TGT票据和用户session部分的内容。</p>
+<p>攻击方法参考：https://blog.csdn.net/shuteer_xu/article/details/106066628</p>
+<h3 id="黄金票据">黄金票据</h3>
+<p>在Windows的kerberos认证过程中，Client将自己的信息发送给KDC，然后KDC使用krbtgt用户的Hash作为密钥进行加密，生成TGT。那么如果获取到了krbtgt的Hash值，不就可以伪造任意的tgt了吗。<strong>因为krbtgt只有域控制器上面才有,所以使用黄金凭据意味着你之前拿到过域控制器的权限,黄金凭据可以理解为一个后门</strong></p>
+<p>具体攻击可以参考：https://blog.csdn.net/qq_41874930/article/details/108266378</p>
+<h3 id="pass-the-ticket">Pass-the-Ticket</h3>
+<p>跟pth不同的是ptt是基于Kerberos协议进行攻击的，可以使用MS14-068进行攻击</p>
+<p>攻击方法可以参考：https://www.freebuf.com/articles/245872.html</p>
+<h3 id="kerberosting">kerberosting</h3>
+<p>这个有点类似上面的AS-REPRoasting，但这个是出现在TGS_REP中的。</p>
+<p>攻击方法可以参考：https://3gstudent.github.io/域渗透-Kerberoasting/</p>
+<h3 id="白银票据">白银票据</h3>
+<p>白银票据特点:</p>
+<ul>
+<li>1.不需要与KDC进行交互</li>
+<li>2.需要目标服务的NTLM Hash</li>
+</ul>
+<p>说白了，这个漏洞要在有目标服务器的NTLM Hash，至于说怎么拿到目标服务器是个问题。如果将目标主机配置为验证KDC PAC签名，则银票将不起作用。</p>
+<p>可以参考大佬的文章：https://payloads.online/archivers/2018-11-30/1#白银票据silver-tickets</p>
+<h1 id="0x03-结尾">0x03 结尾</h1>
+<p>最近因为要考OSCP，粗略的复习了一下windows的认证，以后有空还是把里面的每一个漏洞形成的原理以及过程复现一遍。</p>
+<h1 id="0x04-参考">0x04 参考</h1>
+<p><a href="https://blog.csdn.net/qq_34801745/article/details/108136791">https://blog.csdn.net/qq_34801745/article/details/108136791</a>
+<a href="https://www.harmj0y.net/blog/activedirectory/roasting-as-reps/">https://www.harmj0y.net/blog/activedirectory/roasting-as-reps/</a>
+<a href="https://eviladan0s.github.io/2020/06/04/bloodhound-learn/#%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8">https://eviladan0s.github.io/2020/06/04/bloodhound-learn/#%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8</a>
+<a href="https://xz.aliyun.com/t/7311#toc-6">https://xz.aliyun.com/t/7311#toc-6</a>
+<a href="https://www.freebuf.com/articles/245872.html">https://www.freebuf.com/articles/245872.html</a>
+<a href="https://xz.aliyun.com/t/8187#toc-0">https://xz.aliyun.com/t/8187#toc-0</a>
+<a href="https://loong716.top/posts/Kerberos/#%E6%B5%8B%E8%AF%95%E7%8E%AF%E5%A2%83">https://loong716.top/posts/Kerberos/#%E6%B5%8B%E8%AF%95%E7%8E%AF%E5%A2%83</a>
+<a href="https://daiker.gitbook.io/windows-protocol/">https://daiker.gitbook.io/windows-protocol/</a>
+<a href="https://www.cnblogs.com/-mo-/p/11890232.html">https://www.cnblogs.com/-mo-/p/11890232.html</a></p>
+<p><a href="https://payloads.online/archivers/2018-11-30/1">https://payloads.online/archivers/2018-11-30/1</a></p>
+
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/shield/">
+            Hackthebox-Shield
+        </a>
+    </li>
+    
+    
+    <li>下一篇：
+        <a href="https://getshe11.com/post/pathfinder/">
+            Hackthebox-Pathfinder
+        </a>
+    </li>
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/an-app-distribution-system-upload-vulnerability/" class="post-link">某云分发APP上传漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/analysis-of-php-deserialization-vulnerabilities/" class="post-link">浅析PHP反序列化漏洞</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>
