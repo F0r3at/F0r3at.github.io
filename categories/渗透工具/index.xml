@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>渗透工具 on F0rmat的博客 | 专注于网络攻防和信息安全</title>
+    <link>https://getshe11.com/categories/%E6%B8%97%E9%80%8F%E5%B7%A5%E5%85%B7/</link>
+    <description>Recent content in 渗透工具 on F0rmat的博客 | 专注于网络攻防和信息安全</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Sat, 06 Mar 2021 13:20:00 +0000</lastBuildDate><atom:link href="https://getshe11.com/categories/%E6%B8%97%E9%80%8F%E5%B7%A5%E5%85%B7/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Kali Linux安装Clash</title>
+      <link>https://getshe11.com/post/kali-install-clash/</link>
+      <pubDate>Sat, 06 Mar 2021 13:20:00 +0000</pubDate>
+      
+      <guid>https://getshe11.com/post/kali-install-clash/</guid>
+      <description>下载Clash https://github.com/Dreamacro/clash/releases
+下载
+clash-linux-amd64-v1.4.1.gz
+安装Clash 解压gz包
+gzip -d clash-linux-amd64-v1.4.1.gz
+给执行权限
+chmod +x ./clash-linux-amd64-v1.4.1
+运行Clash
+./clash-linux-amd64-v1.4.1
+配置Clash 运行后会在下面的目录有两个文件
+/home/kali/.config/clash
+下面这两个配置文件可以去Windows那边配置好的拖过来就行了 config.yml 一般在下面这个目录
+C:\Users\用户.config\clash\profiles
+Country.mmdb 一般在下面这个目录
+C:\Users\用户.config\clash
+你从profiles目录下可能是数字的yml，把它改成config.yml 就行了
+然后把config.yml 和Country.mmdb放在kali的/home/kali/.config/clash目录下
+运行Clash ./clash-linux-amd64-v1.4.1
+然后打开http://yacd.haishan.me/
+设置代理或者全局就行了 </description>
+    </item>
+    
+  </channel>
+</rss>
