@@ -1,0 +1,37 @@
+---
+title: Kali Linux安装Clash
+date: '2021-3-6 13:20:00'
+tags:
+  - Kali Linux
+categories:
+  - 渗透工具
+---
+## 下载Clash
+https://github.com/Dreamacro/clash/releases
+下载clash-linux-amd64-v1.4.1.gz
+## 安装Clash
+解压gz包
+`gzip -d clash-linux-amd64-v1.4.1.gz`
+给执行权限
+`chmod +x ./clash-linux-amd64-v1.4.1`
+运行Clash
+`./clash-linux-amd64-v1.4.1`
+## 配置Clash
+运行后会在下面的目录有两个文件
+**/home/kali/.config/clash**
+下面这两个配置文件可以去Windows那边配置好的拖过来就行了
+config.yml 一般在下面这个目录
+**C:\Users\用户\.config\clash\profiles**
+Country.mmdb  一般在下面这个目录
+**C:\Users\用户\.config\clash\**
+你从profiles目录下可能是数字的yml，把它改成config.yml 就行了
+![](https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/kali_install_clash/1.png)
+然后把config.yml 和Country.mmdb放在kali的/home/kali/.config/clash目录下
+![](https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/kali_install_clash/2.png)
+## 运行Clash
+`./clash-linux-amd64-v1.4.1`
+![](https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/kali_install_clash/3.png)
+然后打开http://yacd.haishan.me/
+![](https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/kali_install_clash/4.png)
+设置代理或者全局就行了
+![](https://pic-1252849007.cos.ap-guangzhou.myqcloud.com/kali_install_clash/5.png)
