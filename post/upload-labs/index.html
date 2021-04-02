@@ -23,6 +23,7 @@ setenforce 0
 就OK了。
 &amp;lt;?php include &amp;#39;../config.php&amp;#39;; include &amp;#39;../head.php&amp;#39;; include &amp;#39;../menu.php&amp;#39;; $is_upload = false; $msg = null; if (isset($_POST[&amp;#39;submit&amp;#39;])) { if (file_exists(UPLOAD_PATH)) {//判断UPLOAD_PATH上传目录是否存在  $temp_file = $_FILES[&amp;#39;upload_file&amp;#39;][&amp;#39;tmp_name&amp;#39;];//获取临时文件名  $img_path = UPLOAD_PATH . &amp;#39;/&amp;#39; . $_FILES[&amp;#39;upload_file&amp;#39;][&amp;#39;name&amp;#39;];//上传目录&#43;上传时的文件名  if (move_uploaded_file($temp_file, $img_path)){//把临时文件移到UPLOAD_PATH目录  $is_upload = true; } else { $msg = &amp;#39;上传出错！&amp;#39;; } } else { $msg = UPLOAD_PATH ." /><meta name="keywords"
   content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+  <meta name="referrer" content="no-referrer" />
 
 
 <link rel="stylesheet" href="https://getshe11.com/css/main.css">

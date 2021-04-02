@@ -18,6 +18,7 @@ PHP序列化：serialize 在PHP中，序列化用于存储或传递 PHP 的值�
 string serialize ( mixed $value ) 先看个例子
 &amp;lt;? php class TEST { public $data; private $pass; public function __construct($data, $pass) { $this-&amp;gt;data = $data; $this-&amp;gt;pass = $pass; } } $number = 34; $str = &amp;#39;user&amp;#39;; $bool = true; $null = NULL; $arr = array(&amp;#39;a&amp;#39; =&amp;gt; 10, &amp;#39;b&amp;#39; =&amp;gt; 200); $test = new TEST(&amp;#39;uu&amp;#39;, true); var_dump(serialize($number)); var_dump(serialize($str)); var_dump(serialize($bool)); var_dump(serialize($null)); var_dump(serialize($arr)); var_dump(serialize($test)); ?" /><meta name="keywords"
   content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+  <meta name="referrer" content="no-referrer" />
 
 
 <link rel="stylesheet" href="https://getshe11.com/css/main.css">

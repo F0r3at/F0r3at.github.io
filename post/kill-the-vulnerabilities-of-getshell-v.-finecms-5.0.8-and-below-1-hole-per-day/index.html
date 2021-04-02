@@ -14,6 +14,7 @@
 <meta name="description" content="前言 这几天都挺忙的，刚开学也在做比赛的培训，每天一洞这个事情一定得坚持下去，跟着上次的finecms，在漏洞时代又找了一个漏洞来审计。但是他改了函数里面的传参，我也弄了一阵子才搞明白这个传参原来需要加密过的参数，还有就是这个远程下载再上传，有个小问题，那篇文章没有说明，等下再系统说下。
 漏洞详情 代码位置和代码  位置 \finecms\dayrui\controllers\member\Api.php 代码  public function down_file() { $p = array(); $url = explode(&amp;#39;&amp;amp;&amp;#39;, $this-&amp;gt;input-&amp;gt;post(&amp;#39;url&amp;#39;)); //经过&amp;amp; 分割  foreach ($url as $t) { $item = explode(&amp;#39;=&amp;#39;, $t); $p[$item[0]] = $item[1]; } //经过 = 分割  !$this-&amp;gt;uid &amp;amp;&amp;amp; exit(dr_json(0, fc_lang(&amp;#39;游客不允许上传附件&amp;#39;))); //对$p[&amp;#39;code&amp;#39;] 进行解码  list($size, $ext) = explode(&amp;#39;|&amp;#39;, dr_authcode($p[&amp;#39;code&amp;#39;], &amp;#39;DECODE&amp;#39;)); //得到尺寸和后缀  $path = SYS_UPLOAD_PATH.&amp;#39;/&amp;#39;.date(&amp;#39;Ym&amp;#39;, SYS_TIME).&amp;#39;/&amp;#39;; !is_dir($path) &amp;amp;&amp;amp; dr_mkdirs($path); $furl = $this-&amp;gt;input-&amp;gt;post(&amp;#39;file&amp;#39;); $file = dr_catcher_data($furl); //dr_catcher_data 是读取远程文件  !" /><meta name="keywords"
   content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+  <meta name="referrer" content="no-referrer" />
 
 
 <link rel="stylesheet" href="https://getshe11.com/css/main.css">

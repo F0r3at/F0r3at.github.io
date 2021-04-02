@@ -19,6 +19,7 @@
 首先我们现在thinkPHP的配置文件/system/config/config.php里面修改下面这两个为true 然后去打开网站(这个适合刚刚搭建还没开始安装)，它会自动跳转到安装的页面。做了刚才的设置后会在右下角出现一个小绿帽，点击就可以看到文件的加载流程。 这里有很多文件会预加载，我们主要看它的路由文件Route.php 我们可以看到，这里检查了install.lock文件存不存在，如果不存在就会跳转到安装的界面进行安装。 0x05 漏洞代码分析过程 /app/install/controller/Install.php问题出现在这个文件，它里面的就在index这里检查的install.lock的存在，但是在installPost这个方法里面却没有检查，也没有做关联，在install.html里面直接就跳过了，从而导致了程序重装。 下面直接按照顺序读下面的代码就行了，我都注释好了。就有两个点：
  一个是遍历数据库内容那里，我输出了$matches截图这个内容给你们好理解。  再一个是配置文件的替换，读到$conf = str_replace(&amp;quot;#{$key}#&amp;quot;, $value, $conf);这句的时候我顺便截图了一个配置的内容。   public function installPost(Request $request) { header(&amp;#39;Access-Control-Allow-Origin: *&amp;#39;); header(&amp;#39;Access-Control-Allow-Credentials: true&amp;#39;); header(&amp;#39;Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS&amp;#39;); header(&amp;#39;Access-Control-Allow-Headers: Content-Type, Content-Range,access-token, secret-key,access-key,uid,sid,terminal,X-File-Name,Content-Disposition, Content-Description&amp;#39;); if (Request::instance()-&amp;gt;isPost()) {//判断是否有post的数据  $dbconfig[&amp;#39;type&amp;#39;]=&amp;#34;mysql&amp;#34;;//定义数据库类型  $dbconfig[&amp;#39;hostname&amp;#39;]=input(&amp;#39;post." /><meta name="keywords"
   content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+  <meta name="referrer" content="no-referrer" />
 
 
 <link rel="stylesheet" href="https://getshe11.com/css/main.css">

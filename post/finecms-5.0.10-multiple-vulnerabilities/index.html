@@ -16,6 +16,7 @@
 0x03 任意文件上传漏洞 1.漏洞复现 用十六进制编辑器写一个有一句话的图片 去网站注册一个账号，然后到上传头像的地方。 抓包，把jepg的改成php发包。 可以看到文件已经上传到到/uploadfile/member/用户ID/0x0.php 2.漏洞分析 文件：finecms/dayrui/controllers/member/Account.php 177~244行
 /** * 上传头像处理 * 传入头像压缩包，解压到指定文件夹后删除非图片文件 */ public function upload() { // 创建图片存储文件夹  $dir = SYS_UPLOAD_PATH.&amp;#39;/member/&amp;#39;.$this-&amp;gt;uid.&amp;#39;/&amp;#39;; @dr_dir_delete($dir); !is_dir($dir) &amp;amp;&amp;amp; dr_mkdirs($dir); if ($_POST[&amp;#39;tx&amp;#39;]) { $file = str_replace(&amp;#39; &amp;#39;, &amp;#39;&#43;&amp;#39;, $_POST[&amp;#39;tx&amp;#39;]); if (preg_match(&amp;#39;/^(data:\s*image\/(\w&#43;);base64,)/&amp;#39;, $file, $result)){ $new_file = $dir.&amp;#39;0x0.&amp;#39;.$result[2]; if (!@file_put_contents($new_file, base64_decode(str_replace($result[1], &amp;#39;&amp;#39;, $file)))) { exit(dr_json(0, &amp;#39;目录权限不足或磁盘已满&amp;#39;)); } else { $this-&amp;gt;load-&amp;gt;library(&amp;#39;image_lib&amp;#39;); $config[&amp;#39;create_thumb&amp;#39;] = TRUE; $config[&amp;#39;thumb_marker&amp;#39;] = &amp;#39;&amp;#39;; $config[&amp;#39;maintain_ratio&amp;#39;] = FALSE; $config[&amp;#39;source_image&amp;#39;] = $new_file; foreach (array(30, 45, 90, 180) as $a) { $config[&amp;#39;width&amp;#39;] = $config[&amp;#39;height&amp;#39;] = $a; $config[&amp;#39;new_image&amp;#39;] = $dir." /><meta name="keywords"
   content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+  <meta name="referrer" content="no-referrer" />
 
 
 <link rel="stylesheet" href="https://getshe11.com/css/main.css">

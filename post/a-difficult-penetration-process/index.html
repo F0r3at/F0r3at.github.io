@@ -17,6 +17,7 @@
 PHP Version 5.6.30 disable_functions: passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,popen,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru sendmail_path:/usr/sbin/sendmail -t -i mysql:	mysqlnd 5.0.11-dev - 20120503 宝塔警告！ 问了宝塔的开发工程师，宝塔确实是做得挺好的，Windows的基本没什么希望了，看下Linux的。 0x03 肝 putenv这个没禁可以利用一下，看了P神的一篇文章：https://www.leavesongs.com/PHP/php-bypass-disable-functions-by-CVE-2014-6271.html http://www.exploit-db.com/exploits/35146/ 的POC
 &amp;lt;?php # Exploit Title: PHP 5.x Shellshock Exploit (bypass disable_functions) # Google Dork: none # Date: 10/31/2014 # Exploit Author: Ryan King (Starfall) # Vendor Homepage: http://php.net # Software Link: http://php.net/get/php-5.6.2.tar.bz2/from/a/mirror # Version: 5.* (tested on 5.6.2) # Tested on: Debian 7 and CentOS 5 and 6 # CVE: CVE-2014-6271  function shellshock($cmd) { // Execute a command via CVE-2014-6271 @mail." /><meta name="keywords"
   content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+  <meta name="referrer" content="no-referrer" />
 
 
 <link rel="stylesheet" href="https://getshe11.com/css/main.css">

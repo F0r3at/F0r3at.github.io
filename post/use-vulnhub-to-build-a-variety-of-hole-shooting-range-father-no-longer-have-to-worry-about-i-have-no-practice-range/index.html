@@ -17,6 +17,7 @@ Download (Mirror): https://download.vulnhub.com/jisctf/JIS-CTF-VulnUpload-CTF01.
 0x03 安装 下载完后，解压出来，会看到一个ovf后缀的文件 打开VMware，点击打开，找到我们刚才解压的文件，选择ovf文件 选择存放的位置，然后点击导入 最后等待导入完成，导入速度看本机性能和镜像的大小 0x04 设置 导入完成后，我设置的网络模式是NAT的，因为我内网比较多机子，所以选择这个方便等下扫描。还有就是内存大小，如果本机内存小于4G的请修改内存到4G以下。 我们点击开启虚拟机，到开机的页面我们回车选择第二个Ubuntu的高级选项（如果启动有网络正常的话可以直接正常开机，如果网络不正常可以按下面步骤操作） 进到高级选项，我们再次回车选择第二个Linux内核版本的恢复模式 等待系统启动完毕后，看到这个页面，我们继续回车进入 回车后会弹出选择界面，我们选择root一行回车，然后再次回车进入命令行模式 输入命令查看所以的网卡：ifconfig -a 我的是ens33，然后继续输入命令 vi /etc/network/interface修改网络配置文件 修改这两个地方，改成你的网卡名称，然后ctrl&#43;x保存，最后输入reboot重启，OK！ 0x05 完成任务吧！ 作者给的描述是要我们找到靶机里面的5个flag
  Description: There are five flags on this machine. Try to find them." /><meta name="keywords"
   content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+  <meta name="referrer" content="no-referrer" />
 
 
 <link rel="stylesheet" href="https://getshe11.com/css/main.css">

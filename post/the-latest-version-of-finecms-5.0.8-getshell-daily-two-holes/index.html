@@ -16,6 +16,7 @@
 核心代码：
 public function data2() { $data = array(); // 来路认证  if (defined(&amp;#39;SYS_REFERER&amp;#39;) &amp;amp;&amp;amp; strlen(SYS_REFERER)) { $http = $_SERVER[&amp;#39;HTTP_REFERER&amp;#39;] ? $_SERVER[&amp;#39;HTTP_REFERER&amp;#39;] : $_GET[&amp;#39;http_referer&amp;#39;]; if (empty($http)) { $data = array(&amp;#39;msg&amp;#39; =&amp;gt; &amp;#39;来路认证失败（NULL）&amp;#39;, &amp;#39;code&amp;#39; =&amp;gt; 0); } elseif (strpos($http, SYS_REFERER) === FALSE) { $data = array(&amp;#39;msg&amp;#39; =&amp;gt; &amp;#39;来路认证失败（非法请求）&amp;#39;, &amp;#39;code&amp;#39; =&amp;gt; 0); } } //如果data为空就继续  if (!$data) { // 安全码认证  //从get接收auth的参数  $auth = $this-&amp;gt;input-&amp;gt;get(&amp;#39;auth&amp;#39;); //SYS_KEY的值为24b16fede9a67c9251d3e7c7161c83ac，如果auth不等于md5加密后的SYS_KEY就执行  if ($auth !" /><meta name="keywords"
   content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+  <meta name="referrer" content="no-referrer" />
 
 
 <link rel="stylesheet" href="https://getshe11.com/css/main.css">

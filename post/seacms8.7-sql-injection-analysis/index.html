@@ -18,6 +18,7 @@ http://10.211.55.4/upload/comment/api/index.php?gid=1&amp;amp;page=2&amp;amp;rli
 漏洞文件是在：comment/api/index.php
 &amp;lt;?php session_start(); require_once(&amp;#34;../../include/common.php&amp;#34;); $id = (isset($gid) &amp;amp;&amp;amp; is_numeric($gid)) ? $gid : 0; $page = (isset($page) &amp;amp;&amp;amp; is_numeric($page)) ? $page : 1; $type = (isset($type) &amp;amp;&amp;amp; is_numeric($type)) ? $type : 1; $pCount = 0; $jsoncachefile = sea_DATA.&amp;#34;/cache/review/$type/$id.js&amp;#34;; //缓存第一页的评论 if($page&amp;lt;2) { if(file_exists($jsoncachefile)) { $json=LoadFile($jsoncachefile); die($json); } } $h = ReadData($id,$page); $rlist = array(); if($page&amp;lt;2) { createTextFile($h,$jsoncachefile); } die($h);	function ReadData($id,$page) { global $type,$pCount,$rlist; $ret = array(&amp;#34;&amp;#34;,&amp;#34;&amp;#34;,$page,0,10,$type,$id); if($id&amp;gt;0) { $ret[0] = Readmlist($id,$page,$ret[4]); $ret[3] = $pCount; $x = implode(&amp;#39;,&amp;#39;,$rlist); if(!" /><meta name="keywords"
   content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+  <meta name="referrer" content="no-referrer" />
 
 
 <link rel="stylesheet" href="https://getshe11.com/css/main.css">
