@@ -57,9 +57,10 @@ LM与NTLM协议的认证机制相同，但是加密算法不同。
 也就是说，NTLM与NTLM Hash相互对应。
 认证过程 NTLM验证是一种Challenge/Response 验证机制，由三种消息组成:通常称为type 1(协商)，类型type 2(质询)和type 3(身份验证)。" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://getshe11.com/post/domain-security/" />
-<meta property="article:published_time" content="2020-12-16T09:31:30+00:00" />
-<meta property="article:modified_time" content="2020-12-16T09:31:30+00:00" />
+<meta property="og:url" content="https://getshe11.com/post/domain-security/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2020-12-16T09:31:30&#43;00:00" />
+<meta property="article:modified_time" content="2020-12-16T09:31:30&#43;00:00" />
+
 <meta itemprop="name" content="Windows认证与域渗透">
 <meta itemprop="description" content="0x00 Windows系统中的工作组、域、域控、活动目录 1、工作组 工作组是局域网中的一个概念，由许多在同一物理地点，而且被相同的局域网连接起来的用户组成的小组，也可以是遍布一个机构的，但却被同一网络连接的用户构成的逻辑小组。工作组是最常见最简单最普通的资源管理模式，就是将不同的电脑按功能分别列入不同的组中，加入工作组是为了区分用户计算机在网络中的类别，如果用户有工作组的话，在管理上会方便很多，可以共享/使用打印机和协和工作，很多小企业都是用这种方法来管理电脑，共享文件。
 工作组环境中的登录验证过程：工作组网络也称为“对等式”的网络，因为网络中每台计算机的地位都是平等的，它们的资源以及管理是分散在每台计算机之上，所以工作组环境的特点就是分散管理，工作组环境中的每台计算机都有自己的“本机安全账户数据库”，称为SAM数据库。这个SAM数据库是干什么用的呢？其实就是平时我们登录电脑时，当我们输入账户和密码后，此时就会去这个SAM数据库验证，如果我们输入的账户存在SAM数据库中，同时密码也正确，SAM数据库就会通知系统让我们登录。而这个SAM数据库默认就存储在C:\WINDOWS\system32\config文件夹中。
@@ -77,15 +78,10 @@ LM与NTLM协议的认证机制相同，但是加密算法不同。
 目前大多数的Windows都采用NTLM协议认证，LM协议已经基本淘汰了。
 这个NTLM是一种网络认证协议，与NTLM Hash的关系就是：NTLM网络认证协议是以NTLM Hash作为根本凭证进行认证的协议。
 也就是说，NTLM与NTLM Hash相互对应。
-认证过程 NTLM验证是一种Challenge/Response 验证机制，由三种消息组成:通常称为type 1(协商)，类型type 2(质询)和type 3(身份验证)。">
-<meta itemprop="datePublished" content="2020-12-16T09:31:30+00:00" />
-<meta itemprop="dateModified" content="2020-12-16T09:31:30+00:00" />
+认证过程 NTLM验证是一种Challenge/Response 验证机制，由三种消息组成:通常称为type 1(协商)，类型type 2(质询)和type 3(身份验证)。"><meta itemprop="datePublished" content="2020-12-16T09:31:30&#43;00:00" />
+<meta itemprop="dateModified" content="2020-12-16T09:31:30&#43;00:00" />
 <meta itemprop="wordCount" content="205">
-
-
-
-<meta itemprop="keywords" content="域渗透," />
-<meta name="twitter:card" content="summary"/>
+<meta itemprop="keywords" content="域渗透," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Windows认证与域渗透"/>
 <meta name="twitter:description" content="0x00 Windows系统中的工作组、域、域控、活动目录 1、工作组 工作组是局域网中的一个概念，由许多在同一物理地点，而且被相同的局域网连接起来的用户组成的小组，也可以是遍布一个机构的，但却被同一网络连接的用户构成的逻辑小组。工作组是最常见最简单最普通的资源管理模式，就是将不同的电脑按功能分别列入不同的组中，加入工作组是为了区分用户计算机在网络中的类别，如果用户有工作组的话，在管理上会方便很多，可以共享/使用打印机和协和工作，很多小企业都是用这种方法来管理电脑，共享文件。
 工作组环境中的登录验证过程：工作组网络也称为“对等式”的网络，因为网络中每台计算机的地位都是平等的，它们的资源以及管理是分散在每台计算机之上，所以工作组环境的特点就是分散管理，工作组环境中的每台计算机都有自己的“本机安全账户数据库”，称为SAM数据库。这个SAM数据库是干什么用的呢？其实就是平时我们登录电脑时，当我们输入账户和密码后，此时就会去这个SAM数据库验证，如果我们输入的账户存在SAM数据库中，同时密码也正确，SAM数据库就会通知系统让我们登录。而这个SAM数据库默认就存储在C:\WINDOWS\system32\config文件夹中。
@@ -344,6 +340,10 @@ dcomexec.py
     <ul class="post-list">
         
         <li>
+            <a href="https://getshe11.com/post/research-on-php-deserialization/" class="post-link">PHP反序列化研究</a>
+        </li>
+        
+        <li>
             <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/" class="post-link">Gitlab Cookie 反序列化漏洞研究</a>
         </li>
         
@@ -397,10 +397,6 @@ dcomexec.py
         
         <li>
             <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
-        </li>
-        
-        <li>
-            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
         </li>
         
     </ul>

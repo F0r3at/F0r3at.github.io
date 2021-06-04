@@ -35,24 +35,20 @@ if( isset( $_REQUEST[&amp;#39;ajax_path&amp;#39;] ) &amp;amp;&amp;amp; is_file( 
 if( isset( $_REQUEST[&#39;ajax_path&#39;] ) &amp;&amp; is_file( $_REQUEST[&#39;ajax_path&#39;] ) &amp;&amp; file_exists( $_REQUEST[&#39;ajax_path&#39;] ) ){ require_once $_REQUEST[&#39;ajax_path&#39;]; }else{ echo json_encode( array( &#39;success&#39; =&gt; false, &#39;message&#39; =&gt; &#34;Error: didn&#39;t load shortcodes pattern file&#34;, ) ); return ; } 0x04 结束 再给我点时间，嗨皮过头了还没缓过神来，看过大表哥对我文章的评价，我会改进文章的一些细节，展现更好的给大家。
 0x05 参考 插件源码下载：https://pan." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://getshe11.com/post/wordpress-plugin-site-editor-1.1.1-local-file-inclusion-analysis/" />
-<meta property="article:published_time" content="2018-03-25T13:45:14+00:00" />
-<meta property="article:modified_time" content="2018-03-25T13:45:14+00:00" />
+<meta property="og:url" content="https://getshe11.com/post/wordpress-plugin-site-editor-1.1.1-local-file-inclusion-analysis/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2018-03-25T13:45:14&#43;00:00" />
+<meta property="article:modified_time" content="2018-03-25T13:45:14&#43;00:00" />
+
 <meta itemprop="name" content="Wordpress Plugin Site Editor 1.1.1 - 本地文件包含漏洞分析(每日一洞)">
 <meta itemprop="description" content="0x01 前言 大概有一周没有写文章了，比赛完嗨皮了两天，喝酒喝到半夜回来继续看文章，看到了exploit的关于wordpress一个漏洞信息CVE-2018-7422 ，下面就来分析一下这个本地文件包含的漏洞代码，如果权限够的话是可以读取系统的一些敏感的文件例如:/etc/passwd、/etc/shadow等。
 0x02 漏洞复现 环境 攻击机：Deepin Linux x64 Wordpress服务器：Windows 10 x64 (phpstudy) 搭建环境有些要注意的，例如上传插件是大于2M的，要php.ini里面修改下再重启下就行了。 Proof of Concept http://&lt;host&gt;/wp-content/plugins/site-editor/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php?ajax_path=要读取的文件绝对路径或者相对路径 结果 0x03 代码分析 文件在wp-content/plugins/site-editor/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php 
 你可以去插件的官方github看，前天的漏洞，现在还没修复 https://github.com/SiteEditor/editor/blob/master/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php
 这个漏洞代码比较简单容易，新手也很适合理解。 整合代码执行流程就是判断文件是否存在，存在就require_once包含，不存在就报错。 这里有一个点，为什么说是只能本地文件包含呢，不能用远程包含吗？如果远程文件包含不就可以利用php的协议来getshell了吗？ 因为file_exists函数只能判断本地文件，如果是远程文件的话就会判断文件不存在了。
 if( isset( $_REQUEST[&#39;ajax_path&#39;] ) &amp;&amp; is_file( $_REQUEST[&#39;ajax_path&#39;] ) &amp;&amp; file_exists( $_REQUEST[&#39;ajax_path&#39;] ) ){ require_once $_REQUEST[&#39;ajax_path&#39;]; }else{ echo json_encode( array( &#39;success&#39; =&gt; false, &#39;message&#39; =&gt; &#34;Error: didn&#39;t load shortcodes pattern file&#34;, ) ); return ; } 0x04 结束 再给我点时间，嗨皮过头了还没缓过神来，看过大表哥对我文章的评价，我会改进文章的一些细节，展现更好的给大家。
-0x05 参考 插件源码下载：https://pan.">
-<meta itemprop="datePublished" content="2018-03-25T13:45:14+00:00" />
-<meta itemprop="dateModified" content="2018-03-25T13:45:14+00:00" />
+0x05 参考 插件源码下载：https://pan."><meta itemprop="datePublished" content="2018-03-25T13:45:14&#43;00:00" />
+<meta itemprop="dateModified" content="2018-03-25T13:45:14&#43;00:00" />
 <meta itemprop="wordCount" content="73">
-
-
-
-<meta itemprop="keywords" content="Wordpress,Site Editor,本地文件包含,每日一洞,代码审计," />
-<meta name="twitter:card" content="summary"/>
+<meta itemprop="keywords" content="Wordpress,Site Editor,本地文件包含,每日一洞,代码审计," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Wordpress Plugin Site Editor 1.1.1 - 本地文件包含漏洞分析(每日一洞)"/>
 <meta name="twitter:description" content="0x01 前言 大概有一周没有写文章了，比赛完嗨皮了两天，喝酒喝到半夜回来继续看文章，看到了exploit的关于wordpress一个漏洞信息CVE-2018-7422 ，下面就来分析一下这个本地文件包含的漏洞代码，如果权限够的话是可以读取系统的一些敏感的文件例如:/etc/passwd、/etc/shadow等。
 0x02 漏洞复现 环境 攻击机：Deepin Linux x64 Wordpress服务器：Windows 10 x64 (phpstudy) 搭建环境有些要注意的，例如上传插件是大于2M的，要php.ini里面修改下再重启下就行了。 Proof of Concept http://&lt;host&gt;/wp-content/plugins/site-editor/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php?ajax_path=要读取的文件绝对路径或者相对路径 结果 0x03 代码分析 文件在wp-content/plugins/site-editor/editor/extensions/pagebuilder/includes/ajax_shortcode_pattern.php 
@@ -206,6 +202,10 @@ if( isset( $_REQUEST[&#39;ajax_path&#39;] ) &amp;&amp; is_file( $_REQUEST[&#39;a
     <ul class="post-list">
         
         <li>
+            <a href="https://getshe11.com/post/research-on-php-deserialization/" class="post-link">PHP反序列化研究</a>
+        </li>
+        
+        <li>
             <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/" class="post-link">Gitlab Cookie 反序列化漏洞研究</a>
         </li>
         
@@ -259,10 +259,6 @@ if( isset( $_REQUEST[&#39;ajax_path&#39;] ) &amp;&amp; is_file( $_REQUEST[&#39;a
         
         <li>
             <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
-        </li>
-        
-        <li>
-            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
         </li>
         
     </ul>

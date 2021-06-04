@@ -33,23 +33,19 @@
 0x03 漏洞复现  首先在程序的后台添加一条数据  执行我们的payload,可以看到网站跳转延迟了3s以上。 url:http://sb.com/index.php?m=vod-search post:wd=))||if((select%0bascii(length((select(m_name)\`\`from(mac_manager))))=53),(\`sleep\`(3)),0)#%25%35%63  3. 因为是盲注所以注入出管理员的账号密码在下文分析。
 0x04 SQL执行过程分析  先弄清楚sql是如何执行的一个过程，然后再去分析怎么会造成SQL注入的一个过程，这样对学习代码审计也是一个好处。 因为是动态分析，不会的安装调试环境的请到这篇文章按步骤完成安装https://getpass.cn/2018/04/10/Breakpoint%20debugging%20with%20phpstorm&#43;xdebug/ phpstorm打开这个选项，意思就是断在当前脚本文件的第一行，我就不下断点了，跟着它执行的过程走一遍。  我们先随便输入一点数据 访问后会断在index.php的第一行  F8往下走，走到第14行F7跟进去。 然后F8一直往下走，可以看到拦截的规则 走到POST的过滤这里F7进去 arr_foreach函数检查传过来的值是否是数组，不是数组就返回原数据，然后用urldecode函数URL解码。 最后分别对传过来的wd和test两个值进行匹配，如果存在拦截规则里面的字符就跳转到错误信息。 比如你输入wd=/**/就会被拦截 因为/**/存在拦截的正则表达式里面。  走出来会到$m = be(&#39;get&#39;,&#39;m&#39;);这里，这里只是对m传过来的vod-search进行addslashes函数的过滤  我怕文章过长，一些不必要的代码自己去细读一遍就行了，F8一直往下周，走到37行F7进去，因为我们传过来的的参数是vod，所以会包含vod.php文件并执行。  因为我们传参是search所以会走到这里，我们可以F7进去看执行的过程。 在这里会经过urldecode函数的解码，一直循环到不能解码为止，然后经过刚才的StopAttack方法的过滤 最后到htmlEncode方法的替换  跳出到vod.php文件后F8走到这里，F7进去看SQL执行的过程。 一直走到markname的值是vod 然后不用管F8继续往下走，走到这里再F7进去 可以看到SQL执行是到这里，下面是执行的语句 SELECT count(*) FROM {pre}vod WHERE 1=1 AND d_hide=0 AND d_type&gt;0 and d_type not in(0) and d_usergroup in(0) AND ( instr(d_name,&#39;test&#39;)&gt;0 or instr(d_subname,&#39;test&#39;)&gt;0 or instr(d_starring,&#39;test&#39;)&gt;0 )    0x05 漏洞分析 上面分析了SQL执行过程，下面分析这个是如何构成SQL注入的。" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://getshe11.com/post/maccms-sql-injection-analysis/" />
-<meta property="article:published_time" content="2018-08-26T15:49:02+00:00" />
-<meta property="article:modified_time" content="2018-08-26T15:49:02+00:00" />
+<meta property="og:url" content="https://getshe11.com/post/maccms-sql-injection-analysis/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2018-08-26T15:49:02&#43;00:00" />
+<meta property="article:modified_time" content="2018-08-26T15:49:02&#43;00:00" />
+
 <meta itemprop="name" content="动态调试|Maccms SQL 注入分析(附注入盲注脚本)">
 <meta itemprop="description" content="0x01 前言 已经有一周没发表文章了，一个朋友叫我研究maccms的代码审计，碰到这个注入的漏洞挺有趣的，就在此写一篇分析文。
 0x02 环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： JetBrains PhpStorm 2018.1.6 x64、Seay代码审计工具
 搭建这个程序也挺简单的，也是一步到位。
 0x03 漏洞复现  首先在程序的后台添加一条数据  执行我们的payload,可以看到网站跳转延迟了3s以上。 url:http://sb.com/index.php?m=vod-search post:wd=))||if((select%0bascii(length((select(m_name)\`\`from(mac_manager))))=53),(\`sleep\`(3)),0)#%25%35%63  3. 因为是盲注所以注入出管理员的账号密码在下文分析。
-0x04 SQL执行过程分析  先弄清楚sql是如何执行的一个过程，然后再去分析怎么会造成SQL注入的一个过程，这样对学习代码审计也是一个好处。 因为是动态分析，不会的安装调试环境的请到这篇文章按步骤完成安装https://getpass.cn/2018/04/10/Breakpoint%20debugging%20with%20phpstorm&#43;xdebug/ phpstorm打开这个选项，意思就是断在当前脚本文件的第一行，我就不下断点了，跟着它执行的过程走一遍。  我们先随便输入一点数据 访问后会断在index.php的第一行  F8往下走，走到第14行F7跟进去。 然后F8一直往下走，可以看到拦截的规则 走到POST的过滤这里F7进去 arr_foreach函数检查传过来的值是否是数组，不是数组就返回原数据，然后用urldecode函数URL解码。 最后分别对传过来的wd和test两个值进行匹配，如果存在拦截规则里面的字符就跳转到错误信息。 比如你输入wd=/**/就会被拦截 因为/**/存在拦截的正则表达式里面。  走出来会到$m = be(&#39;get&#39;,&#39;m&#39;);这里，这里只是对m传过来的vod-search进行addslashes函数的过滤  我怕文章过长，一些不必要的代码自己去细读一遍就行了，F8一直往下周，走到37行F7进去，因为我们传过来的的参数是vod，所以会包含vod.php文件并执行。  因为我们传参是search所以会走到这里，我们可以F7进去看执行的过程。 在这里会经过urldecode函数的解码，一直循环到不能解码为止，然后经过刚才的StopAttack方法的过滤 最后到htmlEncode方法的替换  跳出到vod.php文件后F8走到这里，F7进去看SQL执行的过程。 一直走到markname的值是vod 然后不用管F8继续往下走，走到这里再F7进去 可以看到SQL执行是到这里，下面是执行的语句 SELECT count(*) FROM {pre}vod WHERE 1=1 AND d_hide=0 AND d_type&gt;0 and d_type not in(0) and d_usergroup in(0) AND ( instr(d_name,&#39;test&#39;)&gt;0 or instr(d_subname,&#39;test&#39;)&gt;0 or instr(d_starring,&#39;test&#39;)&gt;0 )    0x05 漏洞分析 上面分析了SQL执行过程，下面分析这个是如何构成SQL注入的。">
-<meta itemprop="datePublished" content="2018-08-26T15:49:02+00:00" />
-<meta itemprop="dateModified" content="2018-08-26T15:49:02+00:00" />
+0x04 SQL执行过程分析  先弄清楚sql是如何执行的一个过程，然后再去分析怎么会造成SQL注入的一个过程，这样对学习代码审计也是一个好处。 因为是动态分析，不会的安装调试环境的请到这篇文章按步骤完成安装https://getpass.cn/2018/04/10/Breakpoint%20debugging%20with%20phpstorm&#43;xdebug/ phpstorm打开这个选项，意思就是断在当前脚本文件的第一行，我就不下断点了，跟着它执行的过程走一遍。  我们先随便输入一点数据 访问后会断在index.php的第一行  F8往下走，走到第14行F7跟进去。 然后F8一直往下走，可以看到拦截的规则 走到POST的过滤这里F7进去 arr_foreach函数检查传过来的值是否是数组，不是数组就返回原数据，然后用urldecode函数URL解码。 最后分别对传过来的wd和test两个值进行匹配，如果存在拦截规则里面的字符就跳转到错误信息。 比如你输入wd=/**/就会被拦截 因为/**/存在拦截的正则表达式里面。  走出来会到$m = be(&#39;get&#39;,&#39;m&#39;);这里，这里只是对m传过来的vod-search进行addslashes函数的过滤  我怕文章过长，一些不必要的代码自己去细读一遍就行了，F8一直往下周，走到37行F7进去，因为我们传过来的的参数是vod，所以会包含vod.php文件并执行。  因为我们传参是search所以会走到这里，我们可以F7进去看执行的过程。 在这里会经过urldecode函数的解码，一直循环到不能解码为止，然后经过刚才的StopAttack方法的过滤 最后到htmlEncode方法的替换  跳出到vod.php文件后F8走到这里，F7进去看SQL执行的过程。 一直走到markname的值是vod 然后不用管F8继续往下走，走到这里再F7进去 可以看到SQL执行是到这里，下面是执行的语句 SELECT count(*) FROM {pre}vod WHERE 1=1 AND d_hide=0 AND d_type&gt;0 and d_type not in(0) and d_usergroup in(0) AND ( instr(d_name,&#39;test&#39;)&gt;0 or instr(d_subname,&#39;test&#39;)&gt;0 or instr(d_starring,&#39;test&#39;)&gt;0 )    0x05 漏洞分析 上面分析了SQL执行过程，下面分析这个是如何构成SQL注入的。"><meta itemprop="datePublished" content="2018-08-26T15:49:02&#43;00:00" />
+<meta itemprop="dateModified" content="2018-08-26T15:49:02&#43;00:00" />
 <meta itemprop="wordCount" content="347">
-
-
-
-<meta itemprop="keywords" content="Maccms,SQL注入,动态调试,代码审计," />
-<meta name="twitter:card" content="summary"/>
+<meta itemprop="keywords" content="Maccms,SQL注入,动态调试,代码审计," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="动态调试|Maccms SQL 注入分析(附注入盲注脚本)"/>
 <meta name="twitter:description" content="0x01 前言 已经有一周没发表文章了，一个朋友叫我研究maccms的代码审计，碰到这个注入的漏洞挺有趣的，就在此写一篇分析文。
 0x02 环境 Web： phpstudy System： Windows 10 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： JetBrains PhpStorm 2018.1.6 x64、Seay代码审计工具
@@ -336,6 +332,10 @@ post:<code>wd=))||if((select%0bascii(length((select(m_name)\`\`from(mac_manager)
     <ul class="post-list">
         
         <li>
+            <a href="https://getshe11.com/post/research-on-php-deserialization/" class="post-link">PHP反序列化研究</a>
+        </li>
+        
+        <li>
             <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/" class="post-link">Gitlab Cookie 反序列化漏洞研究</a>
         </li>
         
@@ -389,10 +389,6 @@ post:<code>wd=))||if((select%0bascii(length((select(m_name)\`\`from(mac_manager)
         
         <li>
             <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
-        </li>
-        
-        <li>
-            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
         </li>
         
     </ul>

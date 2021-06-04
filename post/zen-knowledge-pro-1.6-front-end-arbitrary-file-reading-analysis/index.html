@@ -29,21 +29,17 @@
 0x02 环境  下载安装安装程序，这个CMS是封装起来的，连着Apache&#43;MySQL一起打包成exe可执行程序。 安装也比较简单，傻瓜式安装。  0x03 漏洞复现  在网站根目录C:\xampp\chanzhi\www新建一个测试文件test.php  执行payload查看文件内容：http://localhost/file.php?pathname=../test.phpi&amp;t=txt&amp;o=source  执行payload来查看程序的配置文件：http://localhost/file.php?pathname=../http.ini&amp;t=txt&amp;o=source  跨目录读取文件（前提是有目录权限）：http://localhost/file.php?pathname=../../bin/php/backup.php&amp;t=txt&amp;o=source   0x04 漏洞分析 漏洞文件：C:\xampp\chanzhi\www\file.php,从头开始往下分析：
  1-19行是定义变量和判断是否GET传值过来，传全称或者简称都可以赋值给对应的变量，比如:http://192.168.86.130/file.php?f=../test.php&amp;t=txt&amp;o=source,pathname和f是对应的，下面的以此类推。 主要是19行，$_SERVER[&#39;SCRIPT_FILENAME&#39;]的值是C:/xampp/chanzhi/www/file.php,加上dirname函数后的值为C:/xampp/chanzhi/www。 rtrim函数是去掉/右边的值然后加上/data/之后$dataRoot的值为C:/xampp/chanzhi/www/data/  &lt;?php $pathname = &#39;&#39;; $objectType = &#39;&#39;; $imageSize = &#39;&#39;; $extension = &#39;&#39;; $version = &#39;&#39;; if(isset($_GET[&#39;pathname&#39;])) $pathname = $_GET[&#39;pathname&#39;]; if(isset($_GET[&#39;objectType&#39;])) $objectType = $_GET[&#39;objectType&#39;]; if(isset($_GET[&#39;imageSize&#39;])) $imageSize = $_GET[&#39;imageSize&#39;]; if(isset($_GET[&#39;extension&#39;])) $extension = $_GET[&#39;extension&#39;]; if(isset($_GET[&#39;f&#39;])) $pathname = $_GET[&#39;f&#39;]; if(isset($_GET[&#39;o&#39;])) $objectType = $_GET[&#39;o&#39;]; if(isset($_GET[&#39;s&#39;])) $imageSize = $_GET[&#39;s&#39;]; if(isset($_GET[&#39;t&#39;])) $extension = $_GET[&#39;t&#39;]; if(isset($_GET[&#39;v&#39;])) $version = $_GET[&#39;v&#39;]; $dataRoot = rtrim(dirname($_SERVER[&#39;SCRIPT_FILENAME&#39;]), &#39;/&#39;) ." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://getshe11.com/post/zen-knowledge-pro-1.6-front-end-arbitrary-file-reading-analysis/" />
-<meta property="article:published_time" content="2018-08-19T10:00:02+00:00" />
-<meta property="article:modified_time" content="2018-08-19T10:00:02+00:00" />
+<meta property="og:url" content="https://getshe11.com/post/zen-knowledge-pro-1.6-front-end-arbitrary-file-reading-analysis/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2018-08-19T10:00:02&#43;00:00" />
+<meta property="article:modified_time" content="2018-08-19T10:00:02&#43;00:00" />
+
 <meta itemprop="name" content="禅知Pro 1.6 前台任意文件读取分析">
 <meta itemprop="description" content="0x01 前言 这两天看到禅知这个CMS有一个前台的任意文件读取漏洞，就在此写一片分析文章。
 0x02 环境  下载安装安装程序，这个CMS是封装起来的，连着Apache&#43;MySQL一起打包成exe可执行程序。 安装也比较简单，傻瓜式安装。  0x03 漏洞复现  在网站根目录C:\xampp\chanzhi\www新建一个测试文件test.php  执行payload查看文件内容：http://localhost/file.php?pathname=../test.phpi&amp;t=txt&amp;o=source  执行payload来查看程序的配置文件：http://localhost/file.php?pathname=../http.ini&amp;t=txt&amp;o=source  跨目录读取文件（前提是有目录权限）：http://localhost/file.php?pathname=../../bin/php/backup.php&amp;t=txt&amp;o=source   0x04 漏洞分析 漏洞文件：C:\xampp\chanzhi\www\file.php,从头开始往下分析：
- 1-19行是定义变量和判断是否GET传值过来，传全称或者简称都可以赋值给对应的变量，比如:http://192.168.86.130/file.php?f=../test.php&amp;t=txt&amp;o=source,pathname和f是对应的，下面的以此类推。 主要是19行，$_SERVER[&#39;SCRIPT_FILENAME&#39;]的值是C:/xampp/chanzhi/www/file.php,加上dirname函数后的值为C:/xampp/chanzhi/www。 rtrim函数是去掉/右边的值然后加上/data/之后$dataRoot的值为C:/xampp/chanzhi/www/data/  &lt;?php $pathname = &#39;&#39;; $objectType = &#39;&#39;; $imageSize = &#39;&#39;; $extension = &#39;&#39;; $version = &#39;&#39;; if(isset($_GET[&#39;pathname&#39;])) $pathname = $_GET[&#39;pathname&#39;]; if(isset($_GET[&#39;objectType&#39;])) $objectType = $_GET[&#39;objectType&#39;]; if(isset($_GET[&#39;imageSize&#39;])) $imageSize = $_GET[&#39;imageSize&#39;]; if(isset($_GET[&#39;extension&#39;])) $extension = $_GET[&#39;extension&#39;]; if(isset($_GET[&#39;f&#39;])) $pathname = $_GET[&#39;f&#39;]; if(isset($_GET[&#39;o&#39;])) $objectType = $_GET[&#39;o&#39;]; if(isset($_GET[&#39;s&#39;])) $imageSize = $_GET[&#39;s&#39;]; if(isset($_GET[&#39;t&#39;])) $extension = $_GET[&#39;t&#39;]; if(isset($_GET[&#39;v&#39;])) $version = $_GET[&#39;v&#39;]; $dataRoot = rtrim(dirname($_SERVER[&#39;SCRIPT_FILENAME&#39;]), &#39;/&#39;) .">
-<meta itemprop="datePublished" content="2018-08-19T10:00:02+00:00" />
-<meta itemprop="dateModified" content="2018-08-19T10:00:02+00:00" />
+ 1-19行是定义变量和判断是否GET传值过来，传全称或者简称都可以赋值给对应的变量，比如:http://192.168.86.130/file.php?f=../test.php&amp;t=txt&amp;o=source,pathname和f是对应的，下面的以此类推。 主要是19行，$_SERVER[&#39;SCRIPT_FILENAME&#39;]的值是C:/xampp/chanzhi/www/file.php,加上dirname函数后的值为C:/xampp/chanzhi/www。 rtrim函数是去掉/右边的值然后加上/data/之后$dataRoot的值为C:/xampp/chanzhi/www/data/  &lt;?php $pathname = &#39;&#39;; $objectType = &#39;&#39;; $imageSize = &#39;&#39;; $extension = &#39;&#39;; $version = &#39;&#39;; if(isset($_GET[&#39;pathname&#39;])) $pathname = $_GET[&#39;pathname&#39;]; if(isset($_GET[&#39;objectType&#39;])) $objectType = $_GET[&#39;objectType&#39;]; if(isset($_GET[&#39;imageSize&#39;])) $imageSize = $_GET[&#39;imageSize&#39;]; if(isset($_GET[&#39;extension&#39;])) $extension = $_GET[&#39;extension&#39;]; if(isset($_GET[&#39;f&#39;])) $pathname = $_GET[&#39;f&#39;]; if(isset($_GET[&#39;o&#39;])) $objectType = $_GET[&#39;o&#39;]; if(isset($_GET[&#39;s&#39;])) $imageSize = $_GET[&#39;s&#39;]; if(isset($_GET[&#39;t&#39;])) $extension = $_GET[&#39;t&#39;]; if(isset($_GET[&#39;v&#39;])) $version = $_GET[&#39;v&#39;]; $dataRoot = rtrim(dirname($_SERVER[&#39;SCRIPT_FILENAME&#39;]), &#39;/&#39;) ."><meta itemprop="datePublished" content="2018-08-19T10:00:02&#43;00:00" />
+<meta itemprop="dateModified" content="2018-08-19T10:00:02&#43;00:00" />
 <meta itemprop="wordCount" content="419">
-
-
-
-<meta itemprop="keywords" content="代码审计," />
-<meta name="twitter:card" content="summary"/>
+<meta itemprop="keywords" content="代码审计," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="禅知Pro 1.6 前台任意文件读取分析"/>
 <meta name="twitter:description" content="0x01 前言 这两天看到禅知这个CMS有一个前台的任意文件读取漏洞，就在此写一片分析文章。
 0x02 环境  下载安装安装程序，这个CMS是封装起来的，连着Apache&#43;MySQL一起打包成exe可执行程序。 安装也比较简单，傻瓜式安装。  0x03 漏洞复现  在网站根目录C:\xampp\chanzhi\www新建一个测试文件test.php  执行payload查看文件内容：http://localhost/file.php?pathname=../test.phpi&amp;t=txt&amp;o=source  执行payload来查看程序的配置文件：http://localhost/file.php?pathname=../http.ini&amp;t=txt&amp;o=source  跨目录读取文件（前提是有目录权限）：http://localhost/file.php?pathname=../../bin/php/backup.php&amp;t=txt&amp;o=source   0x04 漏洞分析 漏洞文件：C:\xampp\chanzhi\www\file.php,从头开始往下分析：
@@ -331,6 +327,10 @@ http://192.168.86.130/file.php?pathname=../test.php&amp;extension=txt&amp;object
     <ul class="post-list">
         
         <li>
+            <a href="https://getshe11.com/post/research-on-php-deserialization/" class="post-link">PHP反序列化研究</a>
+        </li>
+        
+        <li>
             <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/" class="post-link">Gitlab Cookie 反序列化漏洞研究</a>
         </li>
         
@@ -384,10 +384,6 @@ http://192.168.86.130/file.php?pathname=../test.php&amp;extension=txt&amp;object
         
         <li>
             <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
-        </li>
-        
-        <li>
-            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
         </li>
         
     </ul>

@@ -33,23 +33,19 @@ Download (Mirror): https://download.vulnhub.com/jisctf/JIS-CTF-VulnUpload-CTF01.
 0x03 安装 下载完后，解压出来，会看到一个ovf后缀的文件 打开VMware，点击打开，找到我们刚才解压的文件，选择ovf文件 选择存放的位置，然后点击导入 最后等待导入完成，导入速度看本机性能和镜像的大小 0x04 设置 导入完成后，我设置的网络模式是NAT的，因为我内网比较多机子，所以选择这个方便等下扫描。还有就是内存大小，如果本机内存小于4G的请修改内存到4G以下。 我们点击开启虚拟机，到开机的页面我们回车选择第二个Ubuntu的高级选项（如果启动有网络正常的话可以直接正常开机，如果网络不正常可以按下面步骤操作） 进到高级选项，我们再次回车选择第二个Linux内核版本的恢复模式 等待系统启动完毕后，看到这个页面，我们继续回车进入 回车后会弹出选择界面，我们选择root一行回车，然后再次回车进入命令行模式 输入命令查看所以的网卡：ifconfig -a 我的是ens33，然后继续输入命令 vi /etc/network/interface修改网络配置文件 修改这两个地方，改成你的网卡名称，然后ctrl&#43;x保存，最后输入reboot重启，OK！ 0x05 完成任务吧！ 作者给的描述是要我们找到靶机里面的5个flag
  Description: There are five flags on this machine. Try to find them." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://getshe11.com/post/use-vulnhub-to-build-a-variety-of-hole-shooting-range-father-no-longer-have-to-worry-about-i-have-no-practice-range/" />
-<meta property="article:published_time" content="2018-05-03T17:04:29+00:00" />
-<meta property="article:modified_time" content="2018-05-03T17:04:29+00:00" />
+<meta property="og:url" content="https://getshe11.com/post/use-vulnhub-to-build-a-variety-of-hole-shooting-range-father-no-longer-have-to-worry-about-i-have-no-practice-range/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2018-05-03T17:04:29&#43;00:00" />
+<meta property="article:modified_time" content="2018-05-03T17:04:29&#43;00:00" />
+
 <meta itemprop="name" content="用Vulnhub来练习漏洞靶场(爸爸再也不用担心我没有靶场练习了)">
 <meta itemprop="description" content="0x01 前言 Vulnhub它是一个提供各种漏洞环境的平台，里面大部分的环境是要用VMware或者VirtualBox打开运行的。 如果只是练习一些常见的漏洞可以看我另一篇用[Docker来搭建各种漏洞靶场(妈妈再也不用担心我没有靶场练习了)](https://getpass.cn/2018/03/14/Use Docker to build a variety of loopholes (my mother no longer has to worry about not having practiced in the shooting range)/)
 0x02 下载 https://www.vulnhub.com 里面有各种各样的镜像，可以下载到自己的机子上面练习。 镜像的下载地址和描述、难度等级等 随便点击下载，有些需要FQ才能下载，推荐官网的下载地址。 作为测试，我就下载JIS-CTF: VulnUpload作为演示吧
 Download (Mirror): https://download.vulnhub.com/jisctf/JIS-CTF-VulnUpload-CTF01.ova
 0x03 安装 下载完后，解压出来，会看到一个ovf后缀的文件 打开VMware，点击打开，找到我们刚才解压的文件，选择ovf文件 选择存放的位置，然后点击导入 最后等待导入完成，导入速度看本机性能和镜像的大小 0x04 设置 导入完成后，我设置的网络模式是NAT的，因为我内网比较多机子，所以选择这个方便等下扫描。还有就是内存大小，如果本机内存小于4G的请修改内存到4G以下。 我们点击开启虚拟机，到开机的页面我们回车选择第二个Ubuntu的高级选项（如果启动有网络正常的话可以直接正常开机，如果网络不正常可以按下面步骤操作） 进到高级选项，我们再次回车选择第二个Linux内核版本的恢复模式 等待系统启动完毕后，看到这个页面，我们继续回车进入 回车后会弹出选择界面，我们选择root一行回车，然后再次回车进入命令行模式 输入命令查看所以的网卡：ifconfig -a 我的是ens33，然后继续输入命令 vi /etc/network/interface修改网络配置文件 修改这两个地方，改成你的网卡名称，然后ctrl&#43;x保存，最后输入reboot重启，OK！ 0x05 完成任务吧！ 作者给的描述是要我们找到靶机里面的5个flag
- Description: There are five flags on this machine. Try to find them.">
-<meta itemprop="datePublished" content="2018-05-03T17:04:29+00:00" />
-<meta itemprop="dateModified" content="2018-05-03T17:04:29+00:00" />
+ Description: There are five flags on this machine. Try to find them."><meta itemprop="datePublished" content="2018-05-03T17:04:29&#43;00:00" />
+<meta itemprop="dateModified" content="2018-05-03T17:04:29&#43;00:00" />
 <meta itemprop="wordCount" content="138">
-
-
-
-<meta itemprop="keywords" content="漏洞,0day,靶场,CVE,复现,Vulnhub," />
-<meta name="twitter:card" content="summary"/>
+<meta itemprop="keywords" content="漏洞,0day,靶场,CVE,复现,Vulnhub," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="用Vulnhub来练习漏洞靶场(爸爸再也不用担心我没有靶场练习了)"/>
 <meta name="twitter:description" content="0x01 前言 Vulnhub它是一个提供各种漏洞环境的平台，里面大部分的环境是要用VMware或者VirtualBox打开运行的。 如果只是练习一些常见的漏洞可以看我另一篇用[Docker来搭建各种漏洞靶场(妈妈再也不用担心我没有靶场练习了)](https://getpass.cn/2018/03/14/Use Docker to build a variety of loopholes (my mother no longer has to worry about not having practiced in the shooting range)/)
 0x02 下载 https://www.vulnhub.com 里面有各种各样的镜像，可以下载到自己的机子上面练习。 镜像的下载地址和描述、难度等级等 随便点击下载，有些需要FQ才能下载，推荐官网的下载地址。 作为测试，我就下载JIS-CTF: VulnUpload作为演示吧
@@ -251,6 +247,10 @@ Download (Mirror): https://download.vulnhub.com/jisctf/JIS-CTF-VulnUpload-CTF01.
     <ul class="post-list">
         
         <li>
+            <a href="https://getshe11.com/post/research-on-php-deserialization/" class="post-link">PHP反序列化研究</a>
+        </li>
+        
+        <li>
             <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/" class="post-link">Gitlab Cookie 反序列化漏洞研究</a>
         </li>
         
@@ -304,10 +304,6 @@ Download (Mirror): https://download.vulnhub.com/jisctf/JIS-CTF-VulnUpload-CTF01.
         
         <li>
             <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
-        </li>
-        
-        <li>
-            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
         </li>
         
     </ul>

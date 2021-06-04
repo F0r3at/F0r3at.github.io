@@ -6,7 +6,36 @@
     <description>Recent content on F0rmat的博客 | 专注于网络攻防和信息安全</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Thu, 01 Apr 2021 13:20:00 +0000</lastBuildDate><atom:link href="https://getshe11.com/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 01 Jun 2021 13:20:00 +0000</lastBuildDate><atom:link href="https://getshe11.com/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>PHP反序列化研究</title>
+      <link>https://getshe11.com/post/research-on-php-deserialization/</link>
+      <pubDate>Tue, 01 Jun 2021 13:20:00 +0000</pubDate>
+      
+      <guid>https://getshe11.com/post/research-on-php-deserialization/</guid>
+      <description>什么是序列化与反序列化 序列化的概念 将对象或者数组转化为可存储的字符串。
+在PHP中使用serialize()函数来将对象或者数组进行序列化，并返回一个包含字节流的字符串来表示。
+我们使用类的序列化比较多，所以这里就用一个序列化对象的例子来演示：
+&amp;lt;?php #创建一个类 class test{ public $a = &amp;#39;sdfsdfa&amp;#39;; protected $b = 1111; private $c = false; public function displayVar() { echo $this-&amp;gt;a; } } $d = new test(); //实例化对象 $d = serialize($d);//序列化对象 var_dump($d);//输出序列化后的结果 ?&amp;gt;运行的结果：
+string(73) &amp;#34;O:4:&amp;#34;test&amp;#34;:3:{s:1:&amp;#34;a&amp;#34;;s:7:&amp;#34;sdfsdfa&amp;#34;;s:4:&amp;#34;\000*\000b&amp;#34;;i:1111;s:7:&amp;#34;\000test\000c&amp;#34;;b:0;}&amp;#34; 我们从头开始分析各个部分的数组代表着什么：
+O:4:&amp;ldquo;test&amp;rdquo;:3 O代表是对象类型，如果是a那就是数组类型;4是对象名称的长度，test是对象名称，3代表是有3个成员。
+s:1:&amp;ldquo;a&amp;rdquo;;s:7:&amp;ldquo;sdfsdfa&amp;rdquo; 第一个s代表变量名称是字符串类型，a是变量名称；第二个s代表变量值是字符串类型，7是变量值得长度，后面是变量的值。
+s:4:&amp;quot;\000\000b&amp;quot;;i:1111* 这里的字符串不应该是1吗？为什么是4呢，而且还多了一些字符。我们看到成员变量b的属性是protected；
+protected属性序列化的时候格式是 %00%00成员名 ；*
+一个%00代表一个字节，所以protected有两个%00，再加上*和变量名称长度一共是4个字节；
+接下来的i代表变量数值是整数型。
+s:7:&amp;quot;\000test\000c&amp;quot;;b:0 这里也出现了%00字符而且还多了类的名称，为什么呢？我们看到成员变量c的属性是private；
+private属性序列化的时候格式是 %00类名%00成员名；
+这里也是有两个%002个字节加上类名的4个字节和变量名一个字节，加起来就是7个字节；
+下面的b代表着变量值是布尔型。
+大家在这里有发现对象序列化后为什么方法没有跟着一起序列化呢？
+因为serialize()函数只对类的属性序列化，不序列化方法。
+反序列化的概念 将序列化后的字符串转换回对象或者数组。
+在PHP中使用unserialize()函数来将序列化后的字符串转换回PHP的值，并返回的值可为 integer、float、string、array 或 object类型。
+我们重新用上面的例子并把序列化的结果写入一个文本中存储：
+&amp;lt;?php class test{ public $a = &amp;#39;sdfsdfa&amp;#39;; protected $b = 1111; private $c = false; public function displayVar() { echo $this-&amp;gt;a; } } $d = new test(); $d = serialize($d); file_put_contents(&amp;#39;1.</description>
+    </item>
+    
     <item>
       <title>Gitlab Cookie 反序列化漏洞研究</title>
       <link>https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/</link>

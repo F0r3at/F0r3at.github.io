@@ -27,20 +27,16 @@
 <meta property="og:description" content="0x01 前言 昨天看到phpok可以申请cve就去审计了一下，存在漏洞的地方还是挺多的，时间不多找了个简单的任意文件上传漏洞。
 0x02 环境  程序下载：https://www.lanzous.com/i1ksjkd 集成环境是PHPstudy,PHP5.6。 安装程序   4. 先创建一个数据库phpok 5. 设置管理员账号密码 6. 安装成功 0x03 漏洞挖掘过程   打开打开FolderChangesView记录程序的文件变动。   登录后台 程序升级-&gt;压缩包升级   编辑一个测试文件phpinfo.php,压缩为phpinfo.zip上传。   点击上传，压缩包里面的文件会被压缩到网站根目录   访问根目录下新生成的文件   0x04 漏洞分析 漏洞代码出现在framework/admin/update_control.php文件的unzip_f函数,可以看到用到lib里面的phpzip类，有兴趣可以去读下源码framework/libs/phpzip.php 大家可能疑问你怎么知道漏洞文件是这个，可以抓包来查看整过利用的过程，然后再去源码分析。 public function unzip_f() { $zipfile = $this-&gt;get(&#39;zipfile&#39;); if(!$zipfile){ $this-&gt;error(P_Lang(&#39;未指定附件文件&#39;)); } if(strpos($zipfile,&#39;..&#39;) !== false){ $this-&gt;error(P_Lang(&#39;不支持带..上级路径&#39;)); } if(!file_exists($this-&gt;dir_root.$zipfile)){ $this-&gt;error(P_Lang(&#39;ZIP文件不存在&#39;)); } $this-&gt;lib(&#39;phpzip&#39;)-&gt;unzip($this-&gt;dir_root.$zipfile,&#39;data/update/&#39;); $info = $this-&gt;update_load(); if(!$info || (is_array($info) &amp;&amp; $info[&#39;status&#39;] == &#39;error&#39;)){ $this-&gt;error($info[&#39;content&#39;]); } $this-&gt;success(); } 可以看到用到lib里面的phpzip类，有兴趣可以去读下源码framework/libs/phpzip." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://getshe11.com/post/phpok4.9-background-getshell/" />
-<meta property="article:published_time" content="2018-08-06T08:19:40+00:00" />
-<meta property="article:modified_time" content="2018-08-06T08:19:40+00:00" />
+<meta property="og:url" content="https://getshe11.com/post/phpok4.9-background-getshell/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2018-08-06T08:19:40&#43;00:00" />
+<meta property="article:modified_time" content="2018-08-06T08:19:40&#43;00:00" />
+
 <meta itemprop="name" content="phpok4.9后台getshell(每周一洞)">
 <meta itemprop="description" content="0x01 前言 昨天看到phpok可以申请cve就去审计了一下，存在漏洞的地方还是挺多的，时间不多找了个简单的任意文件上传漏洞。
-0x02 环境  程序下载：https://www.lanzous.com/i1ksjkd 集成环境是PHPstudy,PHP5.6。 安装程序   4. 先创建一个数据库phpok 5. 设置管理员账号密码 6. 安装成功 0x03 漏洞挖掘过程   打开打开FolderChangesView记录程序的文件变动。   登录后台 程序升级-&gt;压缩包升级   编辑一个测试文件phpinfo.php,压缩为phpinfo.zip上传。   点击上传，压缩包里面的文件会被压缩到网站根目录   访问根目录下新生成的文件   0x04 漏洞分析 漏洞代码出现在framework/admin/update_control.php文件的unzip_f函数,可以看到用到lib里面的phpzip类，有兴趣可以去读下源码framework/libs/phpzip.php 大家可能疑问你怎么知道漏洞文件是这个，可以抓包来查看整过利用的过程，然后再去源码分析。 public function unzip_f() { $zipfile = $this-&gt;get(&#39;zipfile&#39;); if(!$zipfile){ $this-&gt;error(P_Lang(&#39;未指定附件文件&#39;)); } if(strpos($zipfile,&#39;..&#39;) !== false){ $this-&gt;error(P_Lang(&#39;不支持带..上级路径&#39;)); } if(!file_exists($this-&gt;dir_root.$zipfile)){ $this-&gt;error(P_Lang(&#39;ZIP文件不存在&#39;)); } $this-&gt;lib(&#39;phpzip&#39;)-&gt;unzip($this-&gt;dir_root.$zipfile,&#39;data/update/&#39;); $info = $this-&gt;update_load(); if(!$info || (is_array($info) &amp;&amp; $info[&#39;status&#39;] == &#39;error&#39;)){ $this-&gt;error($info[&#39;content&#39;]); } $this-&gt;success(); } 可以看到用到lib里面的phpzip类，有兴趣可以去读下源码framework/libs/phpzip.">
-<meta itemprop="datePublished" content="2018-08-06T08:19:40+00:00" />
-<meta itemprop="dateModified" content="2018-08-06T08:19:40+00:00" />
+0x02 环境  程序下载：https://www.lanzous.com/i1ksjkd 集成环境是PHPstudy,PHP5.6。 安装程序   4. 先创建一个数据库phpok 5. 设置管理员账号密码 6. 安装成功 0x03 漏洞挖掘过程   打开打开FolderChangesView记录程序的文件变动。   登录后台 程序升级-&gt;压缩包升级   编辑一个测试文件phpinfo.php,压缩为phpinfo.zip上传。   点击上传，压缩包里面的文件会被压缩到网站根目录   访问根目录下新生成的文件   0x04 漏洞分析 漏洞代码出现在framework/admin/update_control.php文件的unzip_f函数,可以看到用到lib里面的phpzip类，有兴趣可以去读下源码framework/libs/phpzip.php 大家可能疑问你怎么知道漏洞文件是这个，可以抓包来查看整过利用的过程，然后再去源码分析。 public function unzip_f() { $zipfile = $this-&gt;get(&#39;zipfile&#39;); if(!$zipfile){ $this-&gt;error(P_Lang(&#39;未指定附件文件&#39;)); } if(strpos($zipfile,&#39;..&#39;) !== false){ $this-&gt;error(P_Lang(&#39;不支持带..上级路径&#39;)); } if(!file_exists($this-&gt;dir_root.$zipfile)){ $this-&gt;error(P_Lang(&#39;ZIP文件不存在&#39;)); } $this-&gt;lib(&#39;phpzip&#39;)-&gt;unzip($this-&gt;dir_root.$zipfile,&#39;data/update/&#39;); $info = $this-&gt;update_load(); if(!$info || (is_array($info) &amp;&amp; $info[&#39;status&#39;] == &#39;error&#39;)){ $this-&gt;error($info[&#39;content&#39;]); } $this-&gt;success(); } 可以看到用到lib里面的phpzip类，有兴趣可以去读下源码framework/libs/phpzip."><meta itemprop="datePublished" content="2018-08-06T08:19:40&#43;00:00" />
+<meta itemprop="dateModified" content="2018-08-06T08:19:40&#43;00:00" />
 <meta itemprop="wordCount" content="66">
-
-
-
-<meta itemprop="keywords" content="漏洞,代码审计,php,phpok,每周一洞," />
-<meta name="twitter:card" content="summary"/>
+<meta itemprop="keywords" content="漏洞,代码审计,php,phpok,每周一洞," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="phpok4.9后台getshell(每周一洞)"/>
 <meta name="twitter:description" content="0x01 前言 昨天看到phpok可以申请cve就去审计了一下，存在漏洞的地方还是挺多的，时间不多找了个简单的任意文件上传漏洞。
 0x02 环境  程序下载：https://www.lanzous.com/i1ksjkd 集成环境是PHPstudy,PHP5.6。 安装程序   4. 先创建一个数据库phpok 5. 设置管理员账号密码 6. 安装成功 0x03 漏洞挖掘过程   打开打开FolderChangesView记录程序的文件变动。   登录后台 程序升级-&gt;压缩包升级   编辑一个测试文件phpinfo.php,压缩为phpinfo.zip上传。   点击上传，压缩包里面的文件会被压缩到网站根目录   访问根目录下新生成的文件   0x04 漏洞分析 漏洞代码出现在framework/admin/update_control.php文件的unzip_f函数,可以看到用到lib里面的phpzip类，有兴趣可以去读下源码framework/libs/phpzip.php 大家可能疑问你怎么知道漏洞文件是这个，可以抓包来查看整过利用的过程，然后再去源码分析。 public function unzip_f() { $zipfile = $this-&gt;get(&#39;zipfile&#39;); if(!$zipfile){ $this-&gt;error(P_Lang(&#39;未指定附件文件&#39;)); } if(strpos($zipfile,&#39;..&#39;) !== false){ $this-&gt;error(P_Lang(&#39;不支持带..上级路径&#39;)); } if(!file_exists($this-&gt;dir_root.$zipfile)){ $this-&gt;error(P_Lang(&#39;ZIP文件不存在&#39;)); } $this-&gt;lib(&#39;phpzip&#39;)-&gt;unzip($this-&gt;dir_root.$zipfile,&#39;data/update/&#39;); $info = $this-&gt;update_load(); if(!$info || (is_array($info) &amp;&amp; $info[&#39;status&#39;] == &#39;error&#39;)){ $this-&gt;error($info[&#39;content&#39;]); } $this-&gt;success(); } 可以看到用到lib里面的phpzip类，有兴趣可以去读下源码framework/libs/phpzip."/>
@@ -224,6 +220,10 @@
     <ul class="post-list">
         
         <li>
+            <a href="https://getshe11.com/post/research-on-php-deserialization/" class="post-link">PHP反序列化研究</a>
+        </li>
+        
+        <li>
             <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/" class="post-link">Gitlab Cookie 反序列化漏洞研究</a>
         </li>
         
@@ -277,10 +277,6 @@
         
         <li>
             <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
-        </li>
-        
-        <li>
-            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
         </li>
         
     </ul>

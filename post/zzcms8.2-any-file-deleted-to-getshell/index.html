@@ -33,23 +33,19 @@ $title=trim($_POST[&amp;#34;title&amp;#34;]);	$img=trim($_POST[&amp;#34;img&amp;
 代码：
 $title=trim($_POST[&#34;title&#34;]);	$img=trim($_POST[&#34;img&#34;]); if ($_GET[&#34;action&#34;]==&#34;add&#34;){ query(&#34;Insert into zzcms_licence(title,img,editor,sendtime) values(&#39;$title&#39;,&#39;$img&#39;,&#39;$username&#39;,&#39;&#34;.date(&#39;Y-m-d H:i:s&#39;).&#34;&#39;)&#34;) ; }elseif ($_GET[&#34;action&#34;]==&#34;modify&#34;){ $oldimg=trim($_POST[&#34;oldimg&#34;]); $id=$_POST[&#34;id&#34;]; if ($id==&#34;&#34; || is_numeric($id)==false){ $FoundErr=1; $ErrMsg=&#34;&lt;li&gt;&#34;. $f_array[0].&#34;&lt;/li&gt;&#34;; WriteErrMsg($ErrMsg); }else{ query(&#34;update zzcms_licence set title=&#39;$title&#39;,img=&#39;$img&#39;,sendtime=&#39;&#34;.date(&#39;Y-m-d H:i:s&#39;).&#34;&#39;,passed=0 where id=&#39;$id&#39;&#34;); if ($oldimg&lt;&gt;$img &amp;&amp; $oldimg&lt;&gt;&#34;/image/nopic.gif&#34;){ $f=&#34;../&#34;.$oldimg; if (file_exists($f)){ unlink($f); } $fs=&#34;../&#34;.str_replace(&#34;.&#34;,&#34;_small.&#34;,$oldimg).&#34;&#34;; if (file_exists($fs)){ unlink($fs);	} }	} }  我们可以看到如果从$_GET传值过来如果是modify，那么就执行下面的内容。 $oldimg=trim($_POST[&quot;oldimg&quot;]);把$_POST过来的oldimg用trim去点两边的空格之后赋值给$oldimg 接下来这些不用理会，直到if ($oldimg&lt;&gt;$img &amp;&amp; $oldimg&lt;&gt;&quot;/image/nopic.gif&quot;)这句判断，$img是上面$_POST过来的，填其他值就不等于了，然后我们的文件名也不会等于/image/nopic.gif $f=&quot;../&quot;.$oldimg;跳到主目录然后接上我们的要传过来的文件路径和文件名 if (file_exists($f)){unlink($f);}这句file_exists判断文件是否存在，存在就用unlink删除文件。 中间没有做任何的过滤。。。  构造POC 我们要把这些$_POST和$_GET的值都加上，要不然PHP会报错不执行下去。" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://getshe11.com/post/zzcms8.2-any-file-deleted-to-getshell/" />
-<meta property="article:published_time" content="2018-03-06T22:41:35+00:00" />
-<meta property="article:modified_time" content="2018-03-06T22:41:35+00:00" />
+<meta property="og:url" content="https://getshe11.com/post/zzcms8.2-any-file-deleted-to-getshell/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2018-03-06T22:41:35&#43;00:00" />
+<meta property="article:modified_time" content="2018-03-06T22:41:35&#43;00:00" />
+
 <meta itemprop="name" content="ZZCMS8.2任意文件删除至getshell(每日一洞)">
 <meta itemprop="description" content="前言 今天就审计一个洞，时间不够用了。明天或者周末看看有空有拿一些难的漏洞来审计复现一下。
 环境 Web： Apache&#43;PHP&#43;MySql System： Ubuntu Browser： Firefox Quantum
 漏洞详情 任意文件删除 文件位置：/user/licence_save.php
 代码：
-$title=trim($_POST[&#34;title&#34;]);	$img=trim($_POST[&#34;img&#34;]); if ($_GET[&#34;action&#34;]==&#34;add&#34;){ query(&#34;Insert into zzcms_licence(title,img,editor,sendtime) values(&#39;$title&#39;,&#39;$img&#39;,&#39;$username&#39;,&#39;&#34;.date(&#39;Y-m-d H:i:s&#39;).&#34;&#39;)&#34;) ; }elseif ($_GET[&#34;action&#34;]==&#34;modify&#34;){ $oldimg=trim($_POST[&#34;oldimg&#34;]); $id=$_POST[&#34;id&#34;]; if ($id==&#34;&#34; || is_numeric($id)==false){ $FoundErr=1; $ErrMsg=&#34;&lt;li&gt;&#34;. $f_array[0].&#34;&lt;/li&gt;&#34;; WriteErrMsg($ErrMsg); }else{ query(&#34;update zzcms_licence set title=&#39;$title&#39;,img=&#39;$img&#39;,sendtime=&#39;&#34;.date(&#39;Y-m-d H:i:s&#39;).&#34;&#39;,passed=0 where id=&#39;$id&#39;&#34;); if ($oldimg&lt;&gt;$img &amp;&amp; $oldimg&lt;&gt;&#34;/image/nopic.gif&#34;){ $f=&#34;../&#34;.$oldimg; if (file_exists($f)){ unlink($f); } $fs=&#34;../&#34;.str_replace(&#34;.&#34;,&#34;_small.&#34;,$oldimg).&#34;&#34;; if (file_exists($fs)){ unlink($fs);	} }	} }  我们可以看到如果从$_GET传值过来如果是modify，那么就执行下面的内容。 $oldimg=trim($_POST[&quot;oldimg&quot;]);把$_POST过来的oldimg用trim去点两边的空格之后赋值给$oldimg 接下来这些不用理会，直到if ($oldimg&lt;&gt;$img &amp;&amp; $oldimg&lt;&gt;&quot;/image/nopic.gif&quot;)这句判断，$img是上面$_POST过来的，填其他值就不等于了，然后我们的文件名也不会等于/image/nopic.gif $f=&quot;../&quot;.$oldimg;跳到主目录然后接上我们的要传过来的文件路径和文件名 if (file_exists($f)){unlink($f);}这句file_exists判断文件是否存在，存在就用unlink删除文件。 中间没有做任何的过滤。。。  构造POC 我们要把这些$_POST和$_GET的值都加上，要不然PHP会报错不执行下去。">
-<meta itemprop="datePublished" content="2018-03-06T22:41:35+00:00" />
-<meta itemprop="dateModified" content="2018-03-06T22:41:35+00:00" />
+$title=trim($_POST[&#34;title&#34;]);	$img=trim($_POST[&#34;img&#34;]); if ($_GET[&#34;action&#34;]==&#34;add&#34;){ query(&#34;Insert into zzcms_licence(title,img,editor,sendtime) values(&#39;$title&#39;,&#39;$img&#39;,&#39;$username&#39;,&#39;&#34;.date(&#39;Y-m-d H:i:s&#39;).&#34;&#39;)&#34;) ; }elseif ($_GET[&#34;action&#34;]==&#34;modify&#34;){ $oldimg=trim($_POST[&#34;oldimg&#34;]); $id=$_POST[&#34;id&#34;]; if ($id==&#34;&#34; || is_numeric($id)==false){ $FoundErr=1; $ErrMsg=&#34;&lt;li&gt;&#34;. $f_array[0].&#34;&lt;/li&gt;&#34;; WriteErrMsg($ErrMsg); }else{ query(&#34;update zzcms_licence set title=&#39;$title&#39;,img=&#39;$img&#39;,sendtime=&#39;&#34;.date(&#39;Y-m-d H:i:s&#39;).&#34;&#39;,passed=0 where id=&#39;$id&#39;&#34;); if ($oldimg&lt;&gt;$img &amp;&amp; $oldimg&lt;&gt;&#34;/image/nopic.gif&#34;){ $f=&#34;../&#34;.$oldimg; if (file_exists($f)){ unlink($f); } $fs=&#34;../&#34;.str_replace(&#34;.&#34;,&#34;_small.&#34;,$oldimg).&#34;&#34;; if (file_exists($fs)){ unlink($fs);	} }	} }  我们可以看到如果从$_GET传值过来如果是modify，那么就执行下面的内容。 $oldimg=trim($_POST[&quot;oldimg&quot;]);把$_POST过来的oldimg用trim去点两边的空格之后赋值给$oldimg 接下来这些不用理会，直到if ($oldimg&lt;&gt;$img &amp;&amp; $oldimg&lt;&gt;&quot;/image/nopic.gif&quot;)这句判断，$img是上面$_POST过来的，填其他值就不等于了，然后我们的文件名也不会等于/image/nopic.gif $f=&quot;../&quot;.$oldimg;跳到主目录然后接上我们的要传过来的文件路径和文件名 if (file_exists($f)){unlink($f);}这句file_exists判断文件是否存在，存在就用unlink删除文件。 中间没有做任何的过滤。。。  构造POC 我们要把这些$_POST和$_GET的值都加上，要不然PHP会报错不执行下去。"><meta itemprop="datePublished" content="2018-03-06T22:41:35&#43;00:00" />
+<meta itemprop="dateModified" content="2018-03-06T22:41:35&#43;00:00" />
 <meta itemprop="wordCount" content="198">
-
-
-
-<meta itemprop="keywords" content="漏洞,代码审计,php,ZZCMS,getshell," />
-<meta name="twitter:card" content="summary"/>
+<meta itemprop="keywords" content="漏洞,代码审计,php,ZZCMS,getshell," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="ZZCMS8.2任意文件删除至getshell(每日一洞)"/>
 <meta name="twitter:description" content="前言 今天就审计一个洞，时间不够用了。明天或者周末看看有空有拿一些难的漏洞来审计复现一下。
 环境 Web： Apache&#43;PHP&#43;MySql System： Ubuntu Browser： Firefox Quantum
@@ -306,6 +302,10 @@ $title=trim($_POST[&#34;title&#34;]);	$img=trim($_POST[&#34;img&#34;]); if ($_GE
     <ul class="post-list">
         
         <li>
+            <a href="https://getshe11.com/post/research-on-php-deserialization/" class="post-link">PHP反序列化研究</a>
+        </li>
+        
+        <li>
             <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/" class="post-link">Gitlab Cookie 反序列化漏洞研究</a>
         </li>
         
@@ -359,10 +359,6 @@ $title=trim($_POST[&#34;title&#34;]);	$img=trim($_POST[&#34;img&#34;]); if ($_GE
         
         <li>
             <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
-        </li>
-        
-        <li>
-            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
         </li>
         
     </ul>

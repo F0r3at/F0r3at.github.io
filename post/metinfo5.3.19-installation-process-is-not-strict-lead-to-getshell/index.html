@@ -35,24 +35,20 @@ http://xxx.com/admin/app/batch/csvup.php?fileField=1&amp;flienamecsv=../../../co
 执行结果 代码位置和漏洞代码 代码位置 \admin\app\batch\csvup.php
 漏洞代码 &lt;?php $depth=&#39;../&#39;; require_once $depth.&#39;../login/login_check.php&#39;; setlocale(LC_ALL,array(&#39;zh_CN.gbk&#39;,&#39;zh_CN.gb2312&#39;,&#39;zh_CN.gb18030&#39;)); $codeold=&#39;gbk&#39;; $codenew=&#39;utf-8&#39;; $classflie=explode(&#39;_&#39;,$fileField); $classflie=explode(&#39;-&#39;,$classflie[count($classflie)-1]); $class1=$classflie[0]; $class2=$classflie[1]; $class3=$classflie[2]; $class=$class3?$class3:($class2?$class2:$class1); $classcsv=$db-&gt;get_one(&#34;select * from $met_columnwhere id=$class&#34;); if(!$classcsv){ metsave(&#34;../app/batch/contentup.php?anyid=$anyid&amp;lang=$lang&#34;,$lang_csvnocolumn,$depth); } $table=moduledb($classcsv[&#39;module&#39;]); $file = fopen($flienamecsv,&#39;r&#39;); $fdata=fgetcsv($file); foreach($fdata as $key=&gt;$val){ if(iconv($codeold,$codenew,$val)==$lang_columnhtmlname){$staticnum=$key;} } $numcsv=0; while ($data = fgetcsv($file)){ $staticone=iconv($codeold,$codenew,$data[$staticnum]); if($staticone!=NULL){ $static[$numcsv&#43;1]=$staticone; $static_copy[]=$staticone; } $dataqrray[]=$data; $numcsv&#43;&#43;; } fclose($file); @file_unlink($flienamecsv); 分析过程  开始的时候我就在找$fileField和$flienamecsv这两个变量是怎么get过来的，分析了包含include/common." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://getshe11.com/post/metinfo5.3.19-installation-process-is-not-strict-lead-to-getshell/" />
-<meta property="article:published_time" content="2018-03-06T22:41:35+00:00" />
-<meta property="article:modified_time" content="2018-03-06T22:41:35+00:00" />
+<meta property="og:url" content="https://getshe11.com/post/metinfo5.3.19-installation-process-is-not-strict-lead-to-getshell/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2018-03-06T22:41:35&#43;00:00" />
+<meta property="article:modified_time" content="2018-03-06T22:41:35&#43;00:00" />
+
 <meta itemprop="name" content="MetInfo5.3.19安装过程过滤不严导致Getshell(每日一洞)">
 <meta itemprop="description" content="前言 前几天在先知看到的漏洞，就很想写个分析过程了的，因为比赛培训和在审计一个CMS拖到了今天。
 环境 Web： phpstudy System： Windows 7 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： PhpStorm 2017.3.3、Seay源代码审计系统
 任意文件删除漏洞 复现 POC 前提：需要由对应的删除权限 flienamecsv代表要删除的文件
 http://xxx.com/admin/app/batch/csvup.php?fileField=1&amp;flienamecsv=../../../config/install.lock
 执行结果 代码位置和漏洞代码 代码位置 \admin\app\batch\csvup.php
-漏洞代码 &lt;?php $depth=&#39;../&#39;; require_once $depth.&#39;../login/login_check.php&#39;; setlocale(LC_ALL,array(&#39;zh_CN.gbk&#39;,&#39;zh_CN.gb2312&#39;,&#39;zh_CN.gb18030&#39;)); $codeold=&#39;gbk&#39;; $codenew=&#39;utf-8&#39;; $classflie=explode(&#39;_&#39;,$fileField); $classflie=explode(&#39;-&#39;,$classflie[count($classflie)-1]); $class1=$classflie[0]; $class2=$classflie[1]; $class3=$classflie[2]; $class=$class3?$class3:($class2?$class2:$class1); $classcsv=$db-&gt;get_one(&#34;select * from $met_columnwhere id=$class&#34;); if(!$classcsv){ metsave(&#34;../app/batch/contentup.php?anyid=$anyid&amp;lang=$lang&#34;,$lang_csvnocolumn,$depth); } $table=moduledb($classcsv[&#39;module&#39;]); $file = fopen($flienamecsv,&#39;r&#39;); $fdata=fgetcsv($file); foreach($fdata as $key=&gt;$val){ if(iconv($codeold,$codenew,$val)==$lang_columnhtmlname){$staticnum=$key;} } $numcsv=0; while ($data = fgetcsv($file)){ $staticone=iconv($codeold,$codenew,$data[$staticnum]); if($staticone!=NULL){ $static[$numcsv&#43;1]=$staticone; $static_copy[]=$staticone; } $dataqrray[]=$data; $numcsv&#43;&#43;; } fclose($file); @file_unlink($flienamecsv); 分析过程  开始的时候我就在找$fileField和$flienamecsv这两个变量是怎么get过来的，分析了包含include/common.">
-<meta itemprop="datePublished" content="2018-03-06T22:41:35+00:00" />
-<meta itemprop="dateModified" content="2018-03-06T22:41:35+00:00" />
+漏洞代码 &lt;?php $depth=&#39;../&#39;; require_once $depth.&#39;../login/login_check.php&#39;; setlocale(LC_ALL,array(&#39;zh_CN.gbk&#39;,&#39;zh_CN.gb2312&#39;,&#39;zh_CN.gb18030&#39;)); $codeold=&#39;gbk&#39;; $codenew=&#39;utf-8&#39;; $classflie=explode(&#39;_&#39;,$fileField); $classflie=explode(&#39;-&#39;,$classflie[count($classflie)-1]); $class1=$classflie[0]; $class2=$classflie[1]; $class3=$classflie[2]; $class=$class3?$class3:($class2?$class2:$class1); $classcsv=$db-&gt;get_one(&#34;select * from $met_columnwhere id=$class&#34;); if(!$classcsv){ metsave(&#34;../app/batch/contentup.php?anyid=$anyid&amp;lang=$lang&#34;,$lang_csvnocolumn,$depth); } $table=moduledb($classcsv[&#39;module&#39;]); $file = fopen($flienamecsv,&#39;r&#39;); $fdata=fgetcsv($file); foreach($fdata as $key=&gt;$val){ if(iconv($codeold,$codenew,$val)==$lang_columnhtmlname){$staticnum=$key;} } $numcsv=0; while ($data = fgetcsv($file)){ $staticone=iconv($codeold,$codenew,$data[$staticnum]); if($staticone!=NULL){ $static[$numcsv&#43;1]=$staticone; $static_copy[]=$staticone; } $dataqrray[]=$data; $numcsv&#43;&#43;; } fclose($file); @file_unlink($flienamecsv); 分析过程  开始的时候我就在找$fileField和$flienamecsv这两个变量是怎么get过来的，分析了包含include/common."><meta itemprop="datePublished" content="2018-03-06T22:41:35&#43;00:00" />
+<meta itemprop="dateModified" content="2018-03-06T22:41:35&#43;00:00" />
 <meta itemprop="wordCount" content="227">
-
-
-
-<meta itemprop="keywords" content="漏洞,代码审计,php,MetInfo,getshell," />
-<meta name="twitter:card" content="summary"/>
+<meta itemprop="keywords" content="漏洞,代码审计,php,MetInfo,getshell," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="MetInfo5.3.19安装过程过滤不严导致Getshell(每日一洞)"/>
 <meta name="twitter:description" content="前言 前几天在先知看到的漏洞，就很想写个分析过程了的，因为比赛培训和在审计一个CMS拖到了今天。
 环境 Web： phpstudy System： Windows 7 X64 Browser： Firefox Quantum Python version ： 2.7 Tools： PhpStorm 2017.3.3、Seay源代码审计系统
@@ -325,6 +321,10 @@ http://xxx.com/admin/app/batch/csvup.php?fileField=1&amp;flienamecsv=../../../co
     <ul class="post-list">
         
         <li>
+            <a href="https://getshe11.com/post/research-on-php-deserialization/" class="post-link">PHP反序列化研究</a>
+        </li>
+        
+        <li>
             <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/" class="post-link">Gitlab Cookie 反序列化漏洞研究</a>
         </li>
         
@@ -378,10 +378,6 @@ http://xxx.com/admin/app/batch/csvup.php?fileField=1&amp;flienamecsv=../../../co
         
         <li>
             <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
-        </li>
-        
-        <li>
-            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
         </li>
         
     </ul>

